@@ -54,3 +54,14 @@
 - Team routing clear: Tron (parser/query), Ram (graph/writer/governance/search/MCP), Yori (tests), Dumont (docs), Clu (CI/CD), Quorra (MCP expertise)
 - Backlog enables parallelization and prevents mid-phase scope creep
 - Coverage target 80% minimum, parser/governance/indexer >= 95%
+
+### 2026-04-03 — Phase 2 backlog refined with TypeScript signatures
+- Updated all Phase 2 implementation issues with explicit TypeScript function signatures
+- Added type definitions and exports for query/graph modules to prevent Phase 1 API mismatch
+- Query module: `Token`, `TokenKind`, `QueryAST`, `QueryNode`, `FilterNode`, `OperatorNode`, `GroupNode`; `tokenize()` and `parse()` signatures
+- Query evaluator: `QueryResult` type; `evaluate(ast: QueryAST, state: IndexState): QueryResult` signature — critical that parameter is `IndexState` not `IndexCache`
+- Graph module: `WalkDirection`, `WalkVia`, `WalkOptions`, `Edge`, `WalkResult`; `walk(start: string, state: IndexState, options?: WalkOptions): WalkResult` signature
+- CLI layer: Added note that commands are thin wrappers, no new exports from `cli.ts` — core logic in query.ts/graph.ts
+- Phase 2 gate updated: added ACs for public API exports and test skeleton timing (after types are approved)
+- Decision documented in `.squad/decisions/inbox/castor-phase2-backlog-refined.md`
+- Prevention: Test skeletons now written after types locked, eliminating Yori↔Tron contract drift from Phase 1

@@ -72,3 +72,18 @@
 - Release notes: comprehensive, including breaking changes (none), migration steps, and Phase 2 preview
 
 ## Learnings
+
+### Retro A9: FrontmatterEntry Documentation (2026-04-04)
+
+**Task:** Add usage examples and consumer patterns for `FrontmatterEntry` type to `docs/architecture.md`.
+
+**Action taken:**
+- Added new subsection in "## Type System / ### Key Types" (right after intro, before `ParsedFile`)
+- Explains what `FrontmatterEntry` is: `type FrontmatterEntry = Record<string, unknown>` (schemaless)
+- Explains why `unknown` not `any`: forces consumers to narrow values before use, prevents silent runtime errors
+- Provided three code examples showing ❌ (unsafe access), ✅ (type guard with `typeof`), ✅ (helper function)
+- Explained why it's a named type: enables future refinement without breaking existing consumers
+- Kept to ~20 lines + code block (concise, focused)
+- Insert location: Line 234, between type system intro and ParsedFile
+
+**Result:** Phase 1 audit closed. `FrontmatterEntry` now clearly documented with consumer patterns for future developers.

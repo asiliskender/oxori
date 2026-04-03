@@ -119,3 +119,60 @@
 - `exactOptionalPropertyTypes: false` in tsconfig — optional properties accept `undefined` values without issues.
 - `typedRelations` values are `readonly string[]` in `FileEntry` (vs mutable `string[]` in `ParsedFile`) — the indexer must freeze/copy the arrays from the parser output before storing them in the cache.
 - Typecheck passes with zero errors on `src/types.ts` alone (other src files don't exist yet — expected).
+
+---
+
+## Phase 2 — Type Contract Design (Wave 1, Critical Path)
+
+**Date:** 2025-07-13  
+**Task:** Add Query Engine and Graph Traversal types to `src/types.ts`  
+**Status:** Complete — awaiting Flynn review
+
+### What was done
+
+Added two new sections to `src/types.ts`:
+
+**`// === Query Engine (Phase 2) ===`**
+- `TokenKind` — union of token categories emitted by the tokenizer
+- `Token` — `{ kind, value, position }` with zero-based source offset
+- `FilterNode` — leaf AST node for `field op value` atoms
+- `OperatorNode` — interior node for `AND / OR / NOT` with `children: QueryNode[]`
+- `GroupNode` — parenthesized sub-expression node (preserved post-parse)
+- `QueryNode` — discriminated union of the three node types above
+- `QueryAST` — `{ root: QueryNode | null }` — null root means "match all"
+- `QueryResult` — `{ matches: ReadonlySet<string>; totalMatched; executionMs }`
+- `FILTER_FIELDS` — `as const` tuple for runtime field validation
+- `FilterField` — derived union type from `FILTER_FIELDS`
+
+**`// === Graph Traversal (Phase 2) ===`**
+- `Edge` — `{ source, target, kind, relationType? }` directed graph edge
+- `WalkDirection` — `"incoming" | "outgoing" | "both"`
+- `WalkVia` — `"links" | "tags" | "both" | \`relation:${string}\`` (template literal for open-ended named relations)
+- `WalkOptions` — optional-bag for `graph.walk()` configuration
+- `WalkResult` — `{ nodes: ReadonlySet, edges: ReadonlySet, visitOrder: readonly[], truncated }`
+
+### Key decisions
+
+1. `QueryNode` is a discriminated union (not class hierarchy) — enables exhaustive `switch` + keeps nodes JSON-serialisable.
+2. Single `OperatorNode` for AND/OR/NOT — unary NOT is a degenerate case of the same shape.
+3. `GroupNode` preserved post-parse — needed for round-trip serialisation and IDE range highlighting.
+4. `QueryAST.root: null` for empty query — avoids sentinel node, enables short-circuit at call site.
+5. `FILTER_FIELDS as const` + derived `FilterField` — single source of truth for runtime validation and static typing.
+6. `WalkVia` template literal — keeps named relation types open without `string` escape.
+7. `ReadonlySet` on all result types — prevents caller mutation of engine output.
+8. `Edge.relationType` optional (not discriminated union) — traversal algorithms treat all edges uniformly.
+
+### Decision doc
+
+Filed at `.squad/decisions/inbox/tron-phase2-type-contracts.md` with open questions for Flynn.
+
+### Typecheck
+
+`npx tsc --noEmit` → 0 errors.
+
+### Open questions for Flynn
+
+- Should `OperatorNode.children` for NOT be `[QueryNode]` tuple?
+- Should `FilterNode.field` be `FilterField` instead of `string`?
+- Should `GroupNode` be erased during parsing?
+- `ReadonlySet<Edge>` vs `readonly Edge[]` for `WalkResult.edges`?

@@ -73,6 +73,18 @@ Ran the full Phase 1 verification suite. All 14 acceptance criteria passed:
 
 **Gate decision:** `.squad/decisions/inbox/flynn-phase1-gate.md` — APPROVED. Phase 1 status updated to ✅ Complete in team.md. Ready for Phase 2.
 
+### 2026-04-03: Phase 2 Gate Checklist Written
+
+**Delivered:** `.squad/decisions/inbox/flynn-phase2-gate-checklist.md`
+
+Wrote the complete Phase 2 gate checklist at kickoff (addressing Action Item A6 from Phase 1 retro: "write gate checklist at kickoff, not at review time"). 
+
+Checklist is based on Phase 1's 14 criteria (TypeScript, ESLint, tests, build, shebang, no-any, JSDoc, README) plus 17 Phase 2-specific criteria covering: Query types and module exports, Graph types and walk API, public API re-exports, tokenizer/parser/evaluator implementation details, CLI command functionality, documentation (query-language.md, architecture.md updates), Phase 1 CLI tests now filled in, and performance thresholds (query < 100ms, walk < 200ms on linked-vault).
+
+Checklist is binary-verifiable (run commands, check output, review code). Ready for Phase 2 team to execute against.
+
+---
+
 ### 2026-04-03: Phase 1 Retrospective facilitated
 
 **Facilitated** the Phase 1 retrospective for all contributors (Tron, Yori, Clu, Dumont, Castor).
@@ -92,3 +104,27 @@ Ran the full Phase 1 verification suite. All 14 acceptance criteria passed:
 **9 action items assigned** for Phase 2 — highest priority: lock index.ts as first deliverable (A1), Yori writes skeletons only after contracts are merged (A2), fill in CLI todos (A3).
 
 **Phase 2 readiness:** ✅ Cleared. Primary concern for Phase 2: query AST/tokenizer types must be reviewed and locked before Yori writes test skeletons — do not repeat the Phase 1 API mismatch pattern.
+
+### 2025-07-13: Phase 2 Type Contracts Review — APPROVED
+
+Reviewed `src/types.ts` Phase 2 sections (lines 381–682) submitted by Tron, covering the Query Engine and Graph Traversal type contracts.
+
+**All 5 verification criteria passed:**
+- Zero `any` types — confirmed by scan
+- All exported types use `type` keyword; `FILTER_FIELDS` correctly uses `const` for runtime availability
+- Named exports only, no defaults
+- Every Phase 2 type has `@description`, `@remarks`, and `@example` JSDoc — field-level inline docs present on non-obvious fields
+- Types are complete for `query.ts` and `graph.ts` needs
+
+**Answered Tron's 4 open questions:**
+1. **`OperatorNode.children` for NOT:** Keep `QueryNode[]` — runtime assert covers the one-child constraint; tuple adds construction friction with no extra safety in a correct parser.
+2. **`FilterNode.field` as `FilterField` vs `string`:** Keep `string` — field validation belongs in the evaluator; `FilterField` adds test fixture friction for no meaningful compile-time gain.
+3. **Preserve `GroupNode`:** Yes — round-trip serialization and MCP tooling need it; cost is one evaluator `case`.
+4. **`WalkResult.edges` as `ReadonlySet<Edge>`:** Confirmed correct — deduplication semantics are right for edges; `visitOrder` already covers ordered node traversal.
+
+**Actions taken:**
+- Updated `src/index.ts` to re-export all 15 Phase 2 types plus `FILTER_FIELDS`
+- Ran `npx tsc --noEmit` — zero errors
+- Wrote verdict to `.squad/decisions/inbox/flynn-phase2-types-review.md`
+
+**Cleared:** Yori may begin writing test skeletons against these locked contracts immediately.

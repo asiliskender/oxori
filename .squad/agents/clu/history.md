@@ -70,3 +70,26 @@
 - ✅ package.json (added module, CJS exports, packageManager)
 - ✅ ci.yml (added build step, codecov token)
 - ✅ vitest.config.ts (verified thresholds)
+
+### 2026-04-04: Documented Retro Action Items (A5 + A8)
+
+**What:** Completed two retro action items from engineering retrospective:
+
+1. **Retro A5 (P2) — Codify per-entry tsup banner in architecture.md**
+   - Added new "Build System and Tooling" section to `docs/architecture.md`
+   - Explains why tsup uses array config (`defineConfig([...])`) instead of single object
+   - Clarifies that shebang `#!/usr/bin/env node` MUST only appear on CLI entry (`cli.ts`), never on library entry (`index.ts`)
+   - Documents the exact pattern to follow when adding new binary entry points
+   - Explains the error that occurs if banner object is used incorrectly: "banner option must be a string, got object"
+
+2. **Retro A8 (P3) — Add pre-commit test step to CONTRIBUTING.md**
+   - Added new "Pre-Commit Checks" section in `CONTRIBUTING.md`
+   - Instructs developers to run `npx vitest run` locally before committing
+   - Emphasizes verifying zero non-todo failures
+   - Notes that this catches issues early and keeps main branch green
+
+**Why:** Prevent future configuration errors and ensure consistent testing discipline across team. Codifying these patterns in docs makes them discoverable and reduces onboarding friction.
+
+**Files Modified:**
+- ✅ docs/architecture.md (added Build System and Tooling section)
+- ✅ CONTRIBUTING.md (added Pre-Commit Checks section)

@@ -112,3 +112,24 @@ Both test files were written against a pre-implementation API that has since cha
 
 ### Outcome
 31 non-todo tests pass (22 todos remain as stubs for future implementation phases).
+
+---
+
+## Retro A3 — Fill all 11 `it.todo()` CLI tests (P1 debt)
+
+### Task
+Phase 1 retro flagged 11 `it.todo()` stubs in `tests/cli.test.ts` as P1 debt: the CLI entry point was shipped untested. All 11 were implemented before any Phase 2 CLI work begins.
+
+### Changes made
+- **`tests/cli.test.ts`**: Replaced all 11 `it.todo()` stubs with real test implementations.
+  - Removed `/* eslint-disable @typescript-eslint/no-unused-vars */` comment; added `writeFileSync` import.
+  - `oxori init` (5 tests): creates `.oxori/index/` dir, prints `✓ Initialized Oxori vault`, exits 0, fails on non-writable path (file blocking mkdir), idempotent on double-run.
+  - `oxori index` (6 tests): exits 0 on BASIC_VAULT with explicit path arg, works with any explicit path, stdout matches `/✓ Indexed \d+ files in \d+ms/`, exits non-zero + prints `✗` on nonexistent vault, exit 0 on valid vault, exit non-zero on ghost vault.
+
+### Key decisions
+1. **Non-writable test strategy**: Used `writeFileSync(join(testDir, 'deep'), ...)` to create a file where a directory is expected, then passed `testDir/deep/vault` to `oxori init`. `mkdir` fails with ENOTDIR, which the CLI catches and outputs `✗`.
+2. **"--vault flag" reinterpretation**: CLI has no `--vault` flag; test reinterpreted as "accepts an explicit path argument" — writes a `.md` file into `testDir` and indexes it via `oxori index <testDir>`.
+3. **"re-index in cwd" reinterpretation**: CLI always takes explicit `<vaultPath>` arg; test runs with `cwd=testDir` (different from vault) to show path resolution works correctly.
+
+### Outcome
+11/11 CLI tests pass. Full suite: 42 passed | 11 todo (the 11 todos are pre-existing stubs in parser/indexer for Phase 2+ features — out of scope).

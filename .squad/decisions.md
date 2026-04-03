@@ -167,6 +167,163 @@ Good sprint, team. We shipped a real v0.1.0 with a clean foundation. Phase 2 is 
 
 ## Governance
 
+## Phase 2 Decisions
+
+### 2026-04-03: Phase 2 Backlog Refined with TypeScript Signatures
+
+**By:** Castor (Product Owner)  
+**Date:** 2026-04-03  
+**Related:** Retro action item A7
+
+Updated Phase 2 backlog acceptance criteria to include explicit TypeScript function signatures and export lists. This prevents the Phase 1 API mismatch (Yori tests writing for `buildIndex(path)`, Tron building `indexVault(config: VaultConfig)`).
+
+**Changes Made:**
+
+1. **Query Language Tokenizer & AST**
+   - Added type definitions: `Token`, `TokenKind`, `QueryAST`, `QueryNode`, `FilterNode`, `OperatorNode`, `GroupNode`
+   - Added function signatures: `tokenize(query: string): Token[]`, `parse(tokens: Token[]): QueryAST`
+   - Exports explicitly listed under "TypeScript Contract" section
+
+2. **Query Evaluator**
+   - Added type definition: `QueryResult` (with `matches: Set<string>` and `count: number`)
+   - Added function signature: `evaluate(ast: QueryAST, state: IndexState): QueryResult`
+   - Parameter is `IndexState` (not `IndexCache`) — matches the actual type from types.ts
+
+3. **Graph Traversal**
+   - Added type definitions: `WalkDirection`, `WalkVia`, `WalkOptions`, `Edge`, `WalkResult`
+   - Added function signature: `walk(start: string, state: IndexState, options?: WalkOptions): WalkResult`
+   - All types show correct shape for edges, options, and results
+
+4. **CLI Commands (Query, Walk, Graph)**
+   - CLI commands are thin wrappers, no new exports from `cli.ts`
+   - Logic lives in `query.ts` and `graph.ts`, CLI layer only handles I/O
+
+5. **Phase 2 Gate Issue (Kickoff)**
+   - AC: All Phase 2 public API types exported from src/index.ts before implementation begins
+   - AC: Yori writes test skeletons only after types.ts Phase 2 types are Flynn-approved
+
+**Prevention Strategy:** Enforces the learning from Phase 1 retro: types first, test skeletons follow types, signatures in backlog, parameter names matter.
+
+---
+
+### 2025-07-13: Phase 2 Type Contracts (Query Engine + Graph Traversal)
+
+**Author:** Tron  
+**Status:** Proposed — awaiting Flynn review
+
+Phase 2 introduces the query engine and graph traversal layer. All shared type contracts locked before Yori writes test skeletons and before implementation begins.
+
+**Key Design Decisions:**
+
+1. **`QueryNode` as Discriminated Union**
+   - `QueryNode = FilterNode | OperatorNode | GroupNode` uses discriminated union on `type` literal field
+   - TypeScript narrows exhaustively via `switch (node.type)` — compile-time guarantee that every node kind is handled
+   - No runtime `instanceof` checks; all nodes are plain objects — JSON-serialisable by default
+
+2. **Single `OperatorNode` for AND / OR / NOT**
+   - Rather than `AndNode | OrNode | NotNode`, a single `OperatorNode` with `type: "and" | "or" | "not"` and `children: QueryNode[]`
+   - `NOT` is logically unary but structurally the same as a unary `AND`/`OR`: one child
+   - Evaluator asserts `children.length === 1` for NOT at runtime
+
+3. **`GroupNode` Preserved Post-Parse**
+   - Not erased during parsing (it could be, since it wraps exactly one child)
+   - Enables round-trip serialisation and IDE/MCP tooling (hover tooltips, range-highlighting)
+   - Cost is one extra case in the visitor, negligible
+
+4. **`QueryAST.root: QueryNode | null`**
+   - Empty query represented as `{ root: null }` rather than a sentinel `MatchAllNode`
+   - `null` is idiomatic TypeScript and lets callers short-circuit: `if (ast.root === null) return allFiles`
+   - Avoids polluting `QueryNode`'s union with a type that carries no field data
+
+5. **`FILTER_FIELDS` as `const` tuple + Derived Type**
+   - `FILTER_FIELDS = ["tag", "type", ...] as const; type FilterField = (typeof FILTER_FIELDS)[number]`
+   - Evaluator needs runtime array to validate user-supplied field names
+   - Deriving type from constant ensures they never drift apart
+
+6. **`WalkVia` Uses Template Literal for Named Relations**
+   - `type WalkVia = "links" | "tags" | "both" | \`relation:${string}\``
+   - Named relation types are user-defined and not enumerable at type level
+   - Template literal captures convention while keeping type closed for well-known modes
+
+7. **`ReadonlySet` / `readonly` on Result Types**
+   - `QueryResult.matches`, `WalkResult.nodes`, `WalkResult.edges` are `ReadonlySet`; `WalkResult.visitOrder` is `readonly string[]`
+   - Result objects are produced by the engine and consumed by callers — mutation makes no sense
+
+8. **`Edge.relationType` Optional**
+   - Single `kind` field and optional `relationType?: string` rather than discriminated union
+   - Graph traversal treats all edge kinds uniformly; only the filter step inspects `kind`
+   - Flat optional keeps edge construction and pattern-matching simple
+
+---
+
+### 2026-04-03: Phase 2 Gate Checklist — Query Engine + Graph Walk
+
+**Date:** 2026-04-03 (kickoff)  
+**Owner:** Flynn (Phase 2 Gate Keeper)  
+**Release Target:** v0.2.0
+
+**Inherited from Phase 1** (always required):
+1. TypeScript Compilation: Zero Errors
+2. Linting: Zero Errors
+3. Test Suite: All Non-Todo Tests Pass
+4. Build: Success and Correct Outputs
+5. Shebang: CLI Only, Library Clean
+6. No `any` Types in Source
+
+**Phase 2 Specific Criteria:**
+
+7. JSDoc on All Exported Functions
+   - `src/query.ts` — `tokenize()`, `parse()`, `evaluate()`
+   - `src/graph.ts` — `walk()`
+   - `src/types.ts` — exported types (document type contracts)
+   - Each function has `@param`, `@returns`, `@throws` tags
+
+8. README.md Updated with Phase 2 Features
+   - New section: "Phase 2 — Query Engine"
+   - Documents `oxori query`, `oxori walk`, `oxori graph` commands with examples
+   - Query language quick reference section exists
+
+9. Type Exports: Query Language and Graph Types
+   - Required: `Token`, `TokenKind`, `QueryAST`, `QueryNode`, `FilterNode`, `OperatorNode`, `GroupNode`, `QueryResult`, `FilterField`, `FILTER_FIELDS`, `Edge`, `WalkOptions`, `WalkResult`, `WalkDirection`, `WalkVia`
+
+10. Public API Re-exports: index.ts
+    - Re-exports all Phase 1 + Phase 2 public API
+    - All Query types, Graph types, `tokenize`, `parse`, `evaluate`, `walk`
+
+11. Query Module: tokenize, parse, evaluate
+    - `tokenize(query: string): Token[]` handles empty string, unbalanced parens, unknown filter names, all 6 filter fields
+    - `parse(tokens: Token[]): QueryAST` handles simple filters, boolean operators, nested groups, operator precedence
+    - `evaluate(ast: QueryAST, state: IndexState): QueryResult` handles all filter types, operators, nested groups, completes in < 100ms
+
+12. Graph Module: walk
+    - `walk(start: string, cache: IndexState, options: WalkOptions): WalkResult`
+    - Handles cycles (no infinite loops), self-links, depth parameter, direction filters, relation type filters
+    - Completes in < 200ms on linked-vault
+
+13. Coverage: 80% Overall, 90% Query/Graph Modules
+    - `src/query.ts` coverage: ≥ 90%
+    - `src/graph.ts` coverage: ≥ 90%
+    - Phase 1 modules maintain ≥ 95% coverage
+
+14. CLI Commands: Functional and Tested
+    - `oxori query`, `oxori walk`, `oxori graph` all work end-to-end
+    - Tests pass, error messages are helpful
+
+15. Documentation: Query Language and Architecture
+    - `docs/query-language.md` — BNF grammar, filter types, operators, examples, edge cases
+    - `docs/architecture.md` (updated) — Phase 2 section added
+    - `README.md` (updated) — Query, Walk, Graph examples
+
+16. Phase 1 CLI Tests Filled In
+    - The 11 `it.todo()` stubs from Phase 1 now have implementations
+    - Coverage for: `oxori init`, `oxori index`
+
+17. Performance Thresholds Met
+    - Query evaluation: < 100ms on linked-vault
+    - Graph walk: < 200ms on linked-vault
+
+## Governance
+
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
