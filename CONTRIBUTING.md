@@ -62,6 +62,20 @@ pnpm dev -- init ./test-vault
 pnpm dev -- index
 ```
 
+## Pre-Commit Checks
+
+Before committing your code, run tests locally to verify you're not introducing regressions:
+
+```bash
+# Run full test suite
+npx vitest run
+
+# Verify all tests pass with zero non-todo failures
+# The build will fail in CI if there are any test regressions
+```
+
+This catches issues early and keeps the `main` branch green. Tests also run in CI, but running them locally first saves review cycles.
+
 ## Code Conventions
 
 ### TypeScript

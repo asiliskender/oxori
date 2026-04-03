@@ -233,6 +233,27 @@ The type system is strict and stable. Core types are defined once in `types.ts` 
 
 ### Key Types
 
+**`FrontmatterEntry`** — Type alias for `Record<string, unknown>`. Represents schemaless YAML frontmatter where any key-value pair is valid. The `unknown` type forces consumers to narrow values before use, preventing silent type errors. Example usage:
+
+```typescript
+// ❌ Don't do this — type is unknown, operations are unsafe
+const status = entry.frontmatter['status'];
+console.log(status.toUpperCase()); // Error: toUpperCase not defined on unknown
+
+// ✅ Do this — narrow before use
+if (typeof status === 'string') {
+  console.log(status.toUpperCase()); // Safe
+}
+
+// ✅ Or use a helper
+function getString(fm: FrontmatterEntry, key: string): string | undefined {
+  const val = fm[key];
+  return typeof val === 'string' ? val : undefined;
+}
+```
+
+Named as a type (rather than inline `Record<string, unknown>`) to enable future schema refinement (e.g., stricter validation in Phase 3+) without breaking existing code.
+
 **`ParsedFile`** — The intermediate form produced by the parser. Mutable by design (parser builds it incrementally). Contains filepath, filename, frontmatter (Record<string, unknown>), tags (Set<string>), wikilinks (Set<string>), typedRelations (Map<string, string[]>), and body. Example: parsing `/vault/auth.md` with `depends_on: [[login]]` produces a `ParsedFile` with `typedRelations.get("depends_on")` returning `["login"]`.
 
 **`FileEntry`** — The immutable representation stored in the in-memory cache. Same fields as `ParsedFile`, but uses `ReadonlySet` and `ReadonlyMap` to prevent accidental cache mutation. Also includes `lastModified` (mtime) for change detection.
@@ -426,6 +447,101 @@ oxori/
 **Tradeoffs:** 
 - Semantic search is not available until Phase 4.
 - Users who want embeddings must configure a provider (OpenAI, Anthropic, etc.).
+
+## Build System and Tooling
+
+### Array Configuration Pattern
+
+Oxori uses `defineConfig([...])` with an **array of entry points** instead of a single object. This enables **per-entry customization**:
+
+```ts
+// tsup.config.ts
+export default defineConfig([
+  {
+    entry: { index: "src/index.ts" },  // Library entry
+    format: ["esm", "cjs"],
+    dts: true,
+    banner: {},                         // No banner for library
+  },
+  {
+    entry: { cli: "src/cli.ts" },       // CLI entry
+    format: ["esm"],
+    banner: { js: "#!/usr/bin/env node" },
+  },
+]);
+```
+
+**Why the array?** Dual-package distribution requires different settings for library vs CLI:
+- Library exports (`index.ts` → `dist/index.js` + `dist/index.cjs`) must have **no shebang** so downstream consumers can import cleanly.
+- CLI entry (`cli.ts` → `dist/cli.js`) **must have shebang** to be executable as a standalone binary.
+
+### Shebang Placement (Critical Rule)
+
+**Rule: ONLY apply the shebang banner to CLI entry points, never to the library export.**
+
+✅ **Correct:**
+```ts
+// CLI entry only
+{
+  entry: { cli: "src/cli.ts" },
+  banner: { js: "#!/usr/bin/env node" }
+}
+```
+
+❌ **Wrong:**
+```ts
+// This breaks library imports
+{
+  entry: { index: "src/index.ts" },
+  banner: { js: "#!/usr/bin/env node" }
+}
+```
+
+**What happens if you get it wrong?** 
+If `banner: { js: "..." }` is applied to the library entry, downstream code that imports from the package will receive a file starting with `#!/usr/bin/env node`, which is invalid JavaScript and will fail to parse.
+
+### Adding a New Binary Entry
+
+If a new binary command needs to be added (e.g., `src/daemon.ts`), follow this pattern:
+
+1. Create a new entry config in the array
+2. Apply banner **only to the new entry**, not to existing ones
+3. Add the new output file to `package.json` `bin` field
+
+```ts
+export default defineConfig([
+  { entry: { index: "src/index.ts" }, /* ... */ },
+  { entry: { cli: "src/cli.ts" }, banner: { js: "#!/usr/bin/env node" }, /* ... */ },
+  {
+    entry: { daemon: "src/daemon.ts" },  // New binary
+    banner: { js: "#!/usr/bin/env node" }  // Shebang only here
+  },
+]);
+```
+
+Then in `package.json`:
+```json
+{
+  "bin": {
+    "oxori": "./dist/cli.js",
+    "oxori-daemon": "./dist/daemon.js"
+  }
+}
+```
+
+### Common Error: Invalid Banner Value Type
+
+esbuild (used by tsup) requires banner values to be **strings only**, not objects. This error occurs if you try to pass an object:
+
+```ts
+// ❌ Error: banner option requires string value
+banner: { js: { cli: "#!/usr/bin/env node" } }
+
+// ✅ Correct: string value
+banner: { js: "#!/usr/bin/env node" }
+```
+
+The error message: `"banner" option must be a string, got object`. Each entry in the array applies its banner independently — the banner config itself is always a string.
 
 ## What NOT to Do
 
