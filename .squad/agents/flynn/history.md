@@ -44,3 +44,17 @@
 - Each phase = a separate npm release with detailed release notes
 
 ## Learnings
+
+### 2026-04-03: types.ts review — CHANGES REQUESTED
+
+Reviewed `src/types.ts` submitted by Tron.
+
+**Two blockers found:**
+1. `FrontmatterEntry` missing as a named export — backlog criterion explicitly requires it. Inline `Record<string, unknown>` is not sufficient.
+2. Individual types lack per-type JSDoc — file header is good but each exported type needs its own block documenting semantics and non-obvious design choices (especially the `ParsedFile` vs `FileEntry` mutability split).
+
+**Passes:** no `any`, named exports only, `type` keyword throughout, zero src/ dependencies, API surface shapes are solid, `Result<T,E>` pattern is well-designed.
+
+**Revision assigned to Ram** (per protocol: different agent than original author Tron).
+
+**Lesson:** The mutability asymmetry between `ParsedFile` (mutable) and `FileEntry` (ReadonlySet/ReadonlyMap) is a deliberate and good design decision — but it must be documented inline or future maintainers will wonder why it's inconsistent.

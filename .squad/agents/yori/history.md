@@ -44,3 +44,40 @@
 - Each phase = a separate npm release with detailed release notes
 
 ## Learnings
+
+### Phase 1 — Fixture design and test skeleton (2026-04-03)
+
+**What was built:**
+- `tests/fixtures/basic-vault/` — 6 root-level files covering all core parser edge cases
+  (rich frontmatter, typed relations, hierarchical tags, empty file, no-frontmatter, lowercase/dedup wikilinks)
+- `tests/fixtures/linked-vault/` — 7 files forming a realistic directed graph with cycle (A→B→C→A),
+  leaf (node-d), hub (node-e), and multiple typed-relation targets (node-f)
+- `tests/fixtures/governance-vault/` — updated governance.md to spec format, added `secrets/` with 2 protected files
+- `tests/parser.test.ts` — 20 test cases (16 fully implemented, 4 `it.todo()`)
+- `tests/indexer.test.ts` — 18 test cases (13 fully implemented, 5 `it.todo()`)
+- `tests/cli.test.ts` — 11 test cases (all `it.todo()` — CLI tests require end-to-end implementation)
+- `tests/fixtures/README.md` — full documentation of all fixtures and their test scenarios
+
+**Lessons learned:**
+
+1. **Typed relations isolation:** `note-two.md` intentionally has no wikilinks in the body — only
+   `depends_on`/`blocks` typed relations in frontmatter. This is the only clean way to test
+   "typed relations do not bleed into the wikilinks Set" without ambiguity from body links.
+
+2. **Hierarchical tag deduplication test:** Testing dedup via ancestor expansion is more robust than
+   adding explicit duplicate tags to a frontmatter list — `project/alpha` and `project/alpha/planning`
+   both expand to include `project`, so checking `count === 1` catches any dedup failure.
+
+3. **Wikilink normalisation test:** `overview.md` body contains both `[[note-one]]` and `[[NOTE-ONE]]`
+   in the same body. One entry in the Set confirms both normalisation AND deduplication in a single test.
+
+4. **CLI tests are all `it.todo()`:** CLI end-to-end tests need the actual CLI implementation to know
+   exact output strings, exit codes, and flag names. Stubs are in place so they're visible in the test
+   report and can be filled in by Tron when cli.ts is written.
+
+5. **Temp dirs within project:** CLI tests use `tests/.tmp-cli-<n>/` rather than `os.tmpdir()` to
+   respect the "no /tmp writes" constraint. `beforeEach`/`afterEach` create and clean these up.
+
+6. **Cycle safety in linked-vault:** The A→B→C→A cycle tests that `buildIndex()` does not loop
+   infinitely — it should detect cycles at the wikilink collection level, not at graph traversal
+   (traversal is Phase 2's concern). The cycle fixture verifies the indexer is cycle-safe at scan time.

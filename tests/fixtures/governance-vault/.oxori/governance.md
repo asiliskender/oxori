@@ -1,15 +1,13 @@
----
-type: governance
----
+# Governance
 
-## Write Rules
+## Rules
 
-- `rules/` — human-only, agents cannot modify
-- `memory/` — agents can create and append
-- All agent-created files must include `author` and `created_at` in frontmatter
-- Agents cannot delete files
+### Rule: Protect secrets
+- Pattern: secrets/**
+- Effect: deny
+- Applies to: agents
 
-## Agent Permissions
-
-- agent:researcher — read all, write to memory/
-- agent:planner — read all, write to tasks/ and decisions/
+### Rule: Allow all reads
+- Pattern: **
+- Effect: allow
+- Applies to: all
