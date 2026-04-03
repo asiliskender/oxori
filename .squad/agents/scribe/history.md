@@ -70,3 +70,17 @@ Initial setup complete.
 7. docs: Architecture, README, CONTRIBUTING, RELEASES docs
 
 All commits include Co-authored-by trailer.
+
+## Phase 2 Commit Complete — 2026-04-03 23:14:00
+
+✅ All Phase 2 work committed in 3 conventional commits:
+1. feat(types): Add Phase 2 query engine and graph traversal type contracts
+2. feat(query, graph, index, cli): Query tokenizer/parser/evaluator, BFS graph walk, CLI commands, public API exports
+3. test(query, graph, cli): Query language tests, graph walk tests with edge case coverage, CLI integration tests
+4. docs: Query language spec, Phase 2 README updates
+5. fix(ci): Release workflow pnpm fix, Node 24 support, README version sync
+6. chore(ci): GitVersion 5.12.0 integration for semantic versioning
+7. chore(squad): Update agent histories and decisions from Phase 2 work
+
+All commits include Co-authored-by trailer.
+Ready for Phase 3: Write API + Governance.
