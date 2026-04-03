@@ -382,3 +382,61 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+### 2026-04-03: Phase 2 Gate Re-check — ❌ BLOCKED (16/17)
+
+**By:** Flynn (Tech Lead / Architect)
+**Date:** 2026-04-03 (re-check)
+**Release Target:** v0.2.0 — NOT YET APPROVED
+
+**Commands run:**
+- `npx tsc --noEmit` — exit 0 ✅
+- `npx eslint src/ tests/ --max-warnings 0` — exit 0 ✅
+- `npx tsup` — exit 0 (dist/index.js, dist/index.cjs, dist/cli.js) ✅
+- `npx vitest run --coverage --reporter=verbose` — exit 0 ✅ (120 passed, 14 todo)
+- Runtime export check: `tokenize`, `parse`, `evaluate`, `walk` — all present ✅
+- `grep "img.shields.io" README.md` — npm badge found ✅
+
+**16 PASS / 1 FAIL:**
+
+| # | Criterion | Verdict | Finding |
+|---|---|---|---|
+| 1 | TypeScript Compilation: Zero Errors | ✅ PASS | tsc --noEmit exit 0 |
+| 2 | Linting: Zero Errors | ✅ PASS | eslint exit 0 |
+| 3 | Test Suite: All Non-Todo Tests Pass | ✅ PASS | 120 passed, 14 todo |
+| 4 | Build: Success and Correct Outputs | ✅ PASS | dist/index.js, dist/index.cjs, dist/cli.js all present |
+| 5 | Shebang: CLI Only, Library Clean | ✅ PASS | dist/cli.js has shebang; dist/index.js does not |
+| 6 | No `any` Types in Source | ✅ PASS | Zero `: any`, `as any`, or `<any>` in src/ |
+| 7 | JSDoc on All Exported Functions | ✅ PASS | tokenize, parse, evaluate, walk all have @param, @returns, @throws |
+| 8 | README.md Updated with Phase 2 Features | ✅ PASS | oxori query/walk/graph examples present; npm badge present |
+| 9 | Type Exports: Query Language and Graph Types | ✅ PASS | 16 named exports confirmed including FILTER_FIELDS |
+| 10 | Public API Re-exports: index.ts | ✅ PASS | tokenize, parse, evaluate, walk all exported from dist/index.js at runtime |
+| 11 | Query Module: tokenize, parse, evaluate | ✅ PASS | All three exported and functional |
+| 12 | Graph Module: walk | ✅ PASS | Exported and functional; cycle detection confirmed |
+| 13 | Coverage: 80% Overall, 90% Query/Graph Modules | ❌ FAIL | Overall 80.04% ✅; query.ts 93.29% ✅; graph.ts **87.84%** ❌ (needs ≥ 90%) |
+| 14 | CLI Commands: Functional and Tested | ✅ PASS | describe blocks for oxori query, oxori walk, oxori graph; 120 total tests |
+| 15 | Documentation: Query Language and Architecture | ✅ PASS | docs/query-language.md ✅; architecture.md ✅; README ✅ |
+| 16 | Phase 1 CLI Tests Filled In | ✅ PASS | Zero it.todo in cli.test.ts (was 11) |
+| 17 | Performance Thresholds Met | ✅ PASS | Query tokenize+parse: <1ms; walk: previous gate confirmed <200ms |
+
+**Remaining fix (1):**
+
+| Fix | Owner | Criterion | Action |
+|---|---|---|---|
+| Increase graph.ts coverage to ≥ 90% | Yori | #13 | Cover lines 35-36, 129-148 — tagNeighborEdges with empty tags; edge cases in relationEdges |
+
+**Progress from previous gate:** 12/17 → 16/17. Four of five claimed fixes confirmed. graph.ts coverage was assigned to Yori but remains at 87.84% (unchanged from previous run). Overall and query.ts thresholds are now met.
+
+**Blocked by:** Yori (#13 graph.ts coverage)
+
+### Phase 2 Gate: ✅ APPROVED — v0.2.0
+**Date:** 2026-04-03
+**By:** Flynn
+**All 17 criteria passed.**
+- 127 tests passing (14 todo)
+- graph.ts: 94.73% branch coverage
+- query.ts: 93.29% branch coverage  
+- Overall: ≥ 80% all thresholds (82.72% stmts, 87.44% branch, 90.24% funcs, 82.72% lines)
+- tokenize/parse/evaluate/walk exported from public API
+- CLI commands: oxori query/walk/graph
+- docs/query-language.md complete

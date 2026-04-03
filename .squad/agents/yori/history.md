@@ -275,3 +275,70 @@ to the type import at the top of `tests/query.test.ts`.
 ### Outcome
 **105 passed | 14 todo** (119 total). `query.ts` coverage: **93.29%** (was 64.63%).
 Overall lines/statements: **80.04%** (was below 80% threshold).
+
+---
+
+## Phase 2 CLI Integration Tests — oxori query / walk / graph
+
+**Date:** 2025-07
+
+### What was added
+
+Added three new `describe` blocks at the end of `tests/cli.test.ts` covering the Phase 2 CLI commands:
+
+**`oxori query` (6 tests)**
+- `tag:auth` returns matching files (e.g. `decisions/api-choice.md`) from `basic-vault`
+- No-match query outputs `"No files matched."` and exits 0
+- `--json` flag returns `{ files, totalCount }` JSON
+- `--vault` flag tested from a different cwd
+- Unbalanced parens `(tag:auth` exits 1 with `✗` on stderr
+- Unknown filter field `badfield:value` exits 1 with `✗` on stderr
+
+**`oxori walk` (5 tests)**
+- Forward walk from `node-a.md` with `--via links` visits `node-b.md` and `node-d.md`
+- Backward walk from `node-d.md` with `--direction backward --via links` visits `node-b.md` and `node-e.md`
+- `--depth 1` includes `node-b.md` but excludes `node-d.md` (2 hops)
+- `--json` flag returns `{ visited, edges, totalCount }` JSON
+- Non-existent start file exits 1 with `✗` on stderr
+
+**`oxori graph` (3 tests)**
+- Prints `node-a.md → node-b.md (wikilink)` style lines for `linked-vault`
+- `--json` flag returns `{ nodes, edges }` JSON with correct structure
+- Empty vault (no `.md` files) exits 0 with empty output
+
+### Fixtures referenced
+- `tests/fixtures/basic-vault/` — tag `auth` present in `decisions/api-choice.md`, `decisions/user-model.md`, `memory/auth-notes.md`, `tasks/implement-auth.md`
+- `tests/fixtures/linked-vault/` — A→B→C→A cycle + leaf `node-d`, used for walk and graph tests
+
+### Coverage result
+- All 25 CLI tests pass; 120 total tests pass across 5 files
+- Overall coverage: 80.04% statements (≥80% threshold met)
+
+---
+
+## Session — graph.ts branch coverage to ≥ 90%
+
+### Task
+Flynn's gate found graph.ts at 87.84% branch coverage. Target: ≥ 90%.
+
+### Uncovered branches identified
+- **Line 73** (`tagNeighborEdges`): `entry.tags.size === 0` early-return — no existing test walked a file with an empty tag set.
+- **Lines 129–148** (`relationEdges` incoming direction): No test used `direction: "incoming"` with `via: "relation:<key>"`.
+- **Line 35** (`stemToPath`): `return undefined` — no test exercised an unresolvable relation stem.
+- **Line 55** (`incomingLinkEdges`): `!linkEntry` early-return — no test walked a file absent from `state.links`.
+- **Line 79** (`tagNeighborEdges`): `!tagEntry continue` — no test had a tag in `tags` set that was missing from `state.tags`.
+- **Lines 238–239** (`walk`): nullish-coalescing defaults for `direction`/`via` — no test called `walk(validPath, state)` with no options on a path that exists in state.
+
+### Tests added to `tests/graph.test.ts`
+1. **`via: tags` describe** — "returns only the seed when the seed file has no tags": builds minimal state with empty-tags FileEntry, hits line 73 true-branch.
+2. **`via: relation:<key>` describe** — "finds incoming typed-relation edges": walks node-b with `direction: "incoming"`, confirms node-c discovered via `related_to`.
+3. **`via: relation:<key>` describe** — "ignores relation targets whose stem cannot be resolved": minimal state with relation pointing to non-existent stem, hits line 35.
+4. **`via: relation:<key>` describe** — "handles a candidate with relation key mapping to an empty targets array": incoming walk, candidate has `typedRelations.get(relKey) = []`.
+5. **`edge cases` describe** — "uses default direction and via when options are omitted": walks valid path with no options, hits lines 238–239 defaults.
+6. **`edge cases` describe** — "returns empty edges when a file has no link entry in state.links": isolated file with no `state.links` entry, hits line 55.
+7. **`edge cases` describe** — "skips tags missing from state.tags": file with tag absent from `state.tags`, hits line 79.
+
+### Coverage result
+- All 127 tests pass (14 todo); 0 failures
+- graph.ts branch coverage: **94.73%** (≥ 90% target met)
+- Remaining uncovered: lines 41, 53, 130, 255 — defensive guards unreachable via public API
