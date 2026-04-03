@@ -1,0 +1,22 @@
+mode: Mainline
+branches:
+  main:
+    regex: ^main$
+    tag: ''
+    increment: Patch
+    prevent-increment-of-merged-branch-version: true
+  feature:
+    regex: ^feat(ure)?/
+    tag: alpha
+    increment: Minor
+  fix:
+    regex: ^fix/
+    tag: fix
+    increment: Patch
+ignore:
+  sha: []
+major-version-bump-message: '(breaking|major)(\(.+\))?!?:'
+minor-version-bump-message: 'feat(\(.+\))?!?:'
+patch-version-bump-message: 'fix|chore|docs|refactor|perf|test|style(\(.+\))?!?:'
+commit-message-incrementing: Enabled
+tag-prefix: 'v'
