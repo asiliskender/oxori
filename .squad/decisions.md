@@ -440,3 +440,125 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 - tokenize/parse/evaluate/walk exported from public API
 - CLI commands: oxori query/walk/graph
 - docs/query-language.md complete
+
+---
+
+## Phase 2 Retrospective — Oxori v0.2.0
+
+**Facilitated by:** Flynn  
+**Date:** 2026-04-03  
+**Attendees:** Flynn, Tron, Ram, Yori, Clu, Dumont, Castor  
+**Gate result:** ✅ APPROVED (after 2 blocks — 3 gate runs total)
+
+---
+
+### ✅ What Went Well
+
+#### 1. Types-first discipline held — Phase 1 retro A2 delivered
+The single most impactful retro action from Phase 1 was enforced: Yori wrote test skeletons only after Tron's type contracts were reviewed and merged by Flynn. No API mismatch this phase. query.test.ts and graph.test.ts were written against locked `TokenKind`, `QueryAST`, `WalkResult`, and `Edge` shapes — not against stale backlog ACs.
+
+#### 2. Wave parallelism worked and delivered real throughput
+Wave 1 ran Tron (types.ts Phase 2 additions + query.ts tokenizer/parser) and Ram (graph.ts stub) in parallel. Wave 2 ran Tron (evaluate() + CLI commands) and Ram (graph.ts full BFS implementation) in parallel, with Yori filling in test assertions concurrently. The two-wave cadence covered six modules across two concurrent implementors.
+
+#### 3. Ram's first contribution (graph.ts BFS) was solid
+New to the phase, Ram delivered a correct BFS implementation with: all `WalkDirection` variants (`outgoing`/`incoming`/`both`), all `WalkVia` modes (links, tags, both, `relation:<key>`), cycle prevention via visited Set, `maxNodes` truncation with `truncated: true` flag, and global edge deduplication. The implementation never throws — unknown `start` paths return an empty `WalkResult`. This is exactly the right "fail-soft" design for a traversal utility.
+
+#### 4. Phase 1 CLI debt cleared at kickoff (A3 delivered on time)
+All 11 `it.todo()` CLI test stubs from Phase 1 were filled in before any Phase 2 CLI expansion began. This respected the retro A3 directive and meant Phase 2 CLI integration tests were built on top of a tested foundation, not further accumulating untested surface area.
+
+#### 5. Dumont's query-language.md is production-grade from day one
+9200+ words: BNF grammar, full filter/operator reference table, error codes, 8 real-world examples, evaluation semantics, and performance guarantees — all written before gate review. Same pattern as Phase 1's architecture.md. The Phase 2 docs are ship-ready at v0.2.0.
+
+#### 6. Clu proactively fixed CI/release pipeline issues before they blocked Phase 3
+The pnpm version conflict in release.yml, Node 24 deprecation warnings, and missing README version sync were all identified and resolved during Phase 2 without blocking the gate. The semantic-release + `@semantic-release/exec` pipeline is wired and ready for v0.2.0 tag.
+
+#### 7. evaluate() query engine handles all structural cases correctly
+FilterNode (all 6 fields × 3 operators = 18 combinations), OperatorNode (AND intersection, OR union, NOT complement), GroupNode (transparent pass-through), null root (match all), empty state (short-circuit) — all covered. The throw semantics for query parse errors (vs `Result<T>` return) are consistent and the CLI's try/catch + structural narrowing pattern is clean.
+
+#### 8. Conventional commits held throughout the phase
+All commits in the log follow `feat/fix/docs/test/chore` convention with scoped subjects. The `[skip ci]` discipline on squad/setup commits is maintained. Release notes will be trustworthy.
+
+---
+
+### ❌ What Didn't Go Well
+
+#### 1. Gate blocked twice — five failures on first submission
+The first gate run produced 5 failures simultaneously:
+- **README** still showing Phase 2 features as "🔜 future work" (no query/walk/graph examples)
+- **index.ts** missing `tokenize`, `parse`, `evaluate`, `walk` function re-exports (types were all present; the implementation functions themselves were absent — a type-vs-value export mismatch only catchable via runtime check)
+- **query.ts coverage** at 64.63% — `evaluate()` body (lines 466–624) was almost entirely uncovered
+- **graph.ts coverage** at 87.84% — below the 90% threshold
+- **CLI tests** had zero tests for `oxori query`, `oxori walk`, `oxori graph` — only init and index were covered
+
+Root cause: implementors treated coverage and documentation as "follow-on" work rather than part of the delivery. The gate checklist was written at kickoff — it was visible. These failures were avoidable.
+
+#### 2. Gate blocked a second time — graph.ts coverage not fixed in the first round
+After the first gate block, four of five fixes were correctly delivered. graph.ts coverage was assigned to Yori but remained at 87.84% unchanged. The fix summary reported "Overall 80.04%, query.ts 93.29%" — omitting graph.ts entirely. The omission was the signal; the second gate run was needed solely for this one remaining criterion.
+
+#### 3. Type-vs-value export mismatch in index.ts is invisible to TypeScript source inspection
+All 15 Phase 2 types were correctly exported from `src/index.ts`. The four missing exports (`tokenize`, `parse`, `evaluate`, `walk`) were value exports — function re-exports — which TypeScript source inspection does not distinguish from type-only exports. Only a runtime `node -e "import('./dist/index.js')"` check catches this. This class of failure is repeatable in Phase 3 unless the runtime check is in the gate checklist.
+
+#### 4. Graph.ts test skeleton had parameter order baked in from spec — mismatch with implementation
+Yori's initial `graph.test.ts` skeleton called `walk(state, startPath)` — matching the task spec. Ram's implementation used `walk(startPath, state, options?)` — matching the backlog's TypeScript signature (which was correct). Yori had to fix the parameter order when filling in real assertions. A small friction point, but it shows spec-vs-types drift still occurs when multiple documents describe the same API.
+
+#### 5. indexer.ts coverage dragged overall average (47.15% at first gate)
+The overall 68.52% coverage at first gate was partly driven by indexer.ts at 47.15%. Indexer tests were written in Phase 1 but the incremental indexing paths (`indexFile`, `removeFileFromState`) had low coverage. Phase 2 didn't own this — but it contributed to the first gate failure.
+
+---
+
+### 💡 Key Learnings
+
+#### 1. Runtime export check is a mandatory gate step — not optional verification
+`npx tsc --noEmit` passing does not prove that implementation functions are exported at runtime. `node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"` must be a binary gate criterion from the start of every phase. Add it to the Phase 3 checklist at kickoff.
+
+#### 2. Coverage fix submissions must include a full per-file table, not a partial summary
+When Yori reported "Overall 80.04%, query.ts 93.29%", graph.ts was absent. Absent metrics mean "unchanged" — not "passing". Fix submissions for coverage must enumerate every module with a coverage threshold, even if it wasn't the primary focus. This is a process rule, not a judgment on the agent.
+
+#### 3. The "stub that throws" test strategy couples to implementation details
+Yori's original graph.test.ts stubs used `expect(() => walk(...)).toThrowError("not implemented")` to assert the stub was wired correctly. When Ram's real implementation landed with a different parameter order, these tests required a rewrite. For Phase 3, stubs for unimplemented modules should use `it.todo()` — real assertions should wait for a locked implementation.
+
+#### 4. New agent alignment to src/types.ts (not backlog ACs) is critical
+Ram correctly identified that the task spec had stale type names. The authoritative source is `src/types.ts` after Flynn approves it — not the backlog AC text. For Phase 3 (Ram: writer, governance), this alignment step should be explicit and recorded in Ram's history.md before any implementation begins.
+
+#### 5. Documentation and CLI coverage are delivery items, not follow-on work
+README and CLI tests were both listed in the gate checklist written at kickoff. Both were missed in the first submission. For Phase 3, treat docs and CLI tests with the same discipline as implementation — not as last-step cleanup after the "real" work.
+
+#### 6. The phase gate checklist (written at kickoff) is the single source of truth — and it worked
+All five first-gate failures were explicitly listed in the Phase 2 gate checklist written at kickoff. The checklist did its job. The failures were process failures (agents not checking against the list), not checklist failures.
+
+#### 7. GitVersion / semantic-release prep is needed before Phase 3 first release
+The release.yml pnpm conflict is fixed, `@semantic-release/exec` is wired, and README version sync is configured. Before the Phase 3 first release, a dry run of the semantic-release pipeline should be validated — not just assumed to work because the config looks correct.
+
+---
+
+### 🔧 Action Items for Phase 3
+
+| # | Action | Owner | Priority | Notes |
+|---|--------|-------|----------|-------|
+| A1 | Add runtime export check (`node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"`) to Phase 3 gate checklist at kickoff as a binary criterion | Flynn | **P1** | Prevents type-vs-value export mismatch. Must appear alongside TypeScript compilation check. |
+| A2 | When writing Phase 3 index.ts additions, explicitly add value exports (function re-exports) alongside type exports — comment them separately | Tron | **P1** | E.g., `// value exports` and `// type-only exports` blocks side by side in index.ts. |
+| A3 | For unimplemented module stubs, use `it.todo()` (not `expect(toThrowError)`) — reserve real assertions for when the implementation contract is locked and parameter order confirmed | Yori | **P1** | Prevents test rewrites when implementation details differ from spec. |
+| A4 | When submitting coverage fixes, provide a full per-file table for every module with a coverage threshold — do not omit modules even if they weren't the primary focus | Yori | **P1** | Required for gate re-check to succeed on the first attempt. |
+| A5 | Before writing writer.ts and governance.ts, explicitly read src/types.ts and record confirmed function signatures (parameter names, order, return types) in history.md before any implementation code | Ram | **P1** | Phase 3 backlog ACs may have stale names — types.ts is the authoritative spec. |
+| A6 | Write Phase 3 gate checklist at kickoff (not at review time) — include writer.ts, governance.ts, updated public API, runtime export check, and GitVersion/semantic-release dry-run criterion | Flynn | **P1** | Same pattern as Phase 2 checklist. Write it before the first Wave 1 delivery. |
+| A7 | Run `semantic-release --dry-run` on Phase 3 branch before the first release attempt — validate that exec plugin, git assets, and README version sync all fire correctly | Clu | **P2** | Release pipeline has not been validated end-to-end since release.yml was fixed. |
+| A8 | Phase 3 backlog ACs must include confirmed TypeScript function signatures with parameter order explicit — not just behavior descriptions or type names | Castor | **P2** | Addresses the walk(path, state) vs walk(state, path) drift pattern. |
+
+---
+
+### Phase 3 Readiness
+
+**Status: ✅ Ready to begin**
+
+Phase 2 delivered its full scope: query engine (tokenize/parse/evaluate), graph traversal (BFS walk with cycle detection), CLI commands (query/walk/graph), dual public API export, docs/query-language.md, and updated architecture + README. 127 passing tests. Coverage: 82.72% statements / 87.44% branches / 90.24% functions — all thresholds met.
+
+**Debt carried into Phase 3:**
+- indexer.ts coverage is 47.15% — significantly below the 95% target. Phase 3 should include explicit indexer coverage improvement, not carry this further.
+- 14 `it.todo()` stubs remain in parser/indexer/query test files — these are Phase 3+ features (writer, governance) and will be addressed as those modules land.
+
+**Phase 3 primary risk:**
+Governance enforcement logic has complex conditional branches (path matching, rule priority, agent-identity checks). This is the most likely module to have coverage gaps. Yori should write governance tests with the same thoroughness applied to graph.ts branch coverage — enumerate every guard clause explicitly.
+
+Good sprint, team. The query engine and graph traversal are real and working. Phase 3 is where we find out if the write path holds the same discipline as the read path.
+
+— Flynn
