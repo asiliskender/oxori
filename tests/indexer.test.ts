@@ -1,6 +1,6 @@
 /**
  * @file indexer.test.ts
- * @description Unit + integration tests for the buildIndex() function.
+ * @description Unit + integration tests for the indexVault() function.
  *
  * Tests are written against fixtures in tests/fixtures/basic-vault/ and
  * tests/fixtures/linked-vault/. The indexer implementation lives in src/indexer.ts
@@ -10,11 +10,10 @@
  * Run: pnpm test:coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs'
-import { buildIndex } from '../src/indexer'
+import { indexVault } from '../src/indexer'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -22,24 +21,16 @@ const BASIC_VAULT = join(__dirname, 'fixtures/basic-vault')
 const LINKED_VAULT = join(__dirname, 'fixtures/linked-vault')
 const GOVERNANCE_VAULT = join(__dirname, 'fixtures/governance-vault')
 
-/** Temporary output directory created fresh for each test that writes index files. */
-const TEST_OUTPUT_DIR = join(__dirname, '.tmp-indexer')
-
-beforeEach(() => {
-  mkdirSync(TEST_OUTPUT_DIR, { recursive: true })
-})
-
-afterEach(() => {
-  rmSync(TEST_OUTPUT_DIR, { recursive: true, force: true })
-})
-
-describe('buildIndex', () => {
+describe('indexVault', () => {
   // ---------------------------------------------------------------------------
   // Vault scanning
   // ---------------------------------------------------------------------------
   describe('vault scanning', () => {
     it('scans all .md files in vault recursively', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      const state = result.value
       // basic-vault has: overview, note-one, note-two, prerequisite, no-frontmatter,
       // empty, plus the legacy files in decisions/, memory/, tasks/ subdirectories
       // At minimum, the 6 root-level fixtures must be indexed
@@ -48,14 +39,18 @@ describe('buildIndex', () => {
     })
 
     it('builds a files map keyed by absolute filepath', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       const overviewPath = join(BASIC_VAULT, 'overview.md')
-      expect(state.files.has(overviewPath)).toBe(true)
+      expect(result.value.files.has(overviewPath)).toBe(true)
     })
 
     it('excludes files starting with .', async () => {
-      const state = await buildIndex(BASIC_VAULT)
-      for (const filepath of state.files.keys()) {
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      for (const filepath of result.value.files.keys()) {
         const parts = filepath.split('/')
         for (const part of parts) {
           expect(part.startsWith('.')).toBe(false)
@@ -65,15 +60,20 @@ describe('buildIndex', () => {
 
     it('excludes files inside .oxori/', async () => {
       // governance-vault has .oxori/governance.md — must not be indexed
-      const state = await buildIndex(GOVERNANCE_VAULT)
-      for (const filepath of state.files.keys()) {
+      const result = await indexVault({
+        vaultPath: GOVERNANCE_VAULT,
+        excludePatterns: ['.oxori/**'],
+      })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      for (const filepath of result.value.files.keys()) {
         expect(filepath).not.toContain('/.oxori/')
       }
     })
 
     it.todo(
       'throws with action suggestion if vault path does not exist',
-      // Expected: buildIndex('/no/such/vault') rejects with OxoriError
+      // Expected: indexVault({ vaultPath: '/no/such/vault' }) rejects with OxoriError
       // code: 'VAULT_NOT_FOUND', with a non-empty action string
     )
   })
@@ -83,7 +83,10 @@ describe('buildIndex', () => {
   // ---------------------------------------------------------------------------
   describe('in-memory cache', () => {
     it('builds files map keyed by filepath with correct FileEntry shape', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      const state = result.value
       const overviewPath = join(BASIC_VAULT, 'overview.md')
       const entry = state.files.get(overviewPath)
 
@@ -96,44 +99,56 @@ describe('buildIndex', () => {
     })
 
     it('builds tags map with all ancestor levels', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       // overview.md has project/alpha → expands to 'project', 'project/alpha'
-      expect(state.tags.has('project')).toBe(true)
-      expect(state.tags.has('project/alpha')).toBe(true)
+      expect(result.value.tags.has('project')).toBe(true)
+      expect(result.value.tags.has('project/alpha')).toBe(true)
     })
 
     it('tags map entries list files that carry each tag', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       const overviewPath = join(BASIC_VAULT, 'overview.md')
-      const entry = state.tags.get('project/alpha')
+      const entry = result.value.tags.get('project/alpha')
       expect(entry?.files.has(overviewPath)).toBe(true)
     })
 
     it('builds links map keyed by target stem', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       // overview.md links to note-two and prerequisite
-      expect(state.links.has('note-two')).toBe(true)
-      expect(state.links.has('prerequisite')).toBe(true)
+      expect(result.value.links.has('note-two')).toBe(true)
+      expect(result.value.links.has('prerequisite')).toBe(true)
     })
 
     it('links map entries list files that reference each target', async () => {
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       const overviewPath = join(BASIC_VAULT, 'overview.md')
-      const entry = state.links.get('note-two')
+      const entry = result.value.links.get('note-two')
       expect(entry?.sources.has(overviewPath)).toBe(true)
     })
 
     it('totalFiles count matches the size of the files map', async () => {
-      const state = await buildIndex(BASIC_VAULT)
-      expect(state.totalFiles).toBe(state.files.size)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.value.totalFiles).toBe(result.value.files.size)
     })
 
     it('lastIndexed is a recent Unix timestamp', async () => {
       const before = Date.now()
-      const state = await buildIndex(BASIC_VAULT)
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
       const after = Date.now()
-      expect(state.lastIndexed).toBeGreaterThanOrEqual(before)
-      expect(state.lastIndexed).toBeLessThanOrEqual(after)
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.value.lastIndexed).toBeGreaterThanOrEqual(before)
+      expect(result.value.lastIndexed).toBeLessThanOrEqual(after)
     })
   })
 
@@ -143,7 +158,7 @@ describe('buildIndex', () => {
   describe('index file output', () => {
     it.todo(
       'creates .oxori/index/ directory if missing when writing output',
-      // Expected: after buildIndex() with writeOutput:true option,
+      // Expected: after indexVault() with writeOutput:true option,
       // the .oxori/index/ directory is created
     )
 
@@ -165,7 +180,7 @@ describe('buildIndex', () => {
 
     it.todo(
       'index files are deterministically ordered (alphabetical) for git stability',
-      // Expected: running buildIndex() twice produces identical output — rows
+      // Expected: running indexVault() twice produces identical output — rows
       // in files.md, tags.md, links.md are sorted alphabetically so git diffs are clean
     )
   })
@@ -176,23 +191,29 @@ describe('buildIndex', () => {
   describe('graph integrity', () => {
     it('indexes a vault with cyclic wikilinks without infinite loop', async () => {
       // linked-vault: node-a → node-c → node-a (cycle)
-      // buildIndex must complete and not hang
-      const state = await buildIndex(LINKED_VAULT)
-      expect(state.totalFiles).toBeGreaterThanOrEqual(7)
+      // indexVault must complete and not hang
+      const result = await indexVault({ vaultPath: LINKED_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.value.totalFiles).toBeGreaterThanOrEqual(7)
     })
 
     it('indexes leaf nodes correctly (node-d has no outgoing links)', async () => {
-      const state = await buildIndex(LINKED_VAULT)
+      const result = await indexVault({ vaultPath: LINKED_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       const nodeDPath = join(LINKED_VAULT, 'node-d.md')
-      const entry = state.files.get(nodeDPath)
+      const entry = result.value.files.get(nodeDPath)
       expect(entry?.wikilinks.size).toBe(0)
       expect(entry?.typedRelations.size).toBe(0)
     })
 
     it('handles multiple typed relation targets per key (node-f related_to)', async () => {
-      const state = await buildIndex(LINKED_VAULT)
+      const result = await indexVault({ vaultPath: LINKED_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       const nodeFPath = join(LINKED_VAULT, 'node-f.md')
-      const entry = state.files.get(nodeFPath)
+      const entry = result.value.files.get(nodeFPath)
       const targets = entry?.typedRelations.get('related_to') ?? []
       expect(targets).toContain('node-e')
       expect(targets).toContain('node-c')
@@ -205,7 +226,7 @@ describe('buildIndex', () => {
   describe('edge cases', () => {
     it.todo(
       'handles vault with zero markdown files gracefully',
-      // Expected: buildIndex() on an empty directory returns an IndexState
+      // Expected: indexVault() on an empty directory returns an IndexState
       // with totalFiles === 0 and empty maps — no error thrown
     )
 
@@ -216,10 +237,12 @@ describe('buildIndex', () => {
     )
 
     it('handles empty files without throwing', async () => {
-      // basic-vault/empty.md is 0 bytes — buildIndex must not throw
-      const state = await buildIndex(BASIC_VAULT)
+      // basic-vault/empty.md is 0 bytes — indexVault must not throw
+      const result = await indexVault({ vaultPath: BASIC_VAULT })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
       const emptyPath = join(BASIC_VAULT, 'empty.md')
-      const entry = state.files.get(emptyPath)
+      const entry = result.value.files.get(emptyPath)
       expect(entry).toBeDefined()
       expect(entry?.tags.size).toBe(0)
       expect(entry?.wikilinks.size).toBe(0)

@@ -10,6 +10,8 @@
  * Run: pnpm test:coverage
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { fileURLToPath } from 'url'
 import { dirname, join, resolve } from 'path'
