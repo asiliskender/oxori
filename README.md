@@ -1,111 +1,123 @@
-# Oxori
+# oxori
 
-**Where humans and AI agents think together, in markdown.**
+> Where humans and AI agents think together, in markdown.
 
-Your markdown files stay as they are — readable, editable, yours. Oxori makes them queryable, traversable, and searchable. Tags and links become a graph you can walk. Frontmatter becomes structured data you can filter. Content becomes semantically searchable. Humans write the rules, agents record the decisions. 
+Make your markdown vault queryable, traversable, and semantically searchable — without an external database. The index itself is markdown. Oxori is a shared knowledge layer for humans and AI agents.
 
+Your markdown files stay readable, editable, yours. Oxori makes them queryable. Tags and links become a graph you can walk. Frontmatter becomes indexed metadata you can filter. Content becomes semantically searchable via embeddings. Humans write the rules, agents record the decisions.
 
-## What Oxori Does
+## Features (v0.1.0 — Phase 1)
 
-- **Indexes** your markdown files into a markdown-based index under `.oxori/` — no external database, the index itself is human-readable and Git-versioned
-- **Queries** files by any frontmatter field, tag, or combination (`status:open AND tag:auth`)
-- **Walks** the link graph between files with configurable depth — find related decisions, dependencies, and context through wikilinks and typed relations
-- **Searches** content semantically using vector embeddings — find relevant files by meaning, not just keywords
-- **Reads and writes** — both humans and agents can create, read, and update files through a shared API
-- **Governs** access through markdown rules — define which agents can write where, enforced at the API layer
+- ✅ **Parse markdown files** — extract frontmatter (YAML), tags, wikilinks, typed relations
+- ✅ **Build in-memory index** — scan a vault and create `.oxori/index/` markdown files
+- ✅ **Human-readable index** — `files.md`, `tags.md`, `links.md` are markdown and Git-friendly
+- 🔜 **Query engine** (Phase 2) — filter by frontmatter, tags, or custom queries
+- 🔜 **Graph traversal** (Phase 2) — walk links and typed relations with configurable depth
+- 🔜 **Read/write API** (Phase 3) — create and update files with governance enforcement
+- 🔜 **Semantic search** (Phase 4) — find files by meaning, not keywords, with cached embeddings
+- 🔜 **MCP server** (Phase 5) — AI agents (Claude, Cursor) can use Oxori as a tool
 
-## Who Is This For
-
-- **AI agent developers** who need structured, persistent, shared memory for their agents
-- **Humans working with agents** who want to see, edit, and govern what their agents know
-- **Teams** where multiple agents and humans collaborate on the same knowledge base
-
-## Quick Start
+## Installation
 
 ```bash
-# Run directly with npx (no install needed)
-npx oxori init ./my-vault
-npx oxori index
-
-# Or install globally
+# Install as a dev dependency or globally
+npm install --save-dev oxori
+# or
 npm install -g oxori
 
-# Query by frontmatter
-oxori query "type:decision AND status:open"
-
-# Walk the link graph from a file
-oxori walk decisions/api-choice.md --depth 2
-
-# Search semantically
-oxori search "authentication approach"
-
-# Create a new file
-oxori write decisions/caching-strategy.md \
-  --type decision --status open --author agent:planner \
-  --tags "performance,infrastructure" \
-  --body "We should use Redis because..."
-
-# View the graph
-oxori graph --format mermaid
+# Or use with npx without installing
+npx oxori init ./my-vault
 ```
 
-## Programmatic Usage
+Requires Node.js 20 or later.
+
+## Quick Start (Phase 1)
+
+### Initialize a vault
+
+```bash
+oxori init ./my-vault
+```
+
+This creates the `.oxori/` folder structure. You can add markdown files to your vault now.
+
+### Index your vault
+
+```bash
+cd my-vault
+oxori index
+```
+
+Output:
+```
+Scanning vault...
+Parsed 42 files
+Found 15 tags
+Found 128 wikilinks
+Index written to .oxori/index/
+
+Summary:
+  Files indexed: 42
+  Tags: 15
+  Links: 128
+```
+
+Now `.oxori/index/` contains three markdown files:
+- `files.md` — registry of all indexed files with frontmatter
+- `tags.md` — tag-to-file mappings
+- `links.md` — link graph (source, target, relation)
+
+### SDK Usage (Phase 1)
 
 ```typescript
-import { Oxori } from "oxori";
+import { parseFile } from 'oxori/parser';
+import { buildIndex } from 'oxori/indexer';
 
-const vault = await Oxori.open("./my-vault");
+// Parse a single file
+const result = await parseFile('/path/to/note.md');
+if (result.ok) {
+  console.log(result.value.tags); // Set<string>
+  console.log(result.value.wikilinks); // Set<string>
+}
 
-// Query
-const decisions = await vault.query("type:decision AND status:open");
-
-// Walk the graph
-const related = await vault.walk("decisions/api-choice.md", { depth: 2 });
-
-// Write (governance-checked)
-await vault.write("memory/auth-notes.md", {
-  frontmatter: { type: "memory", author: "agent:researcher", tags: ["auth"] },
-  body: "OAuth2 was chosen for the public API.",
-});
-
-// Search semantically
-const results = await vault.search("authentication approach");
+// Build index from vault
+const indexResult = await buildIndex('/path/to/vault');
+if (indexResult.ok) {
+  const { state, filesCount, tagsCount, linksCount } = indexResult.value;
+  console.log(`Indexed ${filesCount} files, ${tagsCount} tags`);
+}
 ```
 
 ## Vault Structure
 
-Oxori works with any folder of markdown files. No special structure required. A typical vault might look like:
+Oxori works with any folder of markdown files. No special structure required. Example vault:
 
 ```
 my-vault/
-├── .oxori/                        # Oxori index and config (auto-generated)
+├── .oxori/                        # Oxori index (auto-created)
 │   ├── index/
-│   │   ├── files.md               # file registry with frontmatter summary
-│   │   ├── tags.md                # tag to file mappings
-│   │   └── links.md               # link graph (source, target, relation)
-│   ├── vectors/                   # embedding cache (binary, not source of truth)
-│   └── governance.md              # access rules for agents
-├── agents/
-│   └── researcher.md              # agent persona, rules, limits
+│   │   ├── files.md
+│   │   ├── tags.md
+│   │   └── links.md
+│   ├── vectors/                   # Embeddings cache (Phase 4)
+│   └── governance.md              # Rules file (Phase 3)
 ├── decisions/
-│   └── api-choice.md              # type: decision, status, depends_on
+│   └── api-choice.md
 ├── tasks/
-│   └── implement-auth.md          # type: task, assignee, priority, blocks
+│   └── implement-auth.md
 ├── memory/
-│   └── user-preferences.md        # learned facts, observations
-└── logs/
-    └── session-2026-04-03.md      # execution history
+│   └── auth-notes.md
+└── README.md
 ```
 
-Each file is a regular markdown file with optional YAML frontmatter:
+Each file is plain markdown with optional YAML frontmatter:
 
 ```markdown
 ---
 type: decision
 status: open
-tags: [auth, security, sprint-3]
+tags: [auth, security]
 depends_on: [[user-model]]
-blocks: [[deploy-v2]]
 author: agent:researcher
 created_at: 2026-04-03T14:30:00Z
 ---
@@ -113,84 +125,90 @@ created_at: 2026-04-03T14:30:00Z
 # Use OAuth2 for API Authentication
 
 We decided to use OAuth2 because...
-
-Related: [[api-choice]], [[security-review]]
 ```
 
-## Governance
+## Index Files
 
-Governance rules live in `.oxori/governance.md` and constrain **agents only** — humans have full access (via Obsidian or any editor). Rules are enforced at the CLI/SDK/MCP layer.
+After running `oxori index`, three markdown files are created under `.oxori/index/`:
+
+### files.md
+
+Registry of all indexed files:
 
 ```markdown
 ---
-type: governance
+type: oxori-index
+generated_at: 2026-04-03T15:00:00Z
+file_count: 42
 ---
 
-## Write Rules
+## decisions/api-choice.md
+- type: decision
+- status: open
+- tags: auth, security, sprint-3
+- depends_on: [[user-model]]
+- links_out: user-model, deploy-v2
+- modified: 2026-04-03T14:30:00Z
 
-- `rules/` — human-only, agents cannot modify
-- `memory/` — agents can create and append, humans can read and edit
-- `decisions/` — agents can create with status:draft, only humans can set status:approved
-- All agent-created files must include `author` and `created_at` in frontmatter
-- Agents cannot delete files
-
-## Agent Permissions
-
-- agent:researcher — read all, write to memory/ and logs/
-- agent:planner — read all, write to tasks/ and decisions/
+## tasks/implement-auth.md
+- type: task
+- ...
 ```
 
-## Obsidian Compatibility
+### tags.md
 
-Oxori is designed to work alongside Obsidian. Humans use Obsidian as the visual interface, agents use CLI/MCP — same vault, different doors.
+Tag-to-file mappings:
 
-Oxori conventions are Obsidian-compatible:
-- Standard YAML frontmatter
-- `[[wikilink]]` syntax for internal links
-- `#tag` and `#tag/subtag` for hierarchical tags
-- Plain markdown files, no proprietary format
+```markdown
+---
+type: oxori-tags
+generated_at: 2026-04-03T15:00:00Z
+tag_count: 15
+---
 
-The `.oxori/` folder is the only addition. Exclude it in Obsidian settings if needed.
+## auth
+- decisions/api-choice.md
+- tasks/implement-auth.md
+- memory/auth-notes.md
 
-## How It Works
+## sprint-3
+- decisions/api-choice.md
+- tasks/implement-auth.md
+```
 
-1. **Your markdown files are the source of truth.** Always.
-2. **The index is also markdown.** Stored under `.oxori/index/`, human-readable, Git-versioned. Not a database — a derived summary that can be regenerated from the source files at any time.
-3. **A graph layer** builds a traversable network from wikilinks and typed relations in frontmatter.
-4. **A semantic layer** (optional) embeds file content for vector similarity search. Embeddings are cached under `.oxori/vectors/` as binary — derived data, not source of truth. Delete them and they regenerate.
-5. **Governance** is a markdown file read at runtime. It constrains agent writes, not human access.
-6. **Multi-agent concurrency** is handled by Git — branch, merge, resolve conflicts. Oxori does not manage locks.
+### links.md
 
-## Integrations
+Wikilink graph:
 
-- **CLI** — `oxori` command for terminal and scripting
-- **TypeScript SDK** — `import { Oxori } from "oxori"` for agent frameworks
-- **MCP Server** — plug into Claude, Cursor, or any MCP-compatible client
-- **Obsidian** — humans use Obsidian as the UI for the same vault
+```markdown
+---
+type: oxori-links
+generated_at: 2026-04-03T15:00:00Z
+link_count: 128
+---
 
-## Philosophy
+| source | target | relation |
+|--------|--------|----------|
+| decisions/api-choice.md | user-model | depends_on |
+| tasks/implement-auth.md | api-choice | link |
+| memory/auth-notes.md | oauth2-docs | reference |
+```
 
-- **Markdown-first.** Everything is markdown — files, index, governance, config.
-- **No lock-in.** Delete Oxori and your files are still just markdown. Delete `.oxori/` and regenerate.
-- **Local-first.** Your data stays on your machine. No cloud required.
-- **Convention over configuration.** Frontmatter is your schema. Tags are your index. Links are your relations.
-- **Governance constrains agents, not humans.** Humans are the owners. Agents operate within defined boundaries.
+## Architecture
 
-## Roadmap
+See [docs/architecture.md](docs/architecture.md) for the complete system design, including all 9 layers, data flow, type system, and design decisions.
 
-| Phase | Scope | Status |
-|-------|-------|--------|
-| Faz 1 | Parse and markdown-based index | Next |
-| Faz 2 | Query engine and graph walk | Planned |
-| Faz 3 | Read/write API and governance | Planned |
-| Faz 4 | Semantic vector search | Planned |
-| Faz 5 | MCP server and Obsidian compatibility | Planned |
+**Overview:**
 
-## Development
+Oxori's parser reads markdown files and extracts frontmatter, tags, and wikilinks. The indexer builds three in-memory data structures (files, tags, links) and persists them as markdown files under `.oxori/index/`. These index files are human-readable, Git-friendly, and regenerable at any time.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup. CI/CD runs on GitHub Actions — every push triggers linting, type checking, and tests. Releases are auto-versioned from conventional commits.
+Phases 2-5 add query engine, graph traversal, governance rules, semantic search, and an MCP server — but Phase 1 gives you a solid foundation: parse any vault and understand its structure.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and commit conventions.
 
 ## License
 
-MIT
+MIT — use Oxori however you like. Your vault, your rules.
 
