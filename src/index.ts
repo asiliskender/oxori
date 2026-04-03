@@ -20,8 +20,24 @@ export type {
   Result,
   WatchEvent,
   GovernanceRule,
+  // Phase 2 — Query Engine
+  Token,
+  TokenKind,
+  QueryAST,
+  QueryNode,
+  FilterNode,
+  OperatorNode,
+  GroupNode,
+  QueryResult,
+  FilterField,
+  // Phase 2 — Graph Traversal
+  Edge,
+  WalkOptions,
+  WalkResult,
+  WalkDirection,
+  WalkVia,
 } from "./types.js";
-export { ok, err } from "./types.js";
+export { ok, err, FILTER_FIELDS } from "./types.js";
 
 // Parser
 export {
