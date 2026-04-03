@@ -116,3 +116,43 @@
 
 **Files Modified:**
 - ✅ .github/workflows/ci.yml (removed version: 9, added env flag, bumped codecov action)
+
+## 2026-04-03: Release Workflow & README Version Sync
+
+**What:** Fixed two release-critical issues:
+1. **Removed pnpm version conflict from release.yml** — removed hardcoded `with: version: 9` from `pnpm/action-setup@v4` and added `env: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` at job level (matching ci.yml fix)
+2. **Added README version sync via semantic-release** — three-part solution:
+   - Added npm version badge to README.md top (auto-updates from registry)
+   - Added README.md to git assets in `@semantic-release/git` config
+   - Added `@semantic-release/exec` prepareCmd to sync version in README heading before commit
+
+**Why:** 
+- Release workflow used conflicting pnpm version config, causing CI/CD failures
+- README v0.2.0 hardcoded and drifting from actual releases — npm badge + semantic-release sync keeps it current
+
+**How:**
+- Updated `.github/workflows/release.yml` with env var and removed version pin
+- Updated `README.md` with npm version badge below title
+- Updated `package.json` release.plugins to include @semantic-release/exec and README.md in git assets
+- Added `@semantic-release/exec` to devDependencies, ran npm install
+
+**Result:** Release workflow now uses compatible pnpm version, README version auto-synced on each release.
+
+## 2026-04-05: GitVersion 5.12.0 Integration
+
+**What:** Replaced semantic-release's commit-analyzer version calculation with GitVersion 5.12.0:
+1. **Created GitVersion.yml** at repo root with Mainline mode, branch strategies (main, feature, fix), and message-based versioning rules
+2. **Updated ci.yml** — Added GitVersion setup and execute steps after pnpm install to display semver during CI runs
+3. **Updated release.yml** — Added GitVersion steps before semantic-release, passed GITVERSION_SEMVER as env var to release job
+4. **Updated package.json** — Removed `@semantic-release/commit-analyzer` plugin (GitVersion handles version calc), updated exec prepareCmd to use `npm version ${GITVERSION_SEMVER}` for version sync
+
+**Why:** GitVersion provides deterministic semantic versioning based on git history without relying on commit conventions. Mainline mode follows trunk-based development (main branch), branch strategies enable alpha/fix tags for feature/fix branches, and tag-prefix 'v' matches existing tagging scheme.
+
+**How:**
+- Created GitVersion.yml with config for Mainline, feature/alpha, and fix/patch branching
+- Added gittools/actions/gitversion/setup@v3 and execute@v3 to both workflows
+- Removed commit-analyzer from release plugins array in package.json
+- Updated exec prepareCmd to incorporate npm version with GITVERSION_SEMVER env var
+
+**Result:** ci and release workflows now use GitVersion for deterministic versioning; semantic-release focuses on publishing and changelog generation without version analysis.
+

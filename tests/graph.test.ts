@@ -185,6 +185,25 @@ describe("walk()", () => {
       const tagEdges = [...result.edges].filter((e) => e.kind === "tag");
       expect(tagEdges.length).toBeGreaterThan(0);
     });
+
+    it("returns only the seed when the seed file has no tags — tagNeighborEdges empty-tag early-return", () => {
+      // Exercises the `entry.tags.size === 0` branch in tagNeighborEdges (returns []).
+      const minState = createEmptyState();
+      const noTagPath = "/vault/no-tags.md";
+      minState.files.set(noTagPath, {
+        filepath: noTagPath,
+        filename: "no-tags",
+        frontmatter: {},
+        tags: new Set<string>(),
+        wikilinks: new Set<string>(),
+        typedRelations: new Map(),
+        lastModified: 0,
+      });
+      const result = walk(noTagPath, minState, { via: "tags", direction: "outgoing" });
+      expect(result.nodes.size).toBe(1);
+      expect(result.nodes.has(noTagPath)).toBe(true);
+      expect(result.edges.size).toBe(0);
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -219,6 +238,78 @@ describe("walk()", () => {
       expect(result.nodes.has(nodeA)).toBe(true); // typed relation target
       expect(result.nodes.has(nodeC)).toBe(false); // body wikilink — must NOT be followed
       expect(result.nodes.has(nodeD)).toBe(false); // body wikilink — must NOT be followed
+    });
+
+    it("finds incoming typed-relation edges — exercises relationEdges incoming branch (lines 129-148)", () => {
+      // node-c has `related_to: [[node-b]]`, so node-c → node-b is an outgoing relation.
+      // Walking node-b with direction:incoming should discover node-c as a source.
+      const nodeB = join(LINKED_VAULT, "node-b.md");
+      const nodeC = join(LINKED_VAULT, "node-c.md");
+      const result = walk(nodeB, state, {
+        via: "relation:related_to",
+        direction: "incoming",
+      });
+      expect(result.nodes.has(nodeC)).toBe(true);
+      const relEdges = [...result.edges].filter(
+        (e) => e.kind === "relation" && e.relationType === "related_to",
+      );
+      expect(relEdges.length).toBeGreaterThan(0);
+      expect(relEdges.some((e) => e.source === nodeC && e.target === nodeB)).toBe(true);
+    });
+
+    it("ignores relation targets whose stem cannot be resolved — stemToPath returns undefined", () => {
+      // Exercises the `return undefined` path in stemToPath (line 35) via outgoing relations.
+      const minState = createEmptyState();
+      const srcPath = "/vault/src.md";
+      minState.files.set(srcPath, {
+        filepath: srcPath,
+        filename: "src",
+        frontmatter: {},
+        tags: new Set<string>(),
+        wikilinks: new Set<string>(),
+        typedRelations: new Map([["depends_on", ["ghost-nonexistent"]]]),
+        lastModified: 0,
+      });
+      const result = walk(srcPath, minState, {
+        via: "relation:depends_on",
+        direction: "outgoing",
+      });
+      // The unresolvable stem produces no edge and no additional nodes.
+      expect(result.nodes.size).toBe(1);
+      expect(result.nodes.has(srcPath)).toBe(true);
+      expect(result.edges.size).toBe(0);
+    });
+
+    it("handles a candidate with relation key mapping to an empty targets array — incoming no-op", () => {
+      // Exercises the inner for-of loop in relationEdges incoming with an empty targets array.
+      // The `if (!targets) continue` check passes ([] is truthy), but the loop body never runs.
+      const minState = createEmptyState();
+      const seedPath = "/vault/seed.md";
+      const candidatePath = "/vault/candidate.md";
+      minState.files.set(seedPath, {
+        filepath: seedPath,
+        filename: "seed",
+        frontmatter: {},
+        tags: new Set<string>(),
+        wikilinks: new Set<string>(),
+        typedRelations: new Map(),
+        lastModified: 0,
+      });
+      minState.files.set(candidatePath, {
+        filepath: candidatePath,
+        filename: "candidate",
+        frontmatter: {},
+        tags: new Set<string>(),
+        wikilinks: new Set<string>(),
+        typedRelations: new Map([["depends_on", []]]), // key exists, array empty
+        lastModified: 0,
+      });
+      const result = walk(seedPath, minState, {
+        via: "relation:depends_on",
+        direction: "incoming",
+      });
+      expect(result.nodes.size).toBe(1);
+      expect(result.edges.size).toBe(0);
     });
   });
 
@@ -260,6 +351,58 @@ describe("walk()", () => {
       });
       expect(result.truncated).toBe(true);
       expect(result.visitOrder.length).toBe(2);
+    });
+
+    it("uses default direction and via when options are omitted — hits nullish-coalescing defaults", () => {
+      // Passes a valid seed with no options object at all, forcing lines 238-239
+      // (`direction ?? "outgoing"` and `via ?? "both"`) to take their default branch.
+      const nodeD = join(LINKED_VAULT, "node-d.md");
+      const result = walk(nodeD, state);
+      // node-d has no outgoing links or relations, so only seed is visited
+      expect(result.nodes.has(nodeD)).toBe(true);
+      expect(result.truncated).toBe(false);
+    });
+
+    it("returns empty edges when a file has no link entry in state.links — incomingLinkEdges !linkEntry branch", () => {
+      // Exercises the `if (!linkEntry) return []` branch at line 55.
+      // We build a state with a file whose filename stem has no entry in state.links.
+      const minState = createEmptyState();
+      const isolatedPath = "/vault/isolated.md";
+      minState.files.set(isolatedPath, {
+        filepath: isolatedPath,
+        filename: "isolated",
+        frontmatter: {},
+        tags: new Set<string>(),
+        wikilinks: new Set<string>(),
+        typedRelations: new Map(),
+        lastModified: 0,
+      });
+      // state.links has no "isolated" entry → incomingLinkEdges returns []
+      const result = walk(isolatedPath, minState, { via: "links", direction: "incoming" });
+      expect(result.nodes.size).toBe(1);
+      expect(result.nodes.has(isolatedPath)).toBe(true);
+      expect(result.edges.size).toBe(0);
+    });
+
+    it("skips tags missing from state.tags — tagNeighborEdges !tagEntry continue branch", () => {
+      // Exercises the `if (!tagEntry) continue` branch at line 79.
+      // File declares a tag that is absent from state.tags (orphan tag).
+      const minState = createEmptyState();
+      const orphanPath = "/vault/orphan.md";
+      minState.files.set(orphanPath, {
+        filepath: orphanPath,
+        filename: "orphan",
+        frontmatter: {},
+        tags: new Set<string>(["orphan/tag-not-in-index"]),
+        wikilinks: new Set<string>(),
+        typedRelations: new Map(),
+        lastModified: 0,
+      });
+      // state.tags has no entry for "orphan/tag-not-in-index"
+      const result = walk(orphanPath, minState, { via: "tags", direction: "outgoing" });
+      expect(result.nodes.size).toBe(1);
+      expect(result.nodes.has(orphanPath)).toBe(true);
+      expect(result.edges.size).toBe(0);
     });
   });
 });
