@@ -203,3 +203,43 @@ Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
 **Next:** Conventional commit + Phase 2 retro + push + GitVersion tag v0.2.0.
 
 **Lesson:** Coverage fixes should be verified numerically (not by description) before re-submitting for gate review. Yori delivered exactly what was needed this time — no ambiguity in the output.
+
+### 2026-04-03: Phase 2 Retrospective facilitated
+
+**Facilitated** the Phase 2 retrospective for all contributors (Tron, Ram, Yori, Clu, Dumont, Castor).
+
+**Gate summary:** ✅ APPROVED — v0.2.0 (after 3 gate runs: initial block with 5 failures, second block with 1 remaining failure, final approval)
+
+**Key findings documented in `.squad/decisions.md` under `## Phase 2 Retrospective`:**
+
+**Wins (8 items):**
+1. Types-first discipline held — Phase 1 retro A2 (test skeletons after locked contracts) was respected, no API mismatch this phase
+2. Wave parallelism delivered: Tron + Ram in parallel across both waves, Yori filling tests concurrently
+3. Ram's first contribution (graph.ts BFS) was solid — all WalkDirection/WalkVia modes, cycle prevention, maxNodes truncation, fail-soft for unknown start paths
+4. Phase 1 CLI debt (11 it.todo()) cleared at Phase 2 kickoff before any new CLI work (A3 delivered)
+5. Dumont's query-language.md is 9200+ words of production-grade reference before gate review
+6. Clu proactively fixed CI/release pipeline (pnpm conflict, Node 24, release.yml, semantic-release exec plugin)
+7. evaluate() query engine handles all structural cases correctly — FilterNode (6 fields × 3 operators), OperatorNode, GroupNode, null root, empty state
+8. Conventional commit discipline held throughout the phase
+
+**Friction points (5 items):**
+1. Gate blocked twice — 5 failures on first run (README, function exports, query.ts coverage, graph.ts coverage, CLI tests)
+2. Graph.ts coverage not delivered in first fix round — fix summary omitted graph.ts metrics entirely; second gate needed for one criterion
+3. Type-vs-value export mismatch in index.ts invisible to TypeScript source inspection — only catchable by runtime `import()` check
+4. graph.test.ts skeleton had parameter order from spec (`walk(state, path)`) vs implementation (`walk(path, state)`) — required test rewrite
+5. indexer.ts coverage at 47.15% dragged the overall average
+
+**Key learnings (7 items):**
+1. Runtime export check is mandatory in every gate checklist — not optional verification
+2. Coverage fix submissions must include a full per-file table (no silent omissions)
+3. "Stub that throws" test strategy couples to implementation details — use it.todo() instead
+4. New agent alignment: src/types.ts is the authoritative spec, not backlog ACs
+5. Docs and CLI tests are delivery items, not follow-on cleanup
+6. The gate checklist (written at kickoff) worked — failures were process failures, not checklist failures
+7. Semantic-release pipeline needs end-to-end dry-run validation before first Phase 3 release
+
+**8 action items assigned** for Phase 3 — highest priority: runtime export check in checklist (A1), value-vs-type exports in index.ts (A2), it.todo() for stubs not throwError (A3), full coverage table in fix submissions (A4).
+
+**Phase 3 primary risk:** Governance enforcement logic has complex conditional branches — coverage gaps are likely. Yori should enumerate every guard clause explicitly.
+
+**Phase 3 readiness:** ✅ Cleared. Primary debt: indexer.ts at 47.15% coverage (below 95% target) — should be addressed in Phase 3, not carried further.
