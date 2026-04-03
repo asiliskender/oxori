@@ -36,7 +36,7 @@
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 1 | Parser + Markdown Index | 🔜 Planned |
+| 1 | Parser + Markdown Index | ✅ Complete |
 | 2 | Query Engine + Graph Walk | 🔜 Planned |
 | 3 | Write API + Governance | 🔜 Planned |
 | 4 | Semantic Search | 🔜 Planned |

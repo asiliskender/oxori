@@ -37,7 +37,7 @@
 
 ## Model
 
-- **Preferred:** claude-haiku-4.5 (mechanical ops — cost-first always)
+- **Preferred:** claude-haiku-4.6 (mechanical ops — cost-first always)
 
 ## Collaboration
 

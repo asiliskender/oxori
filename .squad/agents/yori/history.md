@@ -81,3 +81,34 @@
 6. **Cycle safety in linked-vault:** The A→B→C→A cycle tests that `buildIndex()` does not loop
    infinitely — it should detect cycles at the wikilink collection level, not at graph traversal
    (traversal is Phase 2's concern). The cycle fixture verifies the indexer is cycle-safe at scan time.
+
+---
+
+## 2026-04-01 — API mismatch fix: Result<T,E> unwrapping in parser and indexer tests
+
+### Problem
+Both test files were written against a pre-implementation API that has since changed:
+
+- **parser.test.ts**: Tests accessed `result.frontmatter`, `result.tags`, etc. directly.
+  Actual API returns `Promise<Result<ParsedFile, OxoriError>>`, requiring `result.ok` check
+  and `result.value.*` access.
+
+- **indexer.test.ts**: Tests imported a non-existent `buildIndex(path: string)` function.
+  Actual API is `indexVault(config: VaultConfig): Promise<Result<IndexState, OxoriError>>`,
+  requiring a `VaultConfig` object and Result unwrapping.
+
+### Fix applied
+1. **parser.test.ts**: All active tests now check `expect(result.ok).toBe(true)` then guard
+   with `if (!result.ok) return` before accessing `result.value.*`.
+
+2. **indexer.test.ts**:
+   - Removed `buildIndex` import and the now-unnecessary `beforeEach`/`afterEach` temp-dir
+     scaffolding (the indexer is in-memory only; no disk writes).
+   - Removed `mkdirSync`, `rmSync`, `existsSync`, `readFileSync` fs imports.
+   - Replaced all `buildIndex(VAULT)` calls with `indexVault({ vaultPath: VAULT })`.
+   - All active tests unwrap via `result.ok` + `result.value`.
+   - The `.oxori/` exclusion test now explicitly passes `excludePatterns: ['.oxori/**']`
+     since `indexVault` does not auto-exclude hidden dirs.
+
+### Outcome
+31 non-todo tests pass (22 todos remain as stubs for future implementation phases).

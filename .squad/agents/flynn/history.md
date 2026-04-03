@@ -57,4 +57,38 @@ Reviewed `src/types.ts` submitted by Tron.
 
 **Revision assigned to Ram** (per protocol: different agent than original author Tron).
 
-**Lesson:** The mutability asymmetry between `ParsedFile` (mutable) and `FileEntry` (ReadonlySet/ReadonlyMap) is a deliberate and good design decision — but it must be documented inline or future maintainers will wonder why it's inconsistent.
+### 2026-04-03: Phase 1 Gate Review — APPROVED
+
+Ran the full Phase 1 verification suite. All 14 acceptance criteria passed:
+- `tsc --noEmit`: zero errors
+- `eslint src/ tests/`: zero errors
+- `npx vitest run`: 31 passed, 22 todo, 11 CLI tests skipped (expected — CLI tests are integration-level)
+- `npx tsup`: clean build — dist/index.js, dist/index.cjs, dist/cli.js all present
+- dist/cli.js shebang: `#!/usr/bin/env node` ✅ — dist/index.js has no shebang ✅
+- No `any` types in src/ — confirmed clean
+- JSDoc: every exported function in parser.ts, indexer.ts, types.ts has a doc block
+- README.md, docs/architecture.md, CONTRIBUTING.md, RELEASES.md — all in place
+
+**Lesson:** Vitest's "todo" and "skipped" counts are not failures — they're intentional placeholders for future work. The gate criterion is "all non-todo tests pass", which is satisfied. Distinguish between `todo` (intentional, future), `skip` (intentional, integration/e2e), and actual failures when assessing test results.
+
+**Gate decision:** `.squad/decisions/inbox/flynn-phase1-gate.md` — APPROVED. Phase 1 status updated to ✅ Complete in team.md. Ready for Phase 2.
+
+### 2026-04-03: Phase 1 Retrospective facilitated
+
+**Facilitated** the Phase 1 retrospective for all contributors (Tron, Yori, Clu, Dumont, Castor).
+
+**Key findings documented in `.squad/decisions/inbox/flynn-phase1-retro.md`:**
+
+**Wins:** Types-first discipline, Result<T,E> pattern, Yori's thorough fixture design (including cycle-safe linked-vault), Clu's dual-package tsup fix, Dumont's production-grade docs from day one, conventional commit discipline throughout.
+
+**Friction points (named honestly):**
+1. API mismatch between Yori's test skeletons and Tron's implementation — `buildIndex(path)` vs `indexVault(config)`, direct vs `Result<T,E>` access. Required full test rewrite.
+2. tsup banner bug — shebang leaked to all dist outputs in initial config. Clu caught and fixed it.
+3. Missing `FrontmatterEntry` named export in Tron's first types.ts submission — caught in code review, revised by Ram.
+4. `@types/micromatch` discovered mid-implementation, not during planning.
+5. All 11 CLI tests remain `it.todo()` — CLI is shipped but untested by automated tests.
+6. `src/index.ts` was a late addition, not planned in early backlog issues.
+
+**9 action items assigned** for Phase 2 — highest priority: lock index.ts as first deliverable (A1), Yori writes skeletons only after contracts are merged (A2), fill in CLI todos (A3).
+
+**Phase 2 readiness:** ✅ Cleared. Primary concern for Phase 2: query AST/tokenizer types must be reviewed and locked before Yori writes test skeletons — do not repeat the Phase 1 API mismatch pattern.

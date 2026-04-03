@@ -85,6 +85,23 @@
 - `removeFile` is synchronous (no I/O) — it mutates state and returns the same reference for chaining, consistent with the spec.
 - `state.totalFiles` must be kept in sync manually (`state.files.size`) — it's a denormalized counter, not auto-derived.
 
+### 2026-04-03: cli.ts written
+
+**Task:** Implement `src/cli.ts` — the Oxori CLI entry point (backlog O-1-04). Provides `oxori init <vaultPath>` and `oxori index <vaultPath>` commands using `commander`.
+
+**Key design decisions:**
+- Used `createRequire(import.meta.url)` + cast to `{ version: string }` for JSON version import — avoids `assert`/`with` syntax ambiguity between TS 5.3+ and bundler module resolution. No runtime overhead, works cleanly with `--noEmit`.
+- `init` uses `fs.mkdir(..., { recursive: true })` which is idempotent by design. `EEXIST` on the path is treated the same as success, printing the same confirmation message.
+- `index` times the operation with `Date.now()` before/after `indexVault()` and prints `✓ Indexed N files in Xms`.
+- All error paths print with `✗` prefix via `console.log` (not `console.error`) per spec, then `process.exit(1)`.
+- `program.parseAsync(process.argv)` is awaited at module level — the file is pure side-effects, no exported functions needed.
+- No shebang in source — tsup banner config injects `#!/usr/bin/env node` on build.
+
+**Gotchas / edge cases:**
+- `mkdir({ recursive: true })` on Node 20 does NOT throw `EEXIST` — it resolves silently when the directory already exists. The `EEXIST` guard is a safety net for edge cases (e.g., a file named `.oxori` blocking directory creation), not the normal idempotency path.
+- `unknown` error narrowing: always check `typeof e === "object" && e !== null && "code" in e` before reading `.code` — Node errors are plain objects, not class instances in all runtimes.
+- `noUnusedLocals` / `noUnusedParameters` in tsconfig means every import must be used — `createEmptyState` is intentionally not imported in cli.ts since `indexVault` manages its own state internally.
+
 ### 2026-04-03: types.ts written
 
 **Task:** Write the foundational shared type contract for all Oxori modules.

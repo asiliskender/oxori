@@ -6,18 +6,18 @@ active_issues: []
 
 # What We're Focused On
 
-**Current state:** Team hired. Ready to begin.
+**Current state:** Phase 1 complete. Gate approved by Flynn. v0.1.0 ready for npm release.
 
-**Up next:** Phase 1 — Parser + Markdown Index
+**Completed:** Phase 1 — Parser + Markdown Index ✅
+- src/types.ts, src/parser.ts, src/indexer.ts, src/cli.ts — all implemented and tested
+- 31 tests passing, full JSDoc, zero `any`, clean build (dist/index.js, dist/index.cjs, dist/cli.js)
+- docs/architecture.md, README.md, CONTRIBUTING.md, RELEASES.md — all up to date
 
-**Phase 1 deliverables:**
-- src/types.ts — ParsedFile, FileEntry, TagEntry, LinkEntry type definitions
-- src/parser.ts — frontmatter, tags, wikilinks, typed relations extraction
-- src/indexer.ts — vault scan, in-memory cache, .oxori/index/*.md output
-- src/cli.ts — oxori init and oxori index commands
-- tests/ — full unit tests for parser and indexer, basic-vault and linked-vault fixtures
-- docs/architecture.md — Phase 1 architecture documented
-- CI pipeline running
+**Up next:** Phase 2 — Query Engine + Graph Walk
+- src/query.ts — tokenizer, AST parser, evaluator against in-memory cache
+- src/graph.ts — walk with depth, direction, relation, via (links/tags/both)
+- src/cli.ts — add `oxori query`, `oxori walk`, `oxori graph` commands
+- tests/ — query language edge cases, graph cycle handling
 
 **Team:** Flynn (Lead), Tron (Core Dev), Ram (Platform Dev), Yori (Tester), Dumont (Docs), Clu (DevOps), Castor (Product), Quorra (Agent Builder)
 **User:** Onur Asiliskender

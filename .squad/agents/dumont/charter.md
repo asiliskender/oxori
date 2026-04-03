@@ -35,7 +35,7 @@
 
 ## Model
 
-- **Preferred:** claude-haiku-4.5 (writing, not code generation — cost-first applies)
+- **Preferred:** claude-haiku-4.6 (writing, not code generation — cost-first applies)
 
 ## Collaboration
 

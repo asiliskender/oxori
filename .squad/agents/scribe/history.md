@@ -57,3 +57,16 @@ Initial setup complete.
 - Atomic commits — one logical change per commit
 - No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
 - Each phase = a separate npm release with detailed release notes
+
+## Phase 1 Commit Complete — $(date)
+
+✅ All Phase 1 work committed in 7 conventional commits:
+1. feat(types): Foundational type contracts and Result<T,E> helpers
+2. feat(parser): Markdown parser with tag/wikilink extraction
+3. feat(indexer): In-memory vault indexer with incremental updates
+4. feat(cli): oxori init and oxori index CLI commands
+5. fix(build): Fixed tsup config for per-entry shebang + CJS support
+6. test(fixtures): Test fixtures and test suite for parser/indexer
+7. docs: Architecture, README, CONTRIBUTING, RELEASES docs
+
+All commits include Co-authored-by trailer.

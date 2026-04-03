@@ -33,7 +33,7 @@
 
 ## Model
 
-- **Preferred:** claude-haiku-4.5 (planning, not coding — cost-first)
+- **Preferred:** claude-haiku-4.6 (planning, not coding — cost-first)
 
 ## Collaboration
 

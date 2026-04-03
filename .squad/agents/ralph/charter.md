@@ -32,7 +32,7 @@
 
 ## Model
 
-- **Preferred:** claude-haiku-4.5 (monitoring ops — cost-first always)
+- **Preferred:** claude-haiku-4.6 (monitoring ops — cost-first always)
 
 ## Project Context
 
