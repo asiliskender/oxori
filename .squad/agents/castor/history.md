@@ -1,19 +1,4 @@
-# Project Context
-
-- **Project:** oxori
-- **Created:** 2026-04-03
-
-## Core Context
-
-Agent Ralph initialized and ready for work.
-
-## Recent Updates
-
-📌 Team initialized on 2026-04-03
-
-## Learnings
-
-Initial setup complete.
+# Castor — Project History
 
 ## Project Context
 
@@ -57,3 +42,5 @@ Initial setup complete.
 - Atomic commits — one logical change per commit
 - No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
 - Each phase = a separate npm release with detailed release notes
+
+## Learnings

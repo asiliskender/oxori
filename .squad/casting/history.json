@@ -1,0 +1,21 @@
+{
+  "universe_usage_history": [
+    { "universe": "Tron", "assignment_id": "oxori-2026-04-03", "used_at": "2026-04-03T17:00:30Z" }
+  ],
+  "assignment_cast_snapshots": {
+    "oxori-2026-04-03": {
+      "universe": "Tron",
+      "agents": {
+        "lead-architect": "Flynn",
+        "core-dev": "Tron",
+        "platform-dev": "Ram",
+        "tester-qa": "Yori",
+        "devrel-docs": "Dumont",
+        "devops": "Clu",
+        "product-owner": "Castor",
+        "ai-agent-builder": "Quorra"
+      },
+      "created_at": "2026-04-03T17:00:30Z"
+    }
+  }
+}
