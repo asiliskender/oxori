@@ -128,3 +128,34 @@ Reviewed `src/types.ts` Phase 2 sections (lines 381–682) submitted by Tron, co
 - Wrote verdict to `.squad/decisions/inbox/flynn-phase2-types-review.md`
 
 **Cleared:** Yori may begin writing test skeletons against these locked contracts immediately.
+
+### 2026-04-03: Phase 2 Gate Review — ❌ BLOCKED
+
+Ran full Phase 2 gate verification against all 17 criteria.
+
+**Commands run:**
+- `npx tsc --noEmit` — exit 0 ✅
+- `npx eslint src/ tests/ --max-warnings 0` — exit 0 ✅
+- `npx tsup` — exit 0, all dist outputs built ✅
+- `npx vitest run --coverage --reporter=verbose` — exit 1 (coverage thresholds unmet) ❌
+- Runtime export check via `node -e "import('./dist/index.js')"` — confirmed missing exports ❌
+
+**12 PASS / 5 FAIL:**
+
+PASS: TypeScript, ESLint, Tests (87/87 non-todo), Build, Shebang, No-any, JSDoc, Type exports (9), Query module, Graph module, Phase 1 CLI tests filled in, Performance thresholds.
+
+FAIL:
+1. **Criterion 8** — README still shows Phase 2 as "��" future features. No oxori query/walk/graph command examples.
+2. **Criterion 10** — src/index.ts missing `tokenize`, `parse`, `evaluate` (from query.ts) and `walk` (from graph.ts) function exports. Types are all present; the functions themselves are not re-exported. Confirmed via runtime dist check.
+3. **Criterion 13** — Coverage: 68.52% overall (need 80%); query.ts 64.63% (need 90%); graph.ts 87.84% (need 90%). evaluate() body largely uncovered (lines 466–624). indexer.ts at 47.15% drags overall average.
+4. **Criterion 14** — cli.test.ts has zero tests for oxori query, oxori walk, oxori graph. Only init and index are tested.
+5. **Criterion 15** — Partially fails: docs/query-language.md ✅, architecture.md ✅, README ❌ (same as criterion 8).
+
+**Fix assignments issued:**
+- Tron: add function re-exports to src/index.ts (#10)
+- Yori: evaluate() tests, graph.ts edge case coverage, CLI integration tests for query/walk/graph (#13, #14)
+- Dumont: README Phase 2 section with command examples (#8, #15)
+
+**Gate verdict written to:** `.squad/decisions.md`
+
+**Lesson:** The index.ts was correctly updated for type re-exports (Phase 2 types all present) but the implementors forgot to add function re-exports (`tokenize`, `parse`, `evaluate`, `walk`). Future checklist: always verify the runtime export list, not just the TypeScript source, to catch type-vs-value export mismatches.

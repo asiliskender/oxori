@@ -21,6 +21,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = resolve(__dirname, '..')
 const CLI_ENTRY = join(REPO_ROOT, 'src', 'cli.ts')
 const BASIC_VAULT = join(__dirname, 'fixtures/basic-vault')
+const LINKED_VAULT = join(__dirname, 'fixtures/linked-vault')
 
 /** Runs the CLI via tsx and returns { stdout, stderr, status }. */
 function runCLI(args: string[], cwd: string = REPO_ROOT) {
@@ -127,5 +128,146 @@ describe('oxori index', () => {
   it('exits with non-zero code on vault not found', () => {
     const { status } = runCLI(['index', join(testDir, 'ghost-vault')])
     expect(status).not.toBe(0)
+  })
+})
+
+// -----------------------------------------------------------------------------
+// oxori query
+// -----------------------------------------------------------------------------
+describe('oxori query', () => {
+  it('returns matching files for a valid query (tag filter)', () => {
+    const { stdout, status } = runCLI(['query', 'tag:auth', '--vault', BASIC_VAULT])
+    expect(status).toBe(0)
+    expect(stdout).toContain('decisions/api-choice.md')
+  })
+
+  it("exits 0 with 'No files matched.' for a query that matches nothing", () => {
+    const { stdout, status } = runCLI(['query', 'tag:zzz-nonexistent-xyz', '--vault', BASIC_VAULT])
+    expect(status).toBe(0)
+    expect(stdout).toContain('No files matched.')
+  })
+
+  it('outputs JSON when --json flag is passed', () => {
+    const { stdout, status } = runCLI(['query', 'tag:auth', '--vault', BASIC_VAULT, '--json'])
+    expect(status).toBe(0)
+    const parsed = JSON.parse(stdout) as { files: string[]; totalCount: number }
+    expect(Array.isArray(parsed.files)).toBe(true)
+    expect(parsed.files.length).toBeGreaterThan(0)
+    expect(typeof parsed.totalCount).toBe('number')
+  })
+
+  it('accepts --vault flag to specify vault path', () => {
+    const { stdout, status } = runCLI(['query', 'tag:auth', '--vault', BASIC_VAULT], REPO_ROOT)
+    expect(status).toBe(0)
+    expect(stdout).toContain('decisions/api-choice.md')
+  })
+
+  it('exits 1 and prints error for invalid query (unbalanced parens)', () => {
+    const { stderr, status } = runCLI(['query', '(tag:auth', '--vault', BASIC_VAULT])
+    expect(status).toBe(1)
+    expect(stderr).toContain('✗')
+  })
+
+  it('exits 1 and prints error for unknown filter field', () => {
+    const { stderr, status } = runCLI(['query', 'badfield:value', '--vault', BASIC_VAULT])
+    expect(status).toBe(1)
+    expect(stderr).toContain('✗')
+  })
+})
+
+// -----------------------------------------------------------------------------
+// oxori walk
+// -----------------------------------------------------------------------------
+describe('oxori walk', () => {
+  it('walks forward from start node and prints visited files', () => {
+    const { stdout, status } = runCLI([
+      'walk', 'node-a.md',
+      '--vault', LINKED_VAULT,
+      '--via', 'links',
+    ])
+    expect(status).toBe(0)
+    // node-a links to node-b and node-c; node-b links to node-c and node-d; cycle back handled
+    expect(stdout).toContain('node-b.md')
+    expect(stdout).toContain('node-d.md')
+  })
+
+  it('accepts --direction backward flag', () => {
+    const { stdout, status } = runCLI([
+      'walk', 'node-d.md',
+      '--vault', LINKED_VAULT,
+      '--direction', 'backward',
+      '--via', 'links',
+    ])
+    expect(status).toBe(0)
+    // node-b, node-e, node-g all link to node-d directly
+    expect(stdout).toContain('node-b.md')
+    expect(stdout).toContain('node-e.md')
+  })
+
+  it('accepts --depth flag to limit traversal', () => {
+    const { stdout, status } = runCLI([
+      'walk', 'node-a.md',
+      '--vault', LINKED_VAULT,
+      '--via', 'links',
+      '--depth', '1',
+    ])
+    expect(status).toBe(0)
+    // depth 1: node-a + immediate neighbors node-b, node-c — node-d is 2 hops away
+    expect(stdout).toContain('node-b.md')
+    expect(stdout).not.toContain('node-d.md')
+  })
+
+  it('outputs JSON when --json flag is passed', () => {
+    const { stdout, status } = runCLI([
+      'walk', 'node-a.md',
+      '--vault', LINKED_VAULT,
+      '--via', 'links',
+      '--json',
+    ])
+    expect(status).toBe(0)
+    const parsed = JSON.parse(stdout) as { visited: string[]; edges: unknown[]; totalCount: number }
+    expect(Array.isArray(parsed.visited)).toBe(true)
+    expect(Array.isArray(parsed.edges)).toBe(true)
+    expect(typeof parsed.totalCount).toBe('number')
+  })
+
+  it('exits 1 when start path is not found in vault', () => {
+    const { stderr, status } = runCLI([
+      'walk', 'nonexistent-file.md',
+      '--vault', LINKED_VAULT,
+    ])
+    expect(status).toBe(1)
+    expect(stderr).toContain('✗')
+  })
+})
+
+// -----------------------------------------------------------------------------
+// oxori graph
+// -----------------------------------------------------------------------------
+describe('oxori graph', () => {
+  it("prints all edges in the vault as 'source → target' lines", () => {
+    const { stdout, status } = runCLI(['graph', '--vault', LINKED_VAULT])
+    expect(status).toBe(0)
+    // node-a body links to node-b and node-c
+    expect(stdout).toContain('node-a.md → node-b.md (wikilink)')
+    expect(stdout).toContain('node-a.md → node-c.md (wikilink)')
+  })
+
+  it('outputs JSON with nodes and edges when --json flag is passed', () => {
+    const { stdout, status } = runCLI(['graph', '--vault', LINKED_VAULT, '--json'])
+    expect(status).toBe(0)
+    const parsed = JSON.parse(stdout) as { nodes: string[]; edges: { source: string; target: string; kind: string }[] }
+    expect(Array.isArray(parsed.nodes)).toBe(true)
+    expect(Array.isArray(parsed.edges)).toBe(true)
+    expect(parsed.nodes.length).toBeGreaterThan(0)
+    // verify at least one edge connects node-a to node-b
+    const edge = parsed.edges.find(e => e.source === 'node-a.md' && e.target === 'node-b.md')
+    expect(edge).toBeDefined()
+  })
+
+  it('exits 0 on an empty vault (no markdown files)', () => {
+    const { stdout, status } = runCLI(['graph', '--vault', testDir])
+    expect(status).toBe(0)
+    expect(stdout.trim()).toBe('')
   })
 })

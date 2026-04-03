@@ -87,3 +87,83 @@
 - Insert location: Line 234, between type system intro and ParsedFile
 
 **Result:** Phase 1 audit closed. `FrontmatterEntry` now clearly documented with consumer patterns for future developers.
+
+### Phase 2 Query Language Documentation (2026-04-04)
+
+**Task:** Write `docs/query-language.md` — comprehensive reference for the Oxori query language based on actual implementation in `src/query.ts`.
+
+**Deliverable:** `docs/query-language.md` (9200+ words)
+
+**Sections completed:**
+
+1. **Overview** — What the query language is and what it matches.
+
+2. **Filter Syntax** — All six fields (`tag`, `type`, `path`, `frontmatter`, `title`, `link`) with three operators (`=`, `:`, `~`). Comprehensive table showing behavior by field and operator. Quoted value support for multi-word values.
+
+3. **Boolean Operators** — `AND`, `OR`, `NOT` with strict precedence (NOT > AND > OR). Real examples showing precedence in action and how grouping overrides it.
+
+4. **Grouping** — Parentheses for explicit precedence override, with practical examples.
+
+5. **Bare Values** — Words without `field:` prefix expand to `title:word OR link:word`. Shorthand syntax for simple, intuitive queries.
+
+6. **BNF Grammar** — Formal grammar showing the recursive-descent parser structure.
+
+7. **Error Messages** — Two error codes from implementation:
+   - `QUERY_PARSE_ERROR` — syntax errors (unbalanced parens, stray tokens) with actionable guidance
+   - `QUERY_UNKNOWN_FIELD` — unknown field with did-you-mean suggestion
+
+8. **Examples** — Eight real-world examples covering:
+   - Simple tag filter
+   - Compound AND queries
+   - OR with grouping
+   - NOT exclusion
+   - Frontmatter search
+   - Graph-aware queries (link + type)
+   - Path-based filtering
+   - Bare values with boolean ops
+
+9. **Evaluation Semantics** — Case sensitivity, empty queries, tag hierarchy expansion, wikilink normalization, operator consistency.
+
+10. **Performance** — Guarantees < 100ms on typical vaults.
+
+11. **Implementation Notes** — Three-stage pipeline (tokenize → parse → evaluate), error handling pattern with try/catch.
+
+**Design principles applied:**
+
+- **Accuracy-first:** All syntax, operator behavior, and error messages derived directly from `src/query.ts` implementation.
+- **Developer-friendly:** Clear tables, practical examples, grammar for reference.
+- **No fluff:** Every section tied to actual behavior; no invented features.
+- **Consistent tone:** Matches `docs/architecture.md` — technical but approachable.
+
+**Status:** ✅ Complete and written to `/Users/onurasiliskender/Git/github-personal/oxori/docs/query-language.md`
+
+### Phase 2 README Update (2026-04-04)
+
+**Task:** Update `README.md` to reflect Phase 2 completion — replace future-tense "🔜 Phase 2" placeholders with actual completed features.
+
+**Changes made:**
+
+1. **Features section** — Updated version to v0.2.0, replaced placeholders:
+   - ✅ Query engine — filter files by tag, type, path, frontmatter, title, link
+   - ✅ Graph traversal — BFS walk with cycle detection, direction, and typed relations
+   - ✅ CLI commands — oxori query, oxori walk, oxori graph
+
+2. **Quick Start section** — Removed "(Phase 1)" header, added three new subsections after "Index your vault":
+   - **Query your vault** — Three CLI examples (`oxori query` with various filters and flags)
+   - **Walk the graph** — Three CLI examples (`oxori walk` with direction, via, depth options)
+   - **View full graph** — Two CLI examples (`oxori graph` with and without --json)
+
+3. **SDK Usage section** — Extended with Phase 2 API examples:
+   - Query API: `tokenize`, `parse`, `evaluate` with full example
+   - Walk API: `walk()` with direction, via, depth options
+   - Shows accessing `queryResult.totalMatched` and `walkResult.visitOrder`
+
+4. **Architecture section** — Removed future-tense Phase 2 language, updated to acknowledge Phase 2 as complete and ready for use.
+
+**Standards applied:**
+- Exact flag names from `src/cli.ts` (e.g., `--direction forward/backward`, `--via links`)
+- Real examples derived from docs/query-language.md and CLI implementation
+- Kept concise, developer-friendly tone matching existing README
+- Maintained markdown formatting and hierarchy
+
+**Status:** ✅ Complete. README.md updated with Phase 2 content.

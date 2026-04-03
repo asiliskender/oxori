@@ -44,3 +44,34 @@
 - Each phase = a separate npm release with detailed release notes
 
 ## Learnings
+
+## Phase 2 — Graph Traversal Implementation
+
+**Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+### Completed: O-2-02 — `src/graph.ts`
+
+Replaced the Phase 2 Wave 1 stub with a full BFS implementation.
+
+**What was done:**
+- Implemented `walk(start, state, options?)` using a BFS queue `[path, depth][]`
+- Internal helpers: `stemToPath`, `outgoingLinkEdges`, `incomingLinkEdges`, `tagNeighborEdges`, `relationEdges`, `resolveNeighbors`
+- Supports all `WalkDirection` values: `"outgoing"`, `"incoming"`, `"both"`
+- Supports all `WalkVia` values: `"links"`, `"tags"`, `"both"`, `"relation:<key>"`
+- `depth` stops traversal at edge-hop limit (start = depth 0)
+- `maxNodes` caps visited nodes; sets `truncated: true` when hit
+- Global edge deduplication via `edgeKey` Set (prevents duplicate edges on direction=both)
+- Cycle prevention: visited Set blocks re-enqueuing any node
+- Returns empty `WalkResult` for unknown `start` — never throws
+- All types aligned to actual `src/types.ts` (not task spec which had different names):
+  - `FileEntry.wikilinks`, `FileEntry.filename`, `FileEntry.typedRelations`
+  - `IndexState.tags: Map<string, TagEntry>` (TagEntry.files), `IndexState.links: Map<string, LinkEntry>` (LinkEntry.sources)
+  - `WalkDirection`: `"outgoing" | "incoming" | "both"`
+  - `WalkResult`: `nodes`, `edges`, `visitOrder`, `truncated`
+  - `Edge`: `source`, `target`, `kind`, `relationType?`
+
+**Tests updated (`tests/graph.test.ts`):**
+- Fixed parameter order: `walk(state, path)` → `walk(path, state)` (task spec signature)
+- Changed two `toThrowError("not implemented")` assertions to check for empty `WalkResult`
+
+**TypeScript:** `npx tsc --noEmit` → 0 errors

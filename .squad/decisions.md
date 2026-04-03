@@ -322,6 +322,61 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
     - Query evaluation: < 100ms on linked-vault
     - Graph walk: < 200ms on linked-vault
 
+---
+
+### 2026-04-03: Phase 2 Gate Review — ❌ BLOCKED
+
+**By:** Flynn (Tech Lead / Architect)  
+**Date:** 2026-04-03  
+**Release Target:** v0.2.0 — NOT APPROVED
+
+**Verification run:**
+- `npx tsc --noEmit` — exit 0
+- `npx eslint src/ tests/ --max-warnings 0` — exit 0
+- `npx tsup` — exit 0 (dist/index.js, dist/index.cjs, dist/cli.js)
+- `npx vitest run --coverage` — exit 1 (coverage thresholds unmet; 87 tests pass, 14 todo)
+- Runtime export check: `tokenize`, `parse`, `evaluate`, `walk` absent from dist/index.js
+
+**Gate Criteria Verdicts (17 total):**
+
+| # | Criterion | Verdict | Finding |
+|---|---|---|---|
+| 1 | TypeScript Compilation: Zero Errors | ✅ PASS | tsc --noEmit exits 0 |
+| 2 | Linting: Zero Errors | ✅ PASS | eslint exits 0, no warnings |
+| 3 | Test Suite: All Non-Todo Tests Pass | ✅ PASS | 87 pass, 14 todo — no failures |
+| 4 | Build: Success and Correct Outputs | ✅ PASS | dist/index.js, dist/index.cjs, dist/cli.js all built |
+| 5 | Shebang: CLI Only, Library Clean | ✅ PASS | cli.js has `#!/usr/bin/env node`; index.js clean |
+| 6 | No `any` Types in Source | ✅ PASS | grep confirms zero `any` type annotations in src/ |
+| 7 | JSDoc on All Exported Functions | ✅ PASS | tokenize, parse, evaluate, walk all have full JSDoc with @param/@returns/@throws |
+| 8 | README.md Updated with Phase 2 Features | ❌ FAIL | README still says "🔜 Query engine (Phase 2)" as future work — no oxori query/walk/graph examples |
+| 9 | Type Exports: Query Language and Graph Types | ✅ PASS | All 14 required types exported from src/index.ts |
+| 10 | Public API Re-exports: index.ts | ❌ FAIL | tokenize, parse, evaluate (from query.ts) and walk (from graph.ts) NOT exported — confirmed by runtime check |
+| 11 | Query Module: tokenize, parse, evaluate | ✅ PASS | All three functions implemented in query.ts, all cases handled |
+| 12 | Graph Module: walk | ✅ PASS | walk() implemented, cycle-safe BFS, all options supported |
+| 13 | Coverage: 80% Overall, 90% Query/Graph | ❌ FAIL | Overall 68.52% (need 80%); query.ts 64.63% (need 90%); graph.ts 87.84% (need 90%) |
+| 14 | CLI Commands: Functional and Tested | ❌ FAIL | oxori query/walk/graph implemented but cli.test.ts has NO tests for them |
+| 15 | Documentation: Query Language and Architecture | ❌ FAIL | docs/query-language.md ✅ (BNF present); architecture.md ✅ (Phase 2 sections present); README ❌ (no Query/Walk/Graph examples — same as criterion 8) |
+| 16 | Phase 1 CLI Tests Filled In | ✅ PASS | cli.test.ts has 11 real tests (5 init + 6 index), zero it.todo() stubs |
+| 17 | Performance Thresholds Met | ✅ PASS | 7-node linked-vault completes well under 100ms/200ms thresholds |
+
+**PHASE 2 GATE: ❌ BLOCKED**
+
+**5 failures. Gate is blocked. Do NOT merge or release v0.2.0.**
+
+**Fix assignments:**
+
+| Fix | Owner | Criterion | Action |
+|---|---|---|---|
+| Export tokenize, parse, evaluate, walk from src/index.ts | Tron | #10 | Add `export { tokenize, parse, evaluate } from "./query.js"` and `export { walk } from "./graph.js"` to src/index.ts |
+| Increase query.ts coverage to ≥ 90% | Yori | #13 | Write tests for evaluate() (lines 466-559, 596-624 uncovered) — evaluate handles all filter types, operators, nested groups |
+| Increase graph.ts coverage to ≥ 90% | Yori | #13 | Cover lines 35-36, 129-148 (tagNeighborEdges with empty tags; edge cases in relationEdges) |
+| Add CLI tests for oxori query, walk, graph | Yori | #14 | Add integration tests in cli.test.ts for all three new commands — success, error, --json flag |
+| Update README with Phase 2 commands | Dumont | #8 + #15 | Add "Phase 2 — Query Engine" section with oxori query/walk/graph examples; change 🔜 bullets to ✅ |
+
+**Blocked by:** Tron (#10), Yori (#13, #14), Dumont (#8, #15)
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus

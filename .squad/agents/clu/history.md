@@ -93,3 +93,26 @@
 **Files Modified:**
 - ✅ docs/architecture.md (added Build System and Tooling section)
 - ✅ CONTRIBUTING.md (added Pre-Commit Checks section)
+
+### 2026-04-04: Fixed CI Pipeline Errors
+
+**What:** Resolved two CI/CD issues preventing smooth pipeline execution:
+
+1. **Error 1 — Duplicate pnpm version specification**
+   - Removed redundant `version: 9` from `pnpm/action-setup@v4` in `.github/workflows/ci.yml`
+   - The action now automatically reads `packageManager: pnpm@9.0.0` from `package.json`
+   - Eliminates version conflict that was blocking workflow runs
+
+2. **Warning 2 — Node.js 20 actions deprecation**
+   - Added `env: FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` at job level
+   - Opts runner into Node.js 24 immediately, silencing deprecation warnings
+   - Future-proofs pipeline against mandatory Node 24 migration (June 2026)
+
+3. **Bonus — codecov-action version bump**
+   - Upgraded `codecov/codecov-action@v4` → `@v5`
+   - v5 uses Node 24, aligning with runner environment
+
+**Why:** CI pipeline must run cleanly without warnings or errors. Version conflicts block builds, and deprecation warnings indicate technical debt. Proactive adoption of Node 24 prevents forced migration in 2026.
+
+**Files Modified:**
+- ✅ .github/workflows/ci.yml (removed version: 9, added env flag, bumped codecov action)

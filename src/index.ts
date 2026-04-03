@@ -55,3 +55,9 @@ export {
   removeFile,
   createEmptyState,
 } from "./indexer.js";
+
+// Query Engine
+export { tokenize, parse, evaluate } from "./query.js";
+
+// Graph Traversal
+export { walk } from "./graph.js";

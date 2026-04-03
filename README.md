@@ -1,18 +1,21 @@
 # oxori
 
+[![npm version](https://img.shields.io/npm/v/oxori.svg)](https://www.npmjs.com/package/oxori)
+
 > Where humans and AI agents think together, in markdown.
 
 Make your markdown vault queryable, traversable, and semantically searchable — without an external database. The index itself is markdown. Oxori is a shared knowledge layer for humans and AI agents.
 
 Your markdown files stay readable, editable, yours. Oxori makes them queryable. Tags and links become a graph you can walk. Frontmatter becomes indexed metadata you can filter. Content becomes semantically searchable via embeddings. Humans write the rules, agents record the decisions.
 
-## Features (v0.1.0 — Phase 1)
+## Features (v0.2.0 — Phase 1 & 2)
 
 - ✅ **Parse markdown files** — extract frontmatter (YAML), tags, wikilinks, typed relations
 - ✅ **Build in-memory index** — scan a vault and create `.oxori/index/` markdown files
 - ✅ **Human-readable index** — `files.md`, `tags.md`, `links.md` are markdown and Git-friendly
-- 🔜 **Query engine** (Phase 2) — filter by frontmatter, tags, or custom queries
-- 🔜 **Graph traversal** (Phase 2) — walk links and typed relations with configurable depth
+- ✅ **Query engine** — filter files by tag, type, path, frontmatter, title, link
+- ✅ **Graph traversal** — BFS walk with cycle detection, direction, and typed relations
+- ✅ **CLI commands** — `oxori query`, `oxori walk`, `oxori graph`
 - 🔜 **Read/write API** (Phase 3) — create and update files with governance enforcement
 - 🔜 **Semantic search** (Phase 4) — find files by meaning, not keywords, with cached embeddings
 - 🔜 **MCP server** (Phase 5) — AI agents (Claude, Cursor) can use Oxori as a tool
@@ -31,7 +34,7 @@ npx oxori init ./my-vault
 
 Requires Node.js 20 or later.
 
-## Quick Start (Phase 1)
+## Quick Start
 
 ### Initialize a vault
 
@@ -67,11 +70,35 @@ Now `.oxori/index/` contains three markdown files:
 - `tags.md` — tag-to-file mappings
 - `links.md` — link graph (source, target, relation)
 
-### SDK Usage (Phase 1)
+### Query your vault
+
+```bash
+oxori query "tag:auth AND type:decision"
+oxori query "tag:auth AND (type:decision OR path:~/docs)" --json
+oxori query "NOT tag:draft" --vault ./my-notes
+```
+
+### Walk the graph
+
+```bash
+oxori walk path/to/note.md
+oxori walk path/to/note.md --direction backward --via links
+oxori walk path/to/note.md --depth 2 --json
+```
+
+### View full graph
+
+```bash
+oxori graph
+oxori graph --json
+```
+
+### SDK Usage
 
 ```typescript
 import { parseFile } from 'oxori/parser';
 import { buildIndex } from 'oxori/indexer';
+import { tokenize, parse, evaluate, walk } from 'oxori';
 
 // Parse a single file
 const result = await parseFile('/path/to/note.md');
@@ -85,6 +112,19 @@ const indexResult = await buildIndex('/path/to/vault');
 if (indexResult.ok) {
   const { state, filesCount, tagsCount, linksCount } = indexResult.value;
   console.log(`Indexed ${filesCount} files, ${tagsCount} tags`);
+  
+  // Query the vault
+  const ast = parse(tokenize("tag:auth AND type:decision"));
+  const queryResult = evaluate(ast, state);
+  console.log(queryResult.totalMatched); // number of matching files
+  
+  // Walk the link graph
+  const walkResult = walk("/path/to/note.md", state, {
+    direction: "outgoing",
+    via: "links",
+    depth: 3,
+  });
+  console.log([...walkResult.visitOrder]); // paths of reachable files
 }
 ```
 
@@ -202,7 +242,7 @@ See [docs/architecture.md](docs/architecture.md) for the complete system design,
 
 Oxori's parser reads markdown files and extracts frontmatter, tags, and wikilinks. The indexer builds three in-memory data structures (files, tags, links) and persists them as markdown files under `.oxori/index/`. These index files are human-readable, Git-friendly, and regenerable at any time.
 
-Phases 2-5 add query engine, graph traversal, governance rules, semantic search, and an MCP server — but Phase 1 gives you a solid foundation: parse any vault and understand its structure.
+Phase 2 adds query engine, graph traversal, and CLI commands for searching and exploring your vault. Phases 3-5 will add governance rules, semantic search, and an MCP server — but Phase 1-2 gives you a solid foundation: parse any vault, understand its structure, and query it effectively.
 
 ## Contributing
 

@@ -1,4 +1,4 @@
-# CLAUDE.md
+# PROJECT.md
 
 ## Project Overview
 
@@ -180,33 +180,33 @@ Test vaults under `tests/fixtures/`:
 
 ## Build Order (Phased)
 
-### Faz 1 — Parse and Markdown Index
+### Phased 1 — Parse and Markdown Index
 1. `types.ts` — type definitions: ParsedFile, FileEntry, TagEntry, LinkEntry
 2. `parser.ts` — extract frontmatter, tags, wikilinks, typed relations from one file
 3. `indexer.ts` — scan vault, build in-memory cache (Maps/Sets), write `.oxori/index/*.md`
 4. `cli.ts` — `oxori init`, `oxori index`
 5. Tests + CI pipeline setup
 
-### Faz 2 — Query and Graph Walk
+### Phased 2 — Query and Graph Walk
 1. `query.ts` — tokenizer, AST parser, evaluator against in-memory cache
 2. `graph.ts` — walk with depth, direction, relation, via (links/tags/both)
 3. `cli.ts` — `oxori query`, `oxori walk`, `oxori graph`
 4. Tests for query language edge cases and graph cycles
 
-### Faz 3 — Read/Write API and Governance
+### Phased 3 — Read/Write API and Governance
 1. `writer.ts` — create and append with frontmatter conventions
 2. `governance.ts` — parse governance.md, enforce rules on writes
 3. `cli.ts` — `oxori write`, `oxori append`
 4. `index.ts` — public SDK API: `Oxori.open()`, `vault.query()`, `vault.walk()`, `vault.write()`
 5. Tests for governance allow/deny and write validation
 
-### Faz 4 — Semantic Search
+### Phased 4 — Semantic Search
 1. `search.ts` — embedding provider interface, binary vector storage, cosine similarity
 2. Default provider: OpenAI API (HTTP call, no heavy deps)
 3. CLI: `oxori search`, `oxori embed`
 4. Tests with mock embeddings for deterministic results
 
-### Faz 5 — MCP Server and Obsidian Compatibility
+### Phased 5 — MCP Server and Obsidian Compatibility
 1. `mcp.ts` — MCP server exposing all Oxori tools and resources
 2. `watcher.ts` — chokidar-based filesystem monitoring for live index updates
 3. Obsidian compatibility documentation and testing
@@ -262,3 +262,5 @@ Every phase should be different iterations and should be merged into `main` only
 Make your commit messages clear and descriptive, following the Conventional Commits format. This will help with generating changelogs and understanding the history of changes.
 
 Make your commits atomic — one logical change per commit. This makes it easier to review and revert if needed.
+
+Update README.md if necessary to reflect new features or changes, but keep it high-level. The detailed documentation should go in the `docs/` folder.

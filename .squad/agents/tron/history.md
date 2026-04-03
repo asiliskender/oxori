@@ -122,6 +122,64 @@
 
 ---
 
+## Phase 2 — CLI Commands: query / walk / graph (O-2-04, O-2-05, O-2-06)
+
+**Date:** 2025-07-13  
+**Task:** Add `oxori query`, `oxori walk`, and `oxori graph` subcommands to `src/cli.ts`  
+**Status:** Complete — `npx tsc --noEmit` → 0 errors; 87 tests pass
+
+### What was done
+
+Edited `src/cli.ts` to add three new commander subcommands. Existing `init` and `index` commands left untouched.
+
+**New imports added:**
+- `relative` added to `node:path` import (alongside existing `resolve`)
+- `tokenize`, `parse`, `evaluate` from `./query.js`
+- `walk` from `./graph.js`
+- Types `OxoriError`, `Edge`, `WalkOptions`, `WalkDirection`, `WalkVia` from `./types.js` (type-only import)
+
+**`oxori query <queryString> [--vault <path>] [--json]`:**
+- Calls `indexVault()` → `tokenize()` → `parse()` → `evaluate()`
+- Wraps tokenize/parse/evaluate in try/catch; detects thrown `OxoriError` by structural narrowing (`"code" in e && "message" in e`), prints `✗ message` + `→ action` to stderr, exits 1
+- Default output: file paths relative to vault root, sorted, one per line
+- `--json`: `{ files: string[], totalCount: number }`
+- Empty result: prints "No files matched." to stdout, exits 0
+
+**`oxori walk <startPath> [--vault <path>] [--direction ...] [--via ...] [--depth <n>] [--json]`:**
+- Resolves `startPath` to absolute via `path.resolve(vaultPath, startPath)`
+- Validates start file exists in index; exits 1 with stderr message if not
+- `--direction` accepts `forward` (→ `"outgoing"`), `backward` (→ `"incoming"`), and `"both"` directly
+- `--via` accepts `links`, `tags`, `both`, `relation:<key>` — passed directly as `WalkVia`
+- `--depth` parsed as int, applied only when valid
+- Calls `walk(absStart, state, walkOpts)` — returns `WalkResult` directly (not `Result<WalkResult>`)
+- Default output: visited paths (relative, sorted), one per line
+- `--json`: `{ visited: string[], edges: {from, to, kind}[], totalCount: number }`
+
+**`oxori graph [--vault <path>] [--json]`:**
+- Iterates all files in `state.files`; resolves each wikilink stem to an absolute path via filename matching (same approach as `graph.ts`'s internal `stemToPath`)
+- Builds `Edge[]` with `kind: "wikilink"`
+- Default output: `"source → target (wikilink)"` lines, one per edge
+- `--json`: `{ nodes: string[], edges: Edge[] }` with paths relative to vault root
+
+### Key decisions
+
+1. **`evaluate()` throws, not returns `Result`** — confirmed by query.ts implementation; wrapped in try/catch with structural OxoriError narrowing (no `instanceof` needed — Node errors are plain objects).
+2. **`walk()` returns `WalkResult` directly** — graph.ts never wraps in `Result`; no result unwrapping needed.
+3. **Direction aliases** — `forward`/`backward` mapped to `outgoing`/`incoming` in the CLI layer; the walk internals always use `WalkDirection` values.
+4. **Graph command replicates `stemToPath` inline** — `graph.ts`'s `stemToPath` is module-private; rather than export it or duplicate the traversal, the graph command does a simple filename-equality scan over `state.files.values()`. Acceptable at this scale (in-memory).
+5. **`--json` flag comparison** — `options.json === true` (strict equality) avoids truthy-coercion issues with commander's boolean flag handling.
+6. **`noUnusedLocals`** — all type imports (`OxoriError`, `Edge`, `WalkOptions`, `WalkDirection`, `WalkVia`) are used in type annotations within the action handlers; no dead imports.
+
+### Gotchas / edge cases
+
+- Commander parses `--depth <n>` as a string; must `parseInt(..., 10)` and guard with `isNaN` before setting `walkOpts.depth`.
+- `result.visitOrder` is `readonly string[]`; spreading with `[...result.visitOrder]` to sort without mutation.
+- `result.edges` is `ReadonlySet<Edge>`; spreading with `[...result.edges]` for mapping.
+- OxoriError `action` is optional — checked `!== undefined` before printing the `→` line.
+- `options.vault` defaults to `process.cwd()` via commander's option default — always a string when action runs.
+
+---
+
 ## Phase 2 — Type Contract Design (Wave 1, Critical Path)
 
 **Date:** 2025-07-13  
@@ -176,3 +234,99 @@ Filed at `.squad/decisions/inbox/tron-phase2-type-contracts.md` with open questi
 - Should `FilterNode.field` be `FilterField` instead of `string`?
 - Should `GroupNode` be erased during parsing?
 - `ReadonlySet<Edge>` vs `readonly Edge[]` for `WalkResult.edges`?
+
+---
+
+## Phase 2 — Query Engine: Tokenizer + Parser (Wave 1)
+
+**Date:** 2025-07-13  
+**Task:** Implement `src/query.ts` — tokenizer and recursive-descent parser (backlog O-2-01)  
+**Status:** Complete — `npx tsc --noEmit` → 0 errors
+
+### What was done
+
+Wrote `src/query.ts` with three exported symbols plus internal helpers:
+
+**Exported:**
+- `tokenize(query: string): Token[]` — scans the raw query string character by character, emitting a flat `Token[]` ending with an `EOF` sentinel.
+- `parse(tokens: Token[]): QueryAST` — builds a typed AST via recursive descent; returns `{ root: null }` for empty input.
+
+**Internal:**
+- `splitFilterToken(raw: string)` — splits a raw `field:value` / `field=value` / `field~value` string into its parts. Throws `QUERY_PARSE_ERROR` if no operator found.
+- `TokenCursor` class — thin stateful wrapper over `Token[]` with `peek()`, `consume()`, `expect()`, and `isOperator()`.
+- `raise(error: OxoriError): never` — throws a structured error; `never` return type allows use in expression position without needing extra casts.
+- `closestField(unknown: string): string` — character-overlap heuristic for did-you-mean suggestions on unknown fields.
+- `bareValueToNode(token: Token): QueryNode` — converts a bare word into an implicit `OR` of `title:word` and `link:word`.
+- Grammar functions: `parsePrimary`, `parseNot`, `parseAnd`, `parseOr`.
+
+### Operator precedence (highest to lowest)
+1. `NOT` (unary prefix, right-recursive)
+2. `AND` (binary infix, left-associative)
+3. `OR`  (binary infix, left-associative)
+
+### Error handling
+- Chosen **throw** semantics (not `Result<T>`) — callers wrap in `try/catch`. Consistent with the task spec's "this module may throw" note.
+- `QUERY_PARSE_ERROR` — unbalanced parens, unexpected tokens, malformed filter syntax.
+- `QUERY_UNKNOWN_FIELD` — filter field not in `FILTER_FIELDS`, includes closest-match suggestion.
+
+### Key decisions
+
+1. **Throw vs Result** — chose `throw OxoriError` rather than `Result<Token[], OxoriError>` because parse failures are truly exceptional (not expected in the happy path), and throw keeps call sites cleaner when the caller already wraps in try/catch.
+2. **`TokenCursor` as a class** — the recursive descent functions are stateless pure functions that share cursor state; a class with private `index` is the cleanest encapsulation without closures or parameter threading.
+3. **`raise()` helper** — TypeScript doesn't infer `never` from bare `throw` inside a conditional expression; a `raise()` function with explicit `: never` return eliminates the need for `as never` casts.
+4. **`noUncheckedIndexedAccess`** — `query[pos]` returns `string | undefined`; all usages guarded with `?? ""` before regex test or string concatenation.
+5. **`GroupNode` preserved** — not erased during parse, per the locked type contract; evaluator in Wave 2 will simply descend into `.child`.
+6. **`bareValueToNode`** — bare words expand to `OR(title:word, link:word)` as specified; produces a full `OperatorNode` in the AST.
+
+### Gotchas / edge cases
+
+- `noUncheckedIndexedAccess` means `tokens[this.index]` can return `undefined`; `peek()` coalesces with a synthetic `EOF` token.
+- `FILTER_FIELDS` is `readonly string[]` after widening, so field validation uses `(FILTER_FIELDS as readonly string[]).includes(field)` — avoids the TS2345 "not assignable to parameter of `FilterField`" error that `FILTER_FIELDS.includes(field as FilterField)` would require.
+- The `closestField` function must always find a winner since `FILTER_FIELDS` is non-empty; initialized to `FILTER_FIELDS[0]` with a non-null assertion via `as string` to satisfy strict null checks.
+- Stray `)` with no matching `(` is caught by the post-`parseOr` EOF check, not inside `parsePrimary` — this gives a more actionable error message.
+
+---
+
+## Phase 2 — Query Engine: Evaluator (Wave 2)
+
+**Date:** 2025-07-13  
+**Task:** Add `evaluate()` to `src/query.ts` (backlog O-2-03)  
+**Status:** Complete — `npx tsc --noEmit` → 0 errors; 75 tests pass
+
+### What was done
+
+Added three symbols to `src/query.ts`:
+
+**Exported:**
+- `evaluate(ast: QueryAST, state: IndexState): QueryResult` — evaluates the full AST against all files in the index; returns `matches` (filepath set), `totalMatched`, and `executionMs`.
+
+**Internal:**
+- `matchFilter(file: FileEntry, node: FilterNode): boolean` — handles per-field, per-operator matching logic.
+- `matchNode(file: FileEntry, node: QueryNode, state: IndexState): boolean` — recursive dispatcher over `QueryNode` variants.
+
+### Operator semantics implemented
+
+| Field         | `=`                   | `:`                    | `~`                         |
+|---------------|-----------------------|------------------------|-----------------------------|
+| `tag`         | exact (case-insensitive) | exact (same as `=`)  | substring in any tag        |
+| `type`        | exact                 | contains               | contains                    |
+| `path`        | exact                 | contains               | contains                    |
+| `title`       | exact                 | contains               | contains                    |
+| `link`        | exact stem            | exact stem (same as `=`) | substring in any wikilink |
+| `frontmatter` | exact on any value    | exact on any value     | substring in any value      |
+
+### Key decisions
+
+1. **`matchNode` receives `state`** — passed through in case future NOT-complement semantics need all-files access; currently NOT uses the local negation of the child result (correct per spec).
+2. **`NOT` with empty children** — `node.children[0]` can be `undefined` under `noUncheckedIndexedAccess`; guard returns `false` rather than throwing.
+3. **`QueryResult.matches` returns file paths** — consistent with the actual `types.ts` definition (`matches: ReadonlySet<string>`), not the task description's `files: ReadonlySet<FileEntry>`. The types.ts definition is authoritative.
+4. **`executionMs` via `Date.now()`** — wall-clock delta; starts before the loop, ends after. Zero for empty state (short-circuit before clock).
+5. **`tag` and `link` with `:`** — spec says "for tag: exact; for link: exact stem" — both collapse to the same branch as `=` (no `contains` behavior for these two fields with `:`).
+6. **`frontmatter` substring on non-string values** — uses `String(fmVal)` before `.toLowerCase()` so numbers, booleans, and arrays can still be matched with `~`.
+
+### Gotchas / edge cases
+
+- `noUncheckedIndexedAccess` requires guarding `node.children[0]` in the `"not"` case — TypeScript infers `QueryNode | undefined`.
+- `IndexState.files` is `Map<string, FileEntry>` — iterating `state.files` yields `[filepath, FileEntry]` tuples; both are used (filepath added to matches, FileEntry passed to matchers).
+- `FileEntry.wikilinks` stores lowercased stems — `link` filter always compares against `lowerValue` (no further `.toLowerCase()` needed on the stored values).
+- Empty state → early return `{ matches: new Set(), totalMatched: 0, executionMs: 0 }` avoids an unnecessary loop.
