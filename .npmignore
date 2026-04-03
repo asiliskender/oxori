@@ -1,0 +1,9 @@
+.squad/
+tests/
+docs/
+.github/
+*.config.ts
+tsconfig.json
+*.md
+!README.md
+src/
