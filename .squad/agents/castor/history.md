@@ -44,3 +44,13 @@
 - Each phase = a separate npm release with detailed release notes
 
 ## Learnings
+
+### 2026-04-03 — Full sprint backlog created
+- Wrote complete sprint backlog to `.squad/backlog.md` — 38 issues across 5 phases
+- Each phase is one npm release: v0.1.0 (parser+index) through v0.5.0 (MCP+Obsidian)
+- Phase gates assigned to Flynn (review+approve before merge), release notes to Dumont
+- Scope documented in `.squad/decisions/inbox/castor-backlog-scope.md`
+- Key decisions: Phases 1-3 are core (locked in), Phases 4-5 are extensions (can be adapted)
+- Team routing clear: Tron (parser/query), Ram (graph/writer/governance/search/MCP), Yori (tests), Dumont (docs), Clu (CI/CD), Quorra (MCP expertise)
+- Backlog enables parallelization and prevents mid-phase scope creep
+- Coverage target 80% minimum, parser/governance/indexer >= 95%
