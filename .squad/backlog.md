@@ -225,6 +225,8 @@ Phase 2 gates on Phase 1 completion and approval. Flynn reviews all Phase 2 PRs 
 **Acceptance Criteria:**
 - [ ] All Phase 2 issues completed and PR-linked
 - [ ] Phase 1 merged to main and tagged v0.1.0
+- [ ] All Phase 2 public API types exported from src/index.ts before implementation begins
+- [ ] Yori writes test skeletons only after types.ts Phase 2 types are Flynn-approved
 - [ ] All Phase 2 tests passing (pnpm test -- --coverage)
 - [ ] Coverage >= 80%, query and graph modules >= 90%
 - [ ] Query language documented in docs/query-language.md
@@ -258,6 +260,45 @@ Query language is the main interface to the vault. Examples: `type:decision`, `t
 - [ ] Query language documented in docs/query-language.md with BNF grammar
 - [ ] At least 10 unit tests covering tokenization and parsing
 
+**TypeScript Contract:**
+```typescript
+export type Token = {
+  kind: TokenKind;
+  value: string;
+};
+
+export type TokenKind = "word" | "operator" | "lparen" | "rparen" | "filter" | "quote";
+
+export type QueryAST = QueryNode;
+
+export type QueryNode =
+  | FilterNode
+  | OperatorNode
+  | GroupNode;
+
+export type FilterNode = {
+  type: "filter";
+  filterType: "type" | "tag" | "path" | "frontmatter";
+  value: string;
+};
+
+export type OperatorNode = {
+  type: "operator";
+  operator: "and" | "or" | "not";
+  operands: QueryNode[];
+};
+
+export type GroupNode = {
+  type: "group";
+  node: QueryNode;
+};
+
+export function tokenize(query: string): Token[];
+export function parse(tokens: Token[]): QueryAST;
+
+export { Token, TokenKind, QueryAST, QueryNode, FilterNode, OperatorNode, GroupNode };
+```
+
 **Notes:**
 Design the query language to be simple for users but powerful for complex searches. Reference Obsidian's search or GitHub Issues search for inspiration. Avoid SQL-like syntax — markdown vault users may not know SQL.
 
@@ -272,7 +313,7 @@ Design the query language to be simple for users but powerful for complex search
 Evaluator takes a QueryAST and the in-memory index cache, executes the query, returns a Set<string> of matching file paths.
 
 **Acceptance Criteria:**
-- [ ] query.ts exports: evaluate(ast: QueryAST, cache: IndexCache): Set<string>
+- [ ] query.ts exports: evaluate(ast: QueryAST, state: IndexState): QueryResult
 - [ ] Supports filters: type: (file extension), tag: (hierarchical tag match), path: (glob or prefix), frontmatter.key=value
 - [ ] Operators: and (intersection), or (union), not (complement)
 - [ ] Handles nested groups: `(a and b) or (c and not d)`
@@ -282,8 +323,20 @@ Evaluator takes a QueryAST and the in-memory index cache, executes the query, re
 - [ ] Deterministic results: same query on same cache returns same set every time
 - [ ] At least 12 unit tests covering all filter types and operators
 
+**TypeScript Contract:**
+```typescript
+export type QueryResult = {
+  matches: Set<string>; // absolute filepaths matching the query
+  count: number;
+};
+
+export function evaluate(ast: QueryAST, state: IndexState): QueryResult;
+
+export { QueryResult };
+```
+
 **Notes:**
-Keep evaluation simple — the cache is in memory, so full scans are fast. No need for sophisticated indexing yet. This is the query execution layer that Phase 3's SDK will wrap.
+Keep evaluation simple — the cache is in memory, so full scans are fast. No need for sophisticated indexing yet. This is the query execution layer that Phase 3's SDK will wrap. Note: parameter is `IndexState` (the actual type from types.ts), not `IndexCache`.
 
 ---
 
@@ -296,14 +349,43 @@ Keep evaluation simple — the cache is in memory, so full scans are fast. No ne
 Graph walk starts at a file, follows wikilinks (or other relation types) for N hops, optionally filtering by direction (incoming, outgoing, both) and relation type (typed relations like depends_on).
 
 **Acceptance Criteria:**
-- [ ] graph.ts exports: walk(start: string, cache: IndexCache, options: WalkOptions): WalkResult
+- [ ] graph.ts exports: walk(start: string, state: IndexState, options?: WalkOptions): WalkResult
 - [ ] WalkOptions includes: depth (default 1), direction (incoming|outgoing|both), via (links|tags|both|relation:key)
 - [ ] WalkResult includes: nodes (Set<string>), edges (Set<Edge>), visitOrder (array for topological inspection)
 - [ ] Handles cycles gracefully: doesn't infinite loop, tracks visited nodes
 - [ ] Handles self-links: file linking to itself doesn't cause issues
-- [ ] Can walk typed relations: walk(start, cache, { via: 'relation:depends_on' })
+- [ ] Can walk typed relations: walk(start, state, { via: 'relation:depends_on' })
 - [ ] Performance: walk(start, depth=3, via=links) on linked-vault completes in < 200ms
 - [ ] At least 10 unit tests: simple walks, cycles, direction filters, typed relations, empty results
+
+**TypeScript Contract:**
+```typescript
+export type WalkDirection = "incoming" | "outgoing" | "both";
+
+export type WalkVia = "links" | "tags" | "both" | `relation:${string}`;
+
+export type WalkOptions = {
+  depth?: number;
+  direction?: WalkDirection;
+  via?: WalkVia;
+};
+
+export type Edge = {
+  source: string;    // absolute filepath
+  target: string;    // absolute filepath (resolved wikilink)
+  relation?: string; // typed relation type (e.g., "depends_on"), undefined for wikilinks
+};
+
+export type WalkResult = {
+  nodes: Set<string>;  // absolute filepaths visited
+  edges: Set<Edge>;
+  visitOrder: string[]; // topological order for inspection
+};
+
+export function walk(start: string, state: IndexState, options?: WalkOptions): WalkResult;
+
+export { WalkOptions, WalkResult, Edge, WalkDirection, WalkVia };
+```
 
 **Notes:**
 Graph is a directed graph with typed edges. Wikilinks are one edge type, tags are another, typed relations are custom. Design walk() to be composable — users may chain walks or filter results afterward.
@@ -328,6 +410,9 @@ CLI commands for querying and walking the graph. `oxori query "type:decision"` r
 - [ ] Error messages include action suggestions if no vault found
 - [ ] Output is deterministic and testable
 - [ ] Commands integrate with Phase 1 index (no rebuilding unless --reindex flag)
+
+**Implementation Note:**
+These commands are thin wrappers: load index via `indexVault()`, call `evaluate()` or `walk()` from query.ts/graph.ts, format output. No new exports from `cli.ts` — logic lives in `query.ts` and `graph.ts`. CLI layer only handles argument parsing, formatting, and I/O.
 
 **Notes:**
 CLI commands are wrappers around query and walk functions. Keep logic in query.ts and graph.ts, keep CLI thin. JSON output should be structured so users can pipe to jq.
