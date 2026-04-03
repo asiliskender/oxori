@@ -378,6 +378,309 @@ export type WatchEvent = {
   timestamp: number;
 };
 
+// === Query Engine (Phase 2) ===
+
+/**
+ * @description Enumerates every token kind the query tokenizer can emit.
+ *
+ * @remarks
+ * - `FILTER`   — a `field:value` or `field=value` atom before operator parsing
+ * - `OPERATOR` — the literal strings `AND`, `OR`, `NOT`
+ * - `VALUE`    — a bare or quoted string used as a shorthand tag/title search
+ * - `LPAREN`   — opening parenthesis `(`
+ * - `RPAREN`   — closing parenthesis `)`
+ * - `EOF`      — sentinel emitted once the input is exhausted
+ */
+export type TokenKind = "FILTER" | "OPERATOR" | "VALUE" | "LPAREN" | "RPAREN" | "EOF";
+
+/**
+ * @description A single token produced by the query tokenizer.
+ *
+ * @remarks
+ * `position` is a zero-based character offset into the original query string.
+ * It is preserved in every token so the parser can attach accurate source
+ * locations to error messages without re-scanning.
+ *
+ * @example
+ * // Tokenizing `tag:zettel AND type:note` yields (among others):
+ * const t: Token = { kind: "FILTER", value: "tag:zettel", position: 0 };
+ */
+export type Token = {
+  /** The grammatical category of this token. */
+  kind: TokenKind;
+  /** The raw substring from the query string that produced this token. */
+  value: string;
+  /** Zero-based character offset of the token's first character in the query. */
+  position: number;
+};
+
+/**
+ * @description AST leaf node representing a single field-operator-value filter.
+ *
+ * @remarks
+ * Three operator forms are supported:
+ * - `=`  exact equality (case-insensitive)
+ * - `:`  token / starts-with match (mirrors Obsidian dataview convention)
+ * - `~`  substring / regex match
+ *
+ * `field` must be one of the {@link FilterField} values; the evaluator rejects
+ * unknown fields at runtime so the type is kept as `string` here to avoid
+ * a circular dependency between the AST and the field enumeration.
+ *
+ * @example
+ * const node: FilterNode = { type: "filter", field: "tag", operator: ":", value: "zettel" };
+ */
+export type FilterNode = {
+  type: "filter";
+  /** The index field being tested (e.g. `"tag"`, `"type"`, `"path"`). */
+  field: string;
+  /** How the field value is compared against the filter value. */
+  operator: "=" | ":" | "~";
+  /** The value the field is compared against. */
+  value: string;
+};
+
+/**
+ * @description AST interior node representing a boolean combination of child nodes.
+ *
+ * @remarks
+ * A discriminated union on `type` ensures exhaustive handling in the evaluator:
+ * - `"and"` — all children must match
+ * - `"or"`  — at least one child must match
+ * - `"not"` — `children` holds exactly one node whose result is inverted
+ *
+ * Using a single `OperatorNode` with a `type` field (rather than separate
+ * `AndNode`/`OrNode`/`NotNode` types) keeps the visitor pattern lean: a single
+ * `case "and"` / `case "or"` / `case "not"` covers all boolean logic.
+ *
+ * @example
+ * const node: OperatorNode = {
+ *   type: "and",
+ *   children: [
+ *     { type: "filter", field: "tag", operator: ":", value: "zettel" },
+ *     { type: "filter", field: "type", operator: "=", value: "note" },
+ *   ],
+ * };
+ */
+export type OperatorNode = {
+  type: "and" | "or" | "not";
+  /** Child query nodes. For `"not"`, this array has exactly one element. */
+  children: QueryNode[];
+};
+
+/**
+ * @description AST node representing a parenthesized sub-expression.
+ *
+ * @remarks
+ * `GroupNode` exists as a distinct node type (rather than being erased during
+ * parsing) so that round-trip serialization and IDE highlighting can faithfully
+ * reconstruct the original grouping. The evaluator simply descends into `child`.
+ *
+ * @example
+ * // Query: `(tag:zettel OR tag:fleeting) AND type:note`
+ * const group: GroupNode = {
+ *   type: "group",
+ *   child: { type: "or", children: [ ... ] },
+ * };
+ */
+export type GroupNode = {
+  type: "group";
+  /** The single query node enclosed by the parentheses. */
+  child: QueryNode;
+};
+
+/**
+ * @description The discriminated union of every node that can appear in a query AST.
+ *
+ * @remarks
+ * Pattern-matching on `node.type` exhaustively covers all cases:
+ * `"filter"` → {@link FilterNode}, `"and" | "or" | "not"` → {@link OperatorNode},
+ * `"group"` → {@link GroupNode}.
+ */
+export type QueryNode = FilterNode | OperatorNode | GroupNode;
+
+/**
+ * @description The top-level result of parsing a query string.
+ *
+ * @remarks
+ * `root: null` is the canonical representation of the empty query (match all
+ * files).  Having an explicit `null` avoids a sentinel node and lets callers
+ * short-circuit evaluation with a simple `if (ast.root === null) return allFiles`.
+ *
+ * @example
+ * const ast: QueryAST = { root: null }; // matches every file
+ */
+export type QueryAST = {
+  /** The root node of the parsed query tree, or `null` for "match all". */
+  root: QueryNode | null;
+};
+
+/**
+ * @description The result returned by a query execution.
+ *
+ * @remarks
+ * `matches` is a `ReadonlySet` to signal that callers must not mutate it.
+ * `executionMs` is a wall-clock duration measured inside the query executor
+ * and is intended for developer tooling / MCP diagnostics, not for caching decisions.
+ *
+ * @example
+ * const result: QueryResult = {
+ *   matches: new Set(["notes/foo.md", "notes/bar.md"]),
+ *   totalMatched: 2,
+ *   executionMs: 1.4,
+ * };
+ */
+export type QueryResult = {
+  /** File paths (vault-relative) of every file that satisfied the query. */
+  matches: ReadonlySet<string>;
+  /** Convenience count — equivalent to `matches.size`. */
+  totalMatched: number;
+  /** Wall-clock milliseconds the executor spent evaluating the query. */
+  executionMs: number;
+};
+
+/**
+ * @description The exhaustive list of index fields that a filter expression may target.
+ *
+ * @remarks
+ * Defined as a `const` tuple so it can be used at runtime (e.g. to validate
+ * user-supplied field names in the evaluator) while simultaneously producing
+ * the `FilterField` union type via `typeof FILTER_FIELDS[number]`.
+ *
+ * Fields:
+ * - `"tag"`         — one of the file's `#tags`
+ * - `"type"`        — the `type` frontmatter key (e.g. `note`, `task`)
+ * - `"path"`        — the vault-relative filepath
+ * - `"frontmatter"` — arbitrary frontmatter key (combined with value as `key=value`)
+ * - `"title"`       — the `title` frontmatter key or inferred H1
+ * - `"link"`        — a wikilink target present in the file's body
+ */
+export const FILTER_FIELDS = ["tag", "type", "path", "frontmatter", "title", "link"] as const;
+
+/**
+ * @description The union of valid field names accepted by a {@link FilterNode}.
+ *
+ * @example
+ * const field: FilterField = "tag"; // valid
+ * const bad: FilterField = "author"; // TS error — not a recognised field
+ */
+export type FilterField = (typeof FILTER_FIELDS)[number];
+
+// === Graph Traversal (Phase 2) ===
+
+/**
+ * @description A single directed edge in the file-relationship graph.
+ *
+ * @remarks
+ * All paths are vault-relative strings (the same format used throughout the
+ * indexer).  `kind` distinguishes how the relationship was discovered:
+ * - `"wikilink"` — a `[[target]]` reference in the source file's body
+ * - `"tag"`      — source and target share a common tag (co-occurrence edge)
+ * - `"relation"` — a typed relation declared in frontmatter (`key:: [[target]]`);
+ *   the relation type is preserved in `relationType` for downstream use.
+ *
+ * `relationType` is only present when `kind === "relation"`.
+ *
+ * @example
+ * const e: Edge = { source: "notes/a.md", target: "notes/b.md", kind: "wikilink" };
+ * const r: Edge = { source: "notes/a.md", target: "notes/b.md", kind: "relation", relationType: "references" };
+ */
+export type Edge = {
+  /** Vault-relative path of the originating file. */
+  source: string;
+  /** Vault-relative path of the referenced file. */
+  target: string;
+  /** How the relationship between source and target was established. */
+  kind: "wikilink" | "tag" | "relation";
+  /**
+   * The semantic label of the relation (e.g. `"references"`, `"inspired-by"`).
+   * Only present when `kind === "relation"`.
+   */
+  relationType?: string;
+};
+
+/**
+ * @description Controls which direction edges are followed during a graph walk.
+ *
+ * @remarks
+ * - `"outgoing"` — follow edges where the start node is the source (default)
+ * - `"incoming"` — follow edges where the start node is the target (backlinks)
+ * - `"both"`     — follow edges in either direction
+ */
+export type WalkDirection = "incoming" | "outgoing" | "both";
+
+/**
+ * @description Constrains which edge kinds are traversed during a graph walk.
+ *
+ * @remarks
+ * The template literal form `relation:${string}` lets callers target a specific
+ * named relation type (e.g. `"relation:references"`) without enumerating every
+ * possible relation name in the type system.  This keeps the type extensible —
+ * new relation types added to frontmatter are automatically valid walk targets.
+ *
+ * @example
+ * const via: WalkVia = "links";               // only wikilinks
+ * const via2: WalkVia = "relation:inspired-by"; // only "inspired-by" relations
+ */
+export type WalkVia = "links" | "tags" | "both" | `relation:${string}`;
+
+/**
+ * @description Options bag passed to `graph.walk()`.
+ *
+ * @remarks
+ * All fields are optional; omitting them yields a sensible default walk:
+ * - `depth`     defaults to `Infinity` (walk until no new nodes are found)
+ * - `direction` defaults to `"outgoing"`
+ * - `via`       defaults to `"both"` (all edge kinds)
+ * - `maxNodes`  defaults to no cap (unbounded walk)
+ *
+ * `maxNodes` is a safety valve for large vaults — once the visited-node count
+ * hits the limit the walk stops and `WalkResult.truncated` is set to `true`.
+ *
+ * @example
+ * const opts: WalkOptions = { depth: 2, direction: "outgoing", via: "links", maxNodes: 500 };
+ */
+export type WalkOptions = {
+  /** Maximum edge-hop depth from the seed node. Defaults to `Infinity`. */
+  depth?: number;
+  /** Which direction to follow edges. Defaults to `"outgoing"`. */
+  direction?: WalkDirection;
+  /** Which edge kinds to traverse. Defaults to `"both"`. */
+  via?: WalkVia;
+  /** Hard cap on visited nodes; walk stops early if reached. */
+  maxNodes?: number;
+};
+
+/**
+ * @description The result returned by a `graph.walk()` call.
+ *
+ * @remarks
+ * `nodes` and `edges` are `ReadonlySet` to prevent accidental mutation by
+ * callers.  `visitOrder` is a `readonly` array preserving BFS/DFS discovery
+ * order — useful for rendering breadcrumbs or computing ancestry chains.
+ *
+ * `truncated` is `true` whenever the walk was halted by `maxNodes`; callers
+ * should surface this to users so they know results may be incomplete.
+ *
+ * @example
+ * const result: WalkResult = {
+ *   nodes: new Set(["notes/a.md", "notes/b.md"]),
+ *   edges: new Set([{ source: "notes/a.md", target: "notes/b.md", kind: "wikilink" }]),
+ *   visitOrder: ["notes/a.md", "notes/b.md"],
+ *   truncated: false,
+ * };
+ */
+export type WalkResult = {
+  /** All vault-relative file paths visited during the walk (including the seed). */
+  nodes: ReadonlySet<string>;
+  /** All edges traversed during the walk. */
+  edges: ReadonlySet<Edge>;
+  /** Node paths in the order they were first visited. */
+  visitOrder: readonly string[];
+  /** `true` if the walk was halted early due to `maxNodes`. */
+  truncated: boolean;
+};
+
 // === Governance (Phase 3) ===
 
 /**
