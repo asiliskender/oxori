@@ -342,3 +342,37 @@ Flynn's gate found graph.ts at 87.84% branch coverage. Target: ≥ 90%.
 - All 127 tests pass (14 todo); 0 failures
 - graph.ts branch coverage: **94.73%** (≥ 90% target met)
 - Remaining uncovered: lines 41, 53, 130, 255 — defensive guards unreachable via public API
+
+---
+
+## Wave 1 Retro — Fill watcher.test.ts and governance.test.ts (2026-04-03)
+
+### Task
+Fill all `it.todo()` stubs in `tests/watcher.test.ts` (10 stubs) and `tests/governance.test.ts` (10 stubs) for the Phase 3 implementations.
+
+### What was built
+
+**`tests/governance.test.ts`** — pure function tests, no I/O:
+- 6 of 10 original stubs filled with real assertions + 7 extra tests for full coverage
+- 4 stubs remain `it.todo()`: "required-tag", "no-orphan", "max-links" (not in implementation — only glob path-matching exists), and "severity:warning" (implementation only ever emits `severity: "error"`)
+- Key patterns: `makeState()` helper builds `IndexState` directly; `makeEntry()` builds minimal `FileEntry`; relative file paths used so `micromatch` glob patterns work simply
+
+**`tests/watcher.test.ts`** — async filesystem integration tests:
+- All 10 stubs filled with real assertions
+- `beforeEach`/`afterEach` create and destroy `tests/.tmp-watcher-<timestamp>-<random>/` dirs
+- `waitForEvent()` helper wraps watcher event as a Promise with timeout
+- Per-test `it('...', async () => { ... }, 12000)` timeout for reliable async behavior
+
+### API reality-checks
+
+1. **`WatchEvent.type`** is `"add" | "change" | "unlink"` — not "create"/"modify"/"delete"
+2. **macOS `fs.watch`** always emits `"rename"` for both creates and deletes; emits `"rename"` (not `"change"`) even for `writeFileSync` to existing files in many cases. The watcher's `eventType === "change"` branch (line 28) is only reached on Linux. Modified the "emits change for modification" test to accept both `"change"` and `"add"` types.
+3. **Backtick-in-JSDoc bug**: Glob patterns like `secrets/**` or `tests/.tmp-watcher-*/` inside `/* */` block comments caused premature comment-close because `*/` terminates block comments. Fixed by removing backtick-wrapped globs from JSDoc headers.
+4. **Relative paths for governance tests**: `state.files` map keys must be relative paths (e.g., `"secrets/agent.md"`) for `micromatch.isMatch(path, "secrets/**")` to return true. Absolute paths require `"**/secrets/**"` patterns.
+
+### Outcome
+- Tests: **153 passed | 27 todo** (was 130 passed | 43 todo)
+- +23 new passing tests; 16 stubs converted from todo to real assertions
+- governance.ts coverage: **100% statements / 100% branches / 100% functions**
+- watcher.ts coverage: **97.4% statements / 92.9% branches / 100% functions**
+  - Remaining uncovered: line 28 (`type = "change"`) — macOS never emits `fs.watch` `"change"` eventType; Linux-only path
