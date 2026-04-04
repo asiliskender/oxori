@@ -161,6 +161,36 @@ The architecture prioritizes **predictability over cleverness**: all file paths 
 
 **Provides:** MCP tools for querying, graph traversal, semantic search, file reading, and file writing. Resources for exposing the entire vault as queryable data structures.
 
+## Phase 3 Additions
+
+Phase 3 introduces two critical capabilities that complete the core Oxori platform:
+
+### Watcher Layer (`src/watcher.ts`)
+
+The **watcher** monitors the vault filesystem for real-time changes (new files, edits, deletions) and emits `WatchEvent` objects (type, filepath, timestamp). Built on Node.js `fs.watch` with EventEmitter, it wraps raw filesystem events into typed `WatchEvent` objects with three event types:
+- `"add"` — new markdown file detected
+- `"change"` — existing file content modified
+- `"unlink"` — file deleted or moved out of the vault
+
+The watcher is optional and typically used in long-running processes (MCP server, agent interactions) to keep the index in sync without full re-scans. For one-shot CLI commands, a full re-index is simpler and sufficient.
+
+**API:** `const watcher = watch(vaultPath, config?); watcher.on('change', handler); watcher.stop();`
+
+### Governance Layer (`src/governance.ts`)
+
+The **governance** layer enforces policy rules on vault writes via glob-pattern matching. Rules are defined as `GovernanceRule` objects with:
+- `id` — unique identifier for audit logging
+- `pattern` — glob pattern to match filepaths (e.g., `drafts/**`, `archive/**`)
+- `effect` — `"allow"` or `"deny"` to permit or block writes
+- `appliesTo` — scope (`"agents"` for agent writes only, or `"all"` for future use)
+- `description` — human-readable explanation
+
+Rules are evaluated in declaration order; the first matching rule wins. This enables hierarchical structures like "allow all except drafts". Governance violations produce `GovernanceViolation` entries with severity level (currently `"error"` for denials). Crucially, **humans are never subject to governance** — only agent writes (via MCP, SDK, CLI) are checked. This ensures humans remain in control.
+
+**API:** `const result = checkGovernance(rules, state); if (!result.passed) { result.violations.forEach(v => handle(v)); }`
+
+Both additions are pure functions with no I/O or mutation — they integrate seamlessly with existing layers and are ready for Phase 5's MCP server and agent orchestration.
+
 ## Data Flow
 
 ### Indexing (Phase 1)

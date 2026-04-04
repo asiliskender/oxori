@@ -297,3 +297,35 @@ Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
 
 ---
 
+### 2025-07-14: Phase 3 Gate Review — ✅ APPROVED (12/12)
+
+Ran full Phase 3 gate verification against all 12 mandatory criteria. **First gate to pass on the first attempt.**
+
+**Commands run:**
+- `pnpm build` — exit 0, all dist outputs built ✅
+- `pnpm test:coverage` — 153 passed | 27 todo (180), zero failures ✅
+- Runtime export check via `node -e "import('./dist/index.js')"` — `watch` and `checkGovernance` confirmed in 18 total exports ✅
+- Source files: `src/watcher.ts` and `src/governance.ts` both present ✅
+- README: 10 matches for watch/governance content, File Watcher + Governance SDK sections with code examples ✅
+- RELEASES.md: `## [Unreleased] — v0.3.0` with watcher + governance content ✅
+- CLI tests: `describe('oxori watch')` (4 it.todo), `describe('oxori check')` (2 it.todo) ✅
+- pnpm-lock.yaml: committed at 336864b ✅
+
+**Coverage (full table per Retro A4):**
+- governance.ts: 100% stmts | 100% branch | 100% funcs | 100% lines — exceeds 90% threshold
+- watcher.ts: 97.43% stmts | 92.3% branch | 100% funcs | 97.43% lines — exceeds 90% threshold
+- Global: 84.6% stmts | 88.54% branch | 91.3% funcs | 84.6% lines — exceeds 80% threshold
+- Carried debt: indexer.ts 47.15%, parser.ts 80.76%
+
+**4 governance it.todo() stubs — decided as ACCEPTABLE (not a gate blocker):**
+- required-tag, no-orphan, max-links, severity:warning rule types are extensions beyond the current glob-based path pattern architecture. Tests correctly use `it.todo()` per Retro A3. Phase 4 backlog item needed.
+
+**Phase 2 retro action items compliance:** 7/8 verified (A7 semantic-release dry-run not verified — Clu responsibility pre-publish).
+
+**Gate verdict: ✅ APPROVED — v0.3.0 ready for release.**
+Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
+
+**Lesson:** Writing the gate checklist at kickoff (Retro A6) and mandating the runtime export check (Retro A1) directly prevented the class of failures that blocked Phase 2 twice. First-attempt gate pass validates the retro action item discipline.
+
+---
+

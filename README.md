@@ -8,7 +8,7 @@ Make your markdown vault queryable, traversable, and semantically searchable —
 
 Your markdown files stay readable, editable, yours. Oxori makes them queryable. Tags and links become a graph you can walk. Frontmatter becomes indexed metadata you can filter. Content becomes semantically searchable via embeddings. Humans write the rules, agents record the decisions.
 
-## Features (v0.2.0 — Phase 1 & 2)
+## Features (v0.3.0 — Phase 1, 2, & 3)
 
 - ✅ **Parse markdown files** — extract frontmatter (YAML), tags, wikilinks, typed relations
 - ✅ **Build in-memory index** — scan a vault and create `.oxori/index/` markdown files
@@ -16,7 +16,8 @@ Your markdown files stay readable, editable, yours. Oxori makes them queryable. 
 - ✅ **Query engine** — filter files by tag, type, path, frontmatter, title, link
 - ✅ **Graph traversal** — BFS walk with cycle detection, direction, and typed relations
 - ✅ **CLI commands** — `oxori query`, `oxori walk`, `oxori graph`
-- 🔜 **Read/write API** (Phase 3) — create and update files with governance enforcement
+- ✅ **File watching** — real-time vault change events (add/change/unlink)
+- ✅ **Governance** — policy rules via glob patterns with deny/allow effects
 - 🔜 **Semantic search** (Phase 4) — find files by meaning, not keywords, with cached embeddings
 - 🔜 **MCP server** (Phase 5) — AI agents (Claude, Cursor) can use Oxori as a tool
 
@@ -95,10 +96,11 @@ oxori graph --json
 
 ### SDK Usage
 
+#### Parse and Index
+
 ```typescript
 import { parseFile } from 'oxori/parser';
 import { buildIndex } from 'oxori/indexer';
-import { tokenize, parse, evaluate, walk } from 'oxori';
 
 // Parse a single file
 const result = await parseFile('/path/to/note.md');
@@ -112,19 +114,77 @@ const indexResult = await buildIndex('/path/to/vault');
 if (indexResult.ok) {
   const { state, filesCount, tagsCount, linksCount } = indexResult.value;
   console.log(`Indexed ${filesCount} files, ${tagsCount} tags`);
-  
-  // Query the vault
-  const ast = parse(tokenize("tag:auth AND type:decision"));
-  const queryResult = evaluate(ast, state);
-  console.log(queryResult.totalMatched); // number of matching files
-  
-  // Walk the link graph
-  const walkResult = walk("/path/to/note.md", state, {
-    direction: "outgoing",
-    via: "links",
-    depth: 3,
+}
+```
+
+#### Query and Walk
+
+```typescript
+import { tokenize, parse, evaluate, walk } from 'oxori';
+
+// Query the vault
+const ast = parse(tokenize("tag:auth AND type:decision"));
+const queryResult = evaluate(ast, state);
+console.log(queryResult.totalMatched); // number of matching files
+
+// Walk the link graph
+const walkResult = walk("/path/to/note.md", state, {
+  direction: "outgoing",
+  via: "links",
+  depth: 3,
+});
+console.log([...walkResult.visitOrder]); // paths of reachable files
+```
+
+#### File Watcher
+
+```typescript
+import { watch } from 'oxori';
+
+const watcher = watch('/path/to/vault');
+watcher.on('change', (event) => {
+  console.log(`${event.type}: ${event.filepath}`);
+  // event.type is 'add' | 'change' | 'unlink'
+  // event.filepath is absolute path
+  // event.timestamp is milliseconds since epoch
+});
+
+watcher.on('error', (err) => {
+  console.error('Watch error:', err);
+});
+
+// later:
+watcher.stop();
+```
+
+#### Governance
+
+```typescript
+import { checkGovernance } from 'oxori';
+import type { GovernanceRule } from 'oxori';
+
+const rules: GovernanceRule[] = [
+  {
+    id: 'no-drafts',
+    description: 'Block writes to draft files',
+    pattern: 'drafts/**',
+    effect: 'deny',
+    appliesTo: 'agents'
+  },
+  {
+    id: 'allow-decisions',
+    description: 'Allow all decision files',
+    pattern: 'decisions/**',
+    effect: 'allow',
+    appliesTo: 'agents'
+  }
+];
+
+const result = checkGovernance(rules, state);
+if (!result.passed) {
+  result.violations.forEach(v => {
+    console.log(`[${v.severity}] ${v.ruleId}: ${v.message}`);
   });
-  console.log([...walkResult.visitOrder]); // paths of reachable files
 }
 ```
 
@@ -242,7 +302,7 @@ See [docs/architecture.md](docs/architecture.md) for the complete system design,
 
 Oxori's parser reads markdown files and extracts frontmatter, tags, and wikilinks. The indexer builds three in-memory data structures (files, tags, links) and persists them as markdown files under `.oxori/index/`. These index files are human-readable, Git-friendly, and regenerable at any time.
 
-Phase 2 adds query engine, graph traversal, and CLI commands for searching and exploring your vault. Phases 3-5 will add governance rules, semantic search, and an MCP server — but Phase 1-2 gives you a solid foundation: parse any vault, understand its structure, and query it effectively.
+Phase 2 adds query engine, graph traversal, and CLI commands for searching and exploring your vault. Phase 3 adds a file watcher for real-time index updates and a governance layer to enforce policy rules. Phases 4-5 will add semantic search and an MCP server — but Phase 1-3 gives you a solid foundation: parse any vault, understand its structure, query it effectively, watch for changes, and enforce governance rules.
 
 ## Contributing
 

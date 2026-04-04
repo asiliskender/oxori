@@ -1,5 +1,29 @@
 # Release Notes
 
+## [Unreleased] — v0.3.0
+
+**Status:** Draft (Phase 3 in progress)
+
+### Added
+
+- **`watch(vaultPath, config?)`** — Real-time file watcher emitting `WatchEvent` (add/change/unlink) for markdown files. EventEmitter-based for easy integration with indexers and MCP servers.
+- **`checkGovernance(rules, state)`** — Glob-pattern-based governance rule evaluation. Rules have `id`, `pattern`, `effect` (allow/deny), and `appliesTo` (agents only by design). Returns `GovernanceResult` with violations list.
+- **New types** — `VaultWatcher`, `WatchEvent`, `GovernanceRule`, `GovernanceViolation`, `GovernanceResult` now fully implemented and exported.
+- **SDK exports** — `watch()` and `checkGovernance()` are now part of the public API.
+
+### Changed
+
+- **README.md** — Updated features list to v0.3.0; added "File Watcher" and "Governance" sections in SDK Usage with complete code examples.
+- **docs/architecture.md** — Added "Phase 3 Additions" section summarizing the watcher and governance layers with API examples.
+
+### Documentation
+
+- Watcher emits `WatchEvent` with fields: `type` (add/change/unlink), `filepath` (absolute), `timestamp` (ms)
+- Governance rules enforce policy on agent writes only; humans bypass governance by design
+- Both implementations are pure functions (no I/O or side effects in core logic)
+
+---
+
 ## v0.1.0 — Phase 1: Parser + Markdown Index
 
 **Status:** 🔜 Planned  

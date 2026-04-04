@@ -167,3 +167,63 @@
 - Maintained markdown formatting and hierarchy
 
 **Status:** ✅ Complete. README.md updated with Phase 2 content.
+
+### Phase 3 Documentation Updates (2026-04-04)
+
+**Task:** Update README.md, docs/architecture.md, and RELEASES.md to document Phase 3 additions (Watcher and Governance).
+
+**Changes made:**
+
+1. **README.md**
+   - Updated features list from v0.2.0 to v0.3.0
+   - Updated capabilities: added "File watching (real-time vault change events)" and "Governance (policy rules via glob patterns)"
+   - Restructured SDK Usage into four subsections:
+     - Parse and Index (existing, kept as-is)
+     - Query and Walk (reorganized from existing content)
+     - **File Watcher** (new) — Complete code example showing `watch()` API with `on('change')` listener, event handling (type, filepath, timestamp), error handling, and `stop()` cleanup
+     - **Governance** (new) — Complete code example showing `checkGovernance()` API with rule definition (id/description/pattern/effect/appliesTo), result checking, and violation iteration
+   - Updated Architecture section description to reflect Phase 3 completeness ("Phase 1-3 gives you a solid foundation... enforce governance rules")
+
+2. **docs/architecture.md**
+   - Added new "## Phase 3 Additions" section (after System Layers, before Data Flow)
+   - Summarizes Watcher layer:
+     - EventEmitter-based, wraps Node.js fs.watch
+     - Emits WatchEvent with type (add/change/unlink), filepath (absolute), timestamp (ms)
+     - Optional, used in long-running processes (MCP server, agent interactions)
+     - API: `watch(vaultPath, config?); watcher.on('change', handler); watcher.stop()`
+   - Summarizes Governance layer:
+     - Glob-pattern rule evaluation with id/pattern/effect/appliesTo
+     - Rules evaluated in order, first match wins
+     - Violations include ruleId, message, filePath, severity
+     - **Crucial:** Humans never subject to governance — only agent writes checked
+     - API: `checkGovernance(rules, state); if (!result.passed) { result.violations... }`
+   - Emphasizes both are pure functions with no I/O or mutation, ready for Phase 5 MCP integration
+
+3. **RELEASES.md**
+   - Added **[Unreleased] — v0.3.0** section at top
+   - Sections:
+     - **Added** — New APIs (`watch()`, `checkGovernance()`), new types (VaultWatcher, WatchEvent, GovernanceRule, GovernanceViolation, GovernanceResult), SDK exports
+     - **Changed** — README.md updates (features list, SDK Usage sections) and docs/architecture.md updates (Phase 3 Additions section)
+     - **Documentation** — Key points on WatchEvent fields, governance enforcement scope, pure function design
+   - Preserved all existing v0.1.0 content below
+
+**API Accuracy Verified:**
+- WatchEvent uses `filepath` (not `path`), types are `"add" | "change" | "unlink"` (not "create"/"modify"/"delete")
+- GovernanceRule uses `pattern` (glob string), `effect: "allow" | "deny"`, `appliesTo: "agents" | "all"`
+- All examples validated against src/watcher.ts and src/governance.ts source code
+- VaultWatcher interface shows `on()` overloads for "change" (WatchEvent) and "error" (Error)
+
+**Standards Applied:**
+- README examples are complete, runnable code with proper error handling
+- Architecture section clearly explains layer design decisions and integration points
+- Release notes follow existing format with Added/Changed/Documentation sections
+- All examples are derived from actual API signatures, not pseudo-code
+- Maintained consistency with Phase 1 and 2 documentation tone and structure
+
+**Files created/updated:**
+- `.squad/decisions/inbox/dumont-phase3-docs.md` — Decision note explaining context and choices
+- README.md — Updated version, features, capabilities, SDK Usage
+- docs/architecture.md — Added Phase 3 Additions section
+- RELEASES.md — Added v0.3.0 [Unreleased] entry at top
+
+**Status:** ✅ Complete. Phase 3 documentation is ready for release and user consumption.
