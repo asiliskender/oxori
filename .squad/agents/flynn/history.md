@@ -329,3 +329,33 @@ Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
 
 ---
 
+### 2026-04-04: Phase 3 Retrospective facilitated
+
+**Facilitated** the Phase 3 retrospective for all contributors (Tron, Ram, Yori, Clu, Dumont, Castor).
+
+**Gate summary:** ✅ APPROVED — v0.3.0 (first clean gate pass: 12/12 on attempt #1)
+
+**Key findings documented in `.squad/decisions/inbox/flynn-phase3-retro.md`:**
+
+**Wins (8 items):**
+1. First clean gate in project history — 12/12 criteria on attempt #1
+2. Phase 2 retro A1–A8: 7/8 applied and verified at gate (A7 deferred again)
+3. governance.ts at 100% coverage, watcher.ts at 97.43% — both exceeded thresholds
+4. Wave structure and parallel fan-out (Tron + Ram in Wave 1) worked without blocking dependencies
+5. Types-first discipline held for third consecutive phase — zero API mismatches
+6. Yori's test triage: 10/10 watcher stubs filled, 4 governance stubs correctly left as it.todo()
+7. Dumont's docs accurate on first submission (used correct field names from source)
+8. Conventional commits maintained throughout
+
+**Friction points (4 items):**
+1. GovernanceRule type gap — only supports pattern+effect; required-tag, no-orphan, max-links, severity:warning not expressible in current type shape. Needs discriminated union in Phase 4.
+2. WatchEvent field name discrepancy in test stub descriptions — "create/modify/delete" vs actual "add/change/unlink", "path" vs "filepath". Corrected during fill, but reveals stub descriptions should use exact type vocabulary.
+3. pnpm-lock.yaml missing at Phase 3 start — CI would fail on clean clone. Fixed at commit 336864b.
+4. Scope pivot from Write API (22 criteria) to Watcher + Governance (12 criteria) without formal gate checklist amendment.
+
+**8 action items assigned** for Phase 4 — highest priority: GovernanceRule discriminated union (A1), carry deferred gate criteria formally (A3), indexer.ts coverage debt (A4), semantic-release dry-run mandatory (A6).
+
+**Phase 4 readiness:** ✅ Cleared. Primary concerns: GovernanceRule type extension, indexer.ts at 47.15% (carried 2 phases), semantic-release never validated (deferred 3×).
+
+---
+
