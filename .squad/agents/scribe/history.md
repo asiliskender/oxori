@@ -210,3 +210,16 @@ Ready for Phase 3: Write API + Governance.
 - Squad sign-off complete: Dumont (docs ✅), Flynn (gate ✅), Scribe (commits ✅)
 
 **Status:** Phase 3 COMPLETE. v0.3.0 shipped to production (origin/main). Phase 4 ready to kick off.
+
+## Phase 3 Retrospective Merged — 2026-04-04T04:46:30Z
+
+✅ **Merged Phase 3 retrospective into decisions archive**
+
+**Commit:** 2e6bd4b (docs(scribe): merge Phase 3 retrospective into decisions)
+
+**Actions Completed:**
+1. ✅ Appended flynn-phase3-retro.md to .squad/decisions.md
+2. ✅ Deleted .squad/decisions/inbox/flynn-phase3-retro.md
+3. ✅ Staged changes with git add -A
+4. ✅ Committed with Co-authored-by trailer
+5. ✅ Pushed to origin/main — 4 objects sent, complete decision archive archived
