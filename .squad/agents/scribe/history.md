@@ -84,3 +84,22 @@ All commits include Co-authored-by trailer.
 
 All commits include Co-authored-by trailer.
 Ready for Phase 3: Write API + Governance.
+
+## Phase 3 Wave 0 Commit — 2026-04-04T04:25:16Z
+
+✅ **Committed Phase 3 Wave 0 output from all agents**
+
+**Agents Onboarded:**
+- Castor: Refined backlog ACs with TypeScript signatures, 4-wave plan
+- Flynn: 22-criterion Phase 3 gate checklist (retro A1-A8 applied)
+- Tron: GovernanceViolation, GovernanceResult, VaultWatcher types + exports
+- Yori: 3 query stubs filled, watcher.test.ts + governance.test.ts created, CLI stubs added
+
+**Commit:** `02748e1` (feat(phase3): Wave 0 — type contracts, test skeletons, backlog refinement)
+
+**Logs Created:**
+- `.squad/orchestration-log/2026-04-04T04:25:16Z-wave0.md` — Wave 0 deliverables summary
+- `.squad/log/2026-04-04T04:25:16Z-phase3-wave0.md` — Session log
+- `.squad/decisions.md` — Appended "## Phase 3 Wave 0 Decisions" section (merged inbox)
+
+**Status:** Wave 0 complete. Phase 3 Gate open (awaiting Wave 1 types approval). All agents on schedule.

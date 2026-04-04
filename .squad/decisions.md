@@ -562,3 +562,1225 @@ Governance enforcement logic has complex conditional branches (path matching, ru
 Good sprint, team. The query engine and graph traversal are real and working. Phase 3 is where we find out if the write path holds the same discipline as the read path.
 
 — Flynn
+
+---
+
+## Phase 3 Wave 0 Decisions
+
+### Wave 0 Agents: Castor, Flynn, Tron, Yori
+
+# Phase 3 Gate Checklist — Read/Write API and Governance
+
+**Date:** 2026-04-03 (kickoff)  
+**Owner:** Flynn (Phase 3 Gate Keeper)  
+**Release Target:** v0.3.0  
+**Wave 0 Delivery:** Phase 3 Kickoff (Flynn)
+
+---
+
+## Inherited from Phase 1 & 2 (always required):
+
+1. **TypeScript Compilation: Zero Errors**
+   - `npx tsc --noEmit` exits 0
+   - All src/ and tests/ compile without errors
+
+2. **Linting: Zero Errors**
+   - `npx eslint src/ tests/ --max-warnings 0` exits 0
+   - All TypeScript source conforms to eslint rules (including `@typescript-eslint/no-explicit-any: "error"`)
+
+3. **Test Suite: All Non-Todo Tests Pass**
+   - `npx vitest run` shows 0 failures
+   - Only `it.todo()` stubs are acceptable (must document what they test)
+
+4. **Build: Success and Correct Outputs**
+   - `npx tsup` exits 0
+   - Produces dist/index.js, dist/index.cjs, dist/cli.js
+
+5. **Shebang: CLI Only, Library Clean**
+   - dist/cli.js has `#!/usr/bin/env node` as first line
+   - dist/index.js has no shebang (library entry point)
+   - dist/index.cjs has no shebang
+
+6. **No `any` Types in Source**
+   - `grep -r ": any\| as any\|<any>" src/` returns zero matches
+   - TypeScript strict mode enforced
+
+---
+
+## Phase 3 Specific Criteria:
+
+### 7. **Runtime Export Check** ⭐ (New — from Phase 2 Retro A1)
+   - Command: `node -e "import('./dist/index.js').then(m => { const required = ['open', 'write', 'append', 'parseGovernance', 'enforceRule']; const missing = required.filter(k => !m[k]); if (missing.length) throw new Error('Missing exports: ' + missing.join(', ')); console.log('✓ All exports present'); })"`
+   - Verifies value exports (functions), not just type exports
+   - Must pass before gate approval — **binary pass/fail**
+
+### 8. **JSDoc on All Exported Functions**
+   - `src/writer.ts` — `create()`, `append()`
+   - `src/governance.ts` — `parseGovernance()`, `enforceRule()`
+   - `src/index.ts` — `open()`, Vault class and all public methods
+   - Each function/method has `@param`, `@returns`, `@throws` tags
+   - Class methods documented with parameter and return types
+
+### 9. **Type Exports: Writer and Governance Types**
+   - Required exports from src/types.ts (Phase 3 additions):
+     - `CreateOptions` (for writer.create)
+     - `GovernanceRules`, `GovernanceResult` (for governance parsing)
+     - `WriteAction`, `Actor`, `Agent`, `Human` (for enforcement)
+     - `SearchResult` (for SDK search)
+     - Any other supporting types in the implementation
+   - All types documented with JSDoc comments
+
+### 10. **Public API Re-exports: index.ts** ⭐ (Updated — value exports critical)
+   - All Phase 1 + Phase 2 + Phase 3 public API re-exported
+   - **Type-only exports:** separated with comment `// type-only exports`
+   - **Value exports:** separated with comment `// value exports`
+     - `export { open } from "./index.js"`
+     - `export { create, append } from "./writer.js"`
+     - `export { parseGovernance, enforceRule } from "./governance.js"`
+   - Verify runtime: all exports present in dist/index.js
+
+### 11. **Writer Module: create and append** ⭐ (New)
+   - `create(path: string, options: CreateOptions): Promise<void>`
+     - Creates new markdown file with frontmatter
+     - Throws if file already exists
+     - Handles special characters in frontmatter values
+     - Idempotent within constraints (fails on re-run for same path)
+     - All dates in ISO 8601 UTC format
+   - `append(path: string, content: string): Promise<void>`
+     - Appends to file body without touching frontmatter
+     - Creates file if not present (convenience behavior)
+   - Both accept absolute and relative paths (normalized with path.resolve())
+   - Coverage: ≥ 90%
+
+### 12. **Governance Module: parseGovernance and enforceRule** ⭐ (New)
+   - `parseGovernance(filePath: string): Promise<GovernanceRules>`
+     - Parses .oxori/governance.md
+     - Returns structured GovernanceRules with allowedPaths, blockedPaths, requiredFrontmatter
+     - Missing governance.md returns default rules (no restrictions)
+   - `enforceRule(path: string, action: WriteAction, rules: GovernanceRules, actor: Agent|Human): boolean`
+     - Returns true if action allowed, false if denied
+     - Humans always bypass governance (returns true for all actions)
+     - Agents subject to rules
+   - Covers all rule scenarios: simple rules, glob patterns, conflicting rules
+   - Coverage: ≥ 95% (critical safety module)
+
+### 13. **SDK API: Vault class and open()** ⭐ (New)
+   - `open(path: string): Promise<Vault>`
+     - Creates and returns Vault instance
+     - Loads index cache (Phase 1 indexer)
+     - Parses governance rules (Phase 3)
+     - All state initialized and ready for queries/writes
+   - `Vault` class public methods:
+     - `query(q: string): Promise<Set<string>>` — delegates to Phase 2 query engine
+     - `walk(start: string, opts?: WalkOptions): Promise<WalkResult>` — delegates to Phase 2 graph
+     - `create(path: string, opts: CreateOptions): Promise<void>` — creates file with governance check
+     - `append(path: string, content: string): Promise<void>` — appends with governance check
+     - `getGovernanceRules(): GovernanceRules` — returns parsed governance
+   - All methods async, all errors handled
+   - All public methods documented with TypeDoc
+   - Coverage: ≥ 90%
+
+### 14. **CLI Commands: Testable and Functional** ⭐ (Updated for Phase 3)
+   - `oxori write [--title T] [--tags t1,t2] [--path p] [--body B] [--frontmatter json]`
+     - Creates new file, auto-generates filename from title if --path not provided
+     - All options work correctly
+   - `oxori append [file] [--body B]`
+     - Appends content to file
+   - `oxori config`
+     - Shows vault path, governance rules, index stats, last reindex time
+   - All commands respect --vault flag for targeting specific vault
+   - **All commands must have CLI integration tests** (Criterion #15 — not separate)
+
+### 15. **CLI Integration Tests: write, append, config** ⭐ (New — from Phase 2 Retro A7)
+   - `tests/cli.test.ts` includes describe blocks for write, append, config commands
+   - Minimum test cases (functional + error paths):
+     - `oxori write` with all options
+     - `oxori write` without --path (auto-filename)
+     - `oxori append` to existing file
+     - `oxori append` to non-existent file
+     - `oxori config` output format
+   - Tests for governance scenarios (if --agent flag simulating agent write):
+     - Agent blocked from writing to .oxori/
+     - Human allowed to write to protected paths
+   - All tests pass with `pnpm test`
+   - Coverage included in overall metrics (≥ 80%)
+
+### 16. **Coverage: 80% Overall, 90% New Modules, 95% Governance** ⭐ (Updated)
+   - Overall statement/branch/function/line coverage: ≥ 80%
+   - `src/writer.ts` coverage: ≥ 90%
+   - `src/governance.ts` coverage: ≥ 95% (safety-critical)
+   - `src/index.ts` (SDK/Vault) coverage: ≥ 90%
+   - Phase 1-2 modules maintain their existing coverage (parser/indexer ≥ 95%, query/graph ≥ 90%)
+   - Full report: `npx vitest run --coverage` shows all modules
+   - **Coverage submission must include per-file table** (from Phase 2 Retro A4)
+
+### 17. **Documentation: Writer/Governance/SDK and Updated README** ⭐ (New — from Phase 2 Retro A8)
+   - `docs/write-api.md` — complete API reference for create(), append(), with examples
+   - `docs/governance.md` — how to write governance.md files, rule syntax, examples, enforcement behavior
+   - `docs/sdk-api.md` — Vault class reference, open(), all methods, examples
+   - `README.md` updated with Phase 3 features:
+     - Section on write capabilities (create, append examples)
+     - Section on governance and agent-vs-human semantics
+     - Section on SDK usage (open, query, walk, write examples)
+     - Update version reference from v0.2.0 to v0.3.0
+   - `docs/architecture.md` updated with Phase 3 section
+
+### 18. **Governance Safety: No Bypass for Agents** ⭐ (New)
+   - Verify code enforces: agents always subject to rules, humans always bypass
+   - Test: create scenario where agent is denied by rule, confirm error thrown with suggestion
+   - Test: human write to same path, confirm success (governance not checked for humans)
+   - Code review confirms no backdoor in safeWrite() or Vault write methods
+
+### 19. **Performance Thresholds: Write Operations** ⭐ (New)
+   - All write operations (create, append) complete in < 100ms
+   - Measured on test fixtures (basic-vault, governance-vault)
+   - Governance enforcement overhead < 20ms per write
+
+### 20. **Frontmatter Conventions Implemented** ⭐ (New)
+   - All created files include consistent frontmatter:
+     - `title` (from CreateOptions or auto-generated)
+     - `tags` (array format in YAML)
+     - `created_at` (ISO 8601 UTC)
+     - `updated_at` (ISO 8601 UTC)
+     - Custom fields from CreateOptions.frontmatter (schemaless)
+   - Frontmatter roundtrips correctly (parse → modify → re-serialize)
+
+### 21. **Indexer Incremental Update on Write** ⭐ (New)
+   - After successful write (create or append), vault index is updated:
+     - New file entry added to index
+     - Tags extracted and indexed
+     - Wikilinks indexed (if any)
+   - Index consistency verified: query for newly created file returns correct results
+
+### 22. **Phase 2 Debt: Indexer Coverage** ⭐ (Debt from Phase 2)
+   - `src/indexer.ts` coverage improved from 47.15% to ≥ 90%
+   - Incremental indexing paths (`indexFile`, `removeFileFromState`) covered
+   - Edge cases: empty files, special characters in filenames, concurrent write scenarios
+
+---
+
+## Summary
+
+**Total Criteria: 22** (6 inherited + 16 Phase 3 specific)
+
+**Critical New Criteria (must pass for gate approval):**
+- #7: Runtime export check (catches type-vs-value mismatch)
+- #11-12: Writer and governance modules implemented and covered
+- #13-14: SDK Vault class and CLI commands working
+- #15: CLI integration tests (not just unit tests)
+- #16: Coverage thresholds (especially governance ≥ 95%)
+- #18-21: Safety, performance, consistency verified
+
+**Success Metric:**
+All 22 criteria pass on first gate run (target: minimize gate blocks). Fix submissions must include full per-file coverage table and address all criteria in one submission.
+
+---
+
+## Wave 0 Delivery Checklist
+
+- [ ] This gate checklist written (Wave 0 — Flynn's responsibility)
+- [ ] Dumont agrees on docs structure (Wave 0 — async with implementation)
+- [ ] Yori designs test fixtures: governance-vault/ with sample governance.md (Wave 0)
+- [ ] Ready for Wave 1: Tron writes Phase 3 types (create, governance, Vault types)
+# Phase 3 Gate Checklist — v0.3.0 (Read/Write API + Governance)
+
+**Written by:** Flynn (Tech Lead / Gatekeeper)
+**Date:** 2026-04-04
+**Phase:** Phase 3 — Read/Write API and Governance
+**Status:** 🔒 GATE OPEN (ready for Wave 1 types submission)
+
+---
+
+## Overview
+
+Phase 3 delivers write capability (SDK + CLI) with governance enforcement on agent writes. This checklist applies all Phase 2 retrospective action items (A1–A8) to prevent previous gate failures.
+
+**Core deliverables:**
+- `src/writer.ts` — file creation and append operations
+- `src/governance.ts` — governance rule parsing and enforcement
+- `src/index.ts` — updated exports for Vault class and new functions
+- Updated README.md and docs with Phase 3 features
+- CLI commands: `oxori write`, `oxori append`, `oxori config`
+- Full test coverage (writer ≥ 90%, governance ≥ 95%, global ≥ 80%)
+
+---
+
+## Gate Criteria
+
+### Foundational Checks (Retro A1, A5, A6, A8)
+
+**Criterion #1: TypeScript compilation clean**
+- `pnpm build` must complete with zero TypeScript errors
+- `npx tsc --noEmit` passes
+- No `any` types introduced (ESLint enforces `@typescript-eslint/no-explicit-any: "error"`)
+
+**Status:** ⏳ Pending Wave 1
+
+---
+
+**Criterion #2: Runtime export check (Retro A1)** ✅ **Binary gate**
+- After build, run: `node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"`
+- Output must include ALL new Phase 3 exports:
+  - Type exports: `CreateOptions`, `GovernanceRule`, `Actor`, `WriteAction`, `SearchResult`
+  - Function exports: `create`, `append`, `parseGovernance`, `enforceRule`, `open` (Vault class method)
+  - Class exports: `Vault` (if class, otherwise just method exports from `open`)
+- If any export is missing from dist/index.js, gate **FAILS** immediately — recompile and re-test
+
+**Status:** ⏳ Pending Wave 2 implementation
+
+---
+
+**Criterion #3: Types-first approval (Retro A2)**
+- All Phase 3 types must be merged to types.ts BEFORE any writer.ts or governance.ts implementation
+- Flynn must review and approve types.ts as a standalone PR before Wave 2 begins
+- Types include: `CreateOptions`, `GovernanceRule`, `Actor`, `WriteAction`, `SearchResult`, and any helper types
+- Approved types commit must be tagged (e.g., `types-phase3-approved`) before implementation PRs are opened
+
+**Status:** ⏳ Pending Wave 1 (Tron)
+
+---
+
+**Criterion #4: TypeScript signatures in acceptance criteria (Retro A5 + A8)**
+- All new Phase 3 function signatures must be documented in `.squad/backlog.md` with exact parameter order and return types
+- Examples:
+  - `create(path: string, content: string, actor?: Actor): Promise<Result<string, OxoriError>>`
+  - `append(path: string, content: string, actor?: Actor): Promise<Result<string, OxoriError>>`
+  - `parseGovernance(rules: Record<string, GovernanceRule[]>): Result<GovernanceRule[], OxoriError>`
+  - `enforceRule(action: WriteAction, rules: GovernanceRule[]): Result<boolean, OxoriError>`
+- Backlog ACs must match actual implemented signatures — no post-hoc changes
+
+**Status:** ✅ Verified in `.squad/backlog.md` (Wave 0 complete)
+
+---
+
+### Test Skeleton Pre-Approval (Retro A3 + A2)
+
+**Criterion #5: Test skeletons written only after types locked**
+- Yori must write `tests/writer.test.ts` and `tests/governance.test.ts` ONLY after Tron's types.ts is Flynn-approved
+- All test skeletons use `it.todo()` for unimplemented features (not `expect(toThrowError)`)
+- Test skeleton PRs must be reviewed before implementation begins (prevent the Phase 1 API mismatch)
+
+**Status:** ⏳ Pending Wave 1 (types locked) → Wave 1 (test skeletons)
+
+---
+
+### Test Coverage Requirements (Retro A4)
+
+**Criterion #6: Coverage thresholds enforced**
+- `src/writer.ts` ≥ 90% coverage (lines, functions, branches)
+- `src/governance.ts` ≥ 95% coverage (lines, functions, branches)
+- `src/index.ts` (Vault class + SDK methods) ≥ 90% coverage
+- Global coverage ≥ 80% (aggregate across all modules)
+- If any module misses threshold, gate **FAILS** — provide per-file coverage table from `npx vitest run --coverage`
+
+**Criterion #6 Acceptance:** Final coverage report must include:
+```
+File | Lines | Uncovered | Statements | Branches | Functions
+-----|-------|-----------|------------|----------|----------
+writer.ts | 95% | 0 lines | 96% | 94% | 95%
+governance.ts | 97% | 0 lines | 98% | 96% | 97%
+index.ts | 91% | 1 line | 92% | 90% | 91%
+(all other modules) | ≥80% | ... | ... | ... | ...
+Global | 82% | ... | 83% | 81% | 82%
+```
+
+**Status:** ⏳ Pending Wave 2 (implementation + tests)
+
+---
+
+### CLI Integration Tests (Retro A7)
+
+**Criterion #7: CLI tests for all new commands**
+- `tests/cli.test.ts` must have dedicated test suites for:
+  - `oxori write <path> <content>` — create new file with write command
+  - `oxori append <path> <content>` — append to existing file
+  - `oxori config` — view/set governance configuration (if applicable)
+  - `oxori check <path>` — check file against governance rules (if implemented)
+- Each command must be tested with:
+  - Happy path (valid inputs, success)
+  - Error path (missing file, permission denied, governance violation)
+  - Governance scenarios (agent blocked, human allowed)
+- All CLI tests must pass: `npx vitest run tests/cli.test.ts`
+
+**Status:** ⏳ Pending Wave 3 (CLI implementation + tests)
+
+---
+
+### Documentation Updates (Retro A8)
+
+**Criterion #8: README updated with Phase 3 features**
+- README.md must include:
+  - Write API usage examples (create, append)
+  - Governance rules explanation and example syntax
+  - CLI commands documentation (write, append, config, check)
+  - Migration/upgrade guide for users moving from v0.2.0 → v0.3.0
+- All code examples must be runnable and match actual API
+
+**Status:** ⏳ Pending Wave 4 (documentation)
+
+---
+
+**Criterion #9: Architecture docs updated**
+- docs/architecture.md must include:
+  - Phase 3 ADR: Write API design (create vs append rationale)
+  - Governance rule enforcement workflow (decision tree)
+  - Actor model (human vs agent distinction)
+  - Integration diagram: Vault + Writer + Governance flow
+  - Per-entry tsup banner decision codified (from Phase 2 A5)
+- Any new architectural decisions (e.g., sync vs async, in-memory vs disk governance cache) must be documented
+
+**Status:** ⏳ Pending Wave 4 (documentation)
+
+---
+
+### Writer Module Requirements
+
+**Criterion #10: writer.ts implementation complete**
+- Exports: `create()`, `append()`
+- Signatures (from approved types):
+  - `create(path: string, content: string, actor?: Actor): Promise<Result<ParsedFile, OxoriError>>`
+  - `append(path: string, content: string, actor?: Actor): Promise<Result<ParsedFile, OxoriError>>`
+- All JSDoc documented with parameter descriptions, return type, and example
+- Error cases: path validation, ENOENT, EACCES, disk full, governance violation
+- Result wrapper: always returns `Result<ParsedFile, OxoriError>` — never throws uncaught
+- `npx tsc --noEmit` passes for writer.ts
+
+**Status:** ⏳ Pending Wave 2 (Ram)
+
+---
+
+**Criterion #11: writer.ts test coverage ≥ 90%**
+- `tests/writer.test.ts` must include:
+  - ✓ Create new file (happy path)
+  - ✓ Append to existing file (happy path)
+  - ✓ Create with existing path (error: file exists)
+  - ✓ Append to non-existent file (error: ENOENT)
+  - ✓ Invalid path (error: validation)
+  - ✓ Permission denied (error: EACCES)
+  - ✓ Frontmatter preservation on append
+  - ✓ Typed relations updated on write
+  - ✓ Tag extraction on create/append
+  - ✓ Wikilink tracking on write
+  - ✓ Actor identity in metadata (if tracked)
+  - ✓ Governance rule enforcement integration (agent vs human)
+- All 12+ tests must pass
+- Coverage: writer.ts ≥ 90% (lines, functions, branches)
+
+**Status:** ⏳ Pending Wave 2 (Yori)
+
+---
+
+### Governance Module Requirements
+
+**Criterion #12: governance.ts implementation complete**
+- Exports: `parseGovernance()`, `enforceRule()`
+- Signatures (from approved types):
+  - `parseGovernance(rules: Record<string, GovernanceRule[]>): Result<GovernanceRule[], OxoriError>`
+  - `enforceRule(action: WriteAction, rules: GovernanceRule[]): Result<boolean, OxoriError>`
+- All JSDoc documented
+- Supports rule types: path glob patterns, forbidden keywords, protected paths, agent-only restrictions
+- All JSDoc documented with parameter descriptions and examples
+- Error cases: invalid glob syntax, malformed rules, unknown rule types
+- Result wrapper: always returns `Result<...>` — never throws uncaught
+- `npx tsc --noEmit` passes for governance.ts
+
+**Status:** ⏳ Pending Wave 2 (Ram)
+
+---
+
+**Criterion #13: governance.ts test coverage ≥ 95%**
+- `tests/governance.test.ts` must include:
+  - ✓ Parse simple path rules (exact match)
+  - ✓ Parse glob patterns in rules
+  - ✓ Parse forbidden keywords rules
+  - ✓ Parse agent-only restrictions
+  - ✓ Parse protected path rules
+  - ✓ Enforce rule: agent blocked on protected path
+  - ✓ Enforce rule: human allowed on protected path
+  - ✓ Enforce rule: forbidden keyword violation
+  - ✓ Enforce rule: glob pattern match
+  - ✓ Enforce rule: glob pattern non-match
+  - ✓ Enforce rule: multiple rules (OR logic)
+  - ✓ Enforce rule: conflicting rules (priority)
+  - ✓ Edge case: empty rules list (allow all)
+  - ✓ Edge case: malformed rules (error)
+  - ✓ Edge case: case sensitivity on keywords
+  - ✓ Integration: governance-vault fixture scenario
+- All 16+ tests must pass
+- Coverage: governance.ts ≥ 95% (lines, functions, branches)
+
+**Status:** ⏳ Pending Wave 2 (Yori)
+
+---
+
+### Vault SDK and Integration
+
+**Criterion #14: Vault class and SDK methods**
+- `src/index.ts` must export `Vault` class with methods:
+  - `open(vaultPath: string): Promise<Result<Vault, OxoriError>>` (static factory)
+  - Instance methods:
+    - `query(filter: string): Promise<QueryResult>`
+    - `walk(source: string, options?: WalkOptions): Promise<WalkResult[]>`
+    - `create(path: string, content: string, actor?: Actor): Promise<Result<ParsedFile, OxoriError>>`
+    - `append(path: string, content: string, actor?: Actor): Promise<Result<ParsedFile, OxoriError>>`
+    - `getGovernanceRules(): Promise<GovernanceRule[]>`
+- All methods async, all documented with JSDoc
+- Vault class methods delegate to writer.ts and governance.ts (no logic duplication)
+- Error handling: descriptive messages, Result wrapper everywhere
+
+**Status:** ⏳ Pending Wave 3 (Ram)
+
+---
+
+**Criterion #15: SDK integration tests**
+- `tests/index.test.ts` must include:
+  - ✓ Open vault (happy path)
+  - ✓ Open vault (path not found)
+  - ✓ Query integration (Vault.query wraps query.ts)
+  - ✓ Walk integration (Vault.walk wraps graph.ts)
+  - ✓ Create via Vault (delegates to writer.ts)
+  - ✓ Append via Vault (delegates to writer.ts)
+  - ✓ Governance rules retrieval
+  - ✓ Governance enforcement on create (agent blocked)
+  - ✓ Governance enforcement on create (human allowed)
+  - ✓ End-to-end: create → query → verify
+  - ✓ End-to-end: append → walk → verify
+  - ✓ Multiple opens on same vault (state isolation)
+  - ✓ Concurrent operations (if applicable)
+  - ✓ Integration with governance-vault fixture
+- All 14+ tests must pass
+- Coverage: index.ts (Vault class) ≥ 90%
+
+**Status:** ⏳ Pending Wave 3 (Yori)
+
+---
+
+### CLI Commands
+
+**Criterion #16: CLI commands implemented**
+- `oxori write <path> <content>` — create new file via CLI
+- `oxori append <path> <content>` — append to existing file via CLI
+- `oxori config` — view/set governance configuration
+- `oxori check <path>` — validate file against governance rules (if implemented)
+- All commands support `--vault` flag for non-current-directory vaults
+- All commands use Vault SDK internally (thin CLI wrappers)
+- All commands print user-friendly status/error messages
+- No default exports in CLI modules — named exports only
+
+**Status:** ⏳ Pending Wave 3 (Tron)
+
+---
+
+**Criterion #17: All 14 existing it.todo() stubs resolved**
+- Phase 1 and Phase 2 left 14 `it.todo()` test stubs scattered across test files
+- By end of Phase 3, ALL must be resolved:
+  - Either filled with actual test implementations
+  - Or explicitly removed with justification documented in commit message
+- No PR may merge with unresolved `it.todo()` stubs that relate to delivered features
+
+**Status:** ⏳ Pending Wave 3 and Wave 4 (cleanup)
+
+---
+
+### Build and Release (Retro A6, A7)
+
+**Criterion #18: pnpm build succeeds**
+- `pnpm build` must complete with zero errors
+- Produces dist/index.js (ESM) and dist/index.cjs (CJS)
+- dist/index.js has correct shebang (if applicable) and no shebang in library entry
+- All TypeScript errors resolved
+- All ESLint warnings resolved (or explicitly ignored with comments)
+
+**Status:** ⏳ Pending Wave 2 build
+
+---
+
+**Criterion #19: pnpm test passes, 127+ existing + 40+ new tests**
+- `pnpm test` (or `npx vitest run`) must complete with all tests passing
+- Test count breakdown:
+  - Existing: 127+ tests from Phase 1 & 2
+  - Phase 3: 40+ new tests
+    - writer.test.ts: 12+ tests
+    - governance.test.ts: 16+ tests
+    - index.test.ts: 14+ tests
+  - Total: 167+ tests all passing
+- No test marked as `skip` or `only` (except intentional `it.todo()` stubs being retired)
+
+**Status:** ⏳ Pending Wave 2-3 implementation
+
+---
+
+**Criterion #20: Coverage thresholds verified (full table)**
+- `npx vitest run --coverage` must be run before gate approval
+- Full per-file coverage table (Retro A4 requirement):
+  - writer.ts ≥ 90%
+  - governance.ts ≥ 95%
+  - index.ts ≥ 90%
+  - parser.ts ≥ 95% (inherited from Phase 1, must not regress)
+  - indexer.ts ≥ 90% (Phase 2 improvement target)
+  - query.ts ≥ 90% (Phase 2)
+  - graph.ts ≥ 90% (Phase 2)
+  - all other modules ≥ 80%
+  - **Global ≥ 80%**
+- If any module below threshold, gate **FAILS** — no exceptions
+- Yori submits full coverage report with gate PR
+
+**Status:** ⏳ Pending Wave 4 (Yori final check)
+
+---
+
+**Criterion #21: RELEASES.md updated with v0.3.0 entry**
+- RELEASES.md must include:
+  - **v0.3.0 entry** with:
+    - Release date
+    - New features: write API, governance enforcement, Vault SDK, CLI commands
+    - Breaking changes (if any)
+    - Migration guide (upgrading from v0.2.0)
+    - Contributors and co-authored-by credits
+- Entry must follow same format as v0.1.0 and v0.2.0
+
+**Status:** ⏳ Pending Wave 4 (Dumont)
+
+---
+
+**Criterion #22: CI pipeline green on main + semantic-release dry-run (Retro A7)**
+- GitHub Actions CI must pass all checks on main branch before tag:
+  - `npm install` / `pnpm install` (dependency resolution)
+  - `pnpm lint` (ESLint clean)
+  - `pnpm build` (no TypeScript errors)
+  - `pnpm test --coverage` (all tests pass, coverage thresholds)
+  - `npm run coverage-check` (coverage badges generated)
+- **Semantic-release dry-run:** Before first v0.3.0 release, run:
+  - `pnpm semantic-release --dry-run`
+  - Verify that exec plugin fires, git assets are staged, README version synced
+  - This catches configuration errors before actual release
+
+**Status:** ⏳ Pending Wave 4 (Clu, Flynn final approval)
+
+---
+
+## Phase 3 Gate Workflow
+
+### Wave 0 (Types Planning) — Kickoff
+- Flynn writes this gate checklist ✅ (done)
+- Tron plans types.ts additions (no code)
+- Yori designs test fixtures (governance-vault/)
+- **Gate:** Checklist reviewed and agreed by team
+
+### Wave 1 (Types Locked) — Type Review
+- Tron implements types.ts Phase 3 additions
+- Yori writes test skeletons (after types approved)
+- **Gate:** Flynn reviews types.ts PR → approves → merge
+- **Blocker:** No implementation work begins until types approved
+
+### Wave 2 (Implementation) — Core Modules
+- Ram implements writer.ts and governance.ts
+- Yori implements writer + governance tests
+- **Gate:** All tests pass, coverage ≥ 90% / ≥ 95%
+
+### Wave 3 (SDK + CLI) — Integration
+- Ram implements Vault class
+- Tron implements CLI commands
+- Yori implements SDK + CLI tests
+- **Gate:** All integration tests pass, e2e scenarios verified
+
+### Wave 4 (Docs + Release) — Final Gate
+- Dumont writes all documentation
+- Yori verifies final coverage
+- Clu runs semantic-release dry-run
+- Flynn final gate check (all 22 criteria)
+- **Gate:** PASS → merge to main → tag v0.3.0 → publish to npm
+
+---
+
+## Retro Action Item Mapping
+
+| Retro Item | Phase 3 Application | Criterion # |
+|------------|-------------------|------------|
+| A1 | Runtime export check added to gate | #2 |
+| A2 | Types-first approval: types before implementation | #3 |
+| A3 | Test skeletons with it.todo() after types locked | #5 |
+| A4 | Full coverage table in gate report | #6, #20 |
+| A5 | Function signatures in backlog ACs | #4 |
+| A6 | Gate checklist written at kickoff (this doc) | #1-22 |
+| A7 | CLI tests for write/append/config/check | #7 |
+| A8 | README updated with Phase 3 features | #8 |
+
+---
+
+## Sign-Off
+
+**Gate Status:** 🟡 OPEN (awaiting Wave 1 types)
+
+**Gate Owner:** Flynn
+
+**Required Approvals Before Merge:**
+- [ ] Flynn: Gate checklist review and team agreement
+- [ ] Tron: types.ts Phase 3 additions ready for Wave 1
+- [ ] Castor: Backlog ACs aligned with criteria
+- [ ] Dumont: Documentation structure confirmed
+
+**Next Step:** Tron submits types.ts as Wave 1 kickoff.
+
+---
+
+**Document Version:** Phase 3 Gate v1.0
+**Last Updated:** 2026-04-04
+**Phase 3 Release Target:** v0.3.0 (npm)
+# Tron: Phase 3 Type Contracts
+
+**Date:** 2026-04-03  
+**Phase:** 3 (Watcher + Governance)  
+**Wave:** 1 — Types Locked  
+**Status:** ✅ Implemented & Build Verified  
+
+---
+
+## Overview
+
+This document specifies all TypeScript type contracts for Phase 3 modules:
+- **Watcher** (`src/watcher.ts`): File system change monitoring
+- **Governance** (`src/governance.ts`): Rule-based write policy enforcement
+
+All types have been added to `src/types.ts` and exported from `src/index.ts`. Wave 1 implementors must follow these signatures exactly.
+
+---
+
+## New Types Added to `src/types.ts`
+
+### 1. `GovernanceViolation`
+
+Represents a single rule violation found during governance evaluation.
+
+```typescript
+export type GovernanceViolation = {
+  /** The unique ID of the rule that was violated. */
+  ruleId: string;
+  /** Human-readable message describing why the rule was violated. */
+  message: string;
+  /** The filepath (relative or absolute) affected by this violation. */
+  filePath: string;
+  /** Severity level: "error" prevents the write, "warning" allows but logs. */
+  severity: "error" | "warning";
+};
+```
+
+**Constraints:**
+- `ruleId` must match a `GovernanceRule.id` from the input ruleset.
+- `filePath` is the target file path (normalized via `path.resolve()` if an absolute path, or relative if provided relative).
+- `severity: "error"` blocks writes; `severity: "warning"` is informational.
+
+---
+
+### 2. `GovernanceResult`
+
+Aggregated result of evaluating all governance rules against vault state.
+
+```typescript
+export type GovernanceResult = {
+  /** True if all rules passed; false if any violation exists. */
+  passed: boolean;
+  /** Immutable list of violations found during evaluation. */
+  violations: readonly GovernanceViolation[];
+  /** Unix timestamp (ms) when the evaluation was performed. */
+  checkedAt: number;
+};
+```
+
+**Constraints:**
+- `passed === true` ⟺ `violations.length === 0`
+- `violations` is readonly to prevent accidental mutation.
+- `checkedAt` is a Unix timestamp in milliseconds (`Date.now()`).
+
+---
+
+### 3. `VaultWatcher` (Interface)
+
+EventEmitter-style interface for watching vault filesystem changes.
+
+```typescript
+export interface VaultWatcher {
+  /**
+   * Subscribe to filesystem change events.
+   * @param event - The event type: "change" for file modifications, "error" for watcher errors.
+   * @param listener - Callback invoked when the event fires.
+   * @returns The watcher itself (for method chaining).
+   */
+  on(event: "change", listener: (e: WatchEvent) => void): this;
+
+  /**
+   * Subscribe to watcher errors.
+   * @param event - Always "error" for this overload.
+   * @param listener - Callback invoked when a filesystem watch error occurs.
+   * @returns The watcher itself (for method chaining).
+   */
+  on(event: "error", listener: (err: Error) => void): this;
+
+  /**
+   * Stop watching and clean up the underlying fs.watch handle.
+   * After calling stop(), no further events will be emitted.
+   */
+  stop(): void;
+}
+```
+
+**Constraints:**
+- Must support EventEmitter-style `.on()` chaining (returns `this`).
+- Two event types: `"change"` emits `WatchEvent`, `"error"` emits `Error`.
+- `stop()` must be synchronous and immediately halt further event emissions.
+- Multiple listeners per event are supported (standard EventEmitter behavior).
+
+---
+
+## Existing Types Referenced
+
+### `WatchEvent` (from Phase 1)
+
+Used by the watcher to emit filesystem changes:
+
+```typescript
+export type WatchEvent = {
+  /** The kind of filesystem change: "add", "change", or "unlink". */
+  type: "add" | "change" | "unlink";
+  /** Absolute path of the affected file, normalized via path.resolve(). */
+  filepath: string;
+  /** Unix timestamp (ms) when the event was emitted. */
+  timestamp: number;
+};
+```
+
+---
+
+### `GovernanceRule` (from Phase 1)
+
+Defines a single access control rule evaluated by the governance engine:
+
+```typescript
+export type GovernanceRule = {
+  /** Unique identifier for this rule. Used in error messages and audit logs. */
+  id: string;
+  /** Human-readable explanation of what this rule enforces. */
+  description: string;
+  /** Glob or regex string matched against the target filepath or content. */
+  pattern: string;
+  /** Whether a matching write is permitted or blocked. */
+  effect: "allow" | "deny";
+  /** Scope: "agents" for MCP/agent writes only; "all" for future use. */
+  appliesTo: "agents" | "all";
+};
+```
+
+---
+
+### `IndexState` (from Phase 1)
+
+Current state of the vault index; input to governance evaluation:
+
+```typescript
+export type IndexState = {
+  files: Map<string, ParsedFile>;
+  tags: Map<string, TagEntry[]>;
+  links: Map<string, LinkEntry[]>;
+  relations: Map<string, TypedRelation[]>;
+  updatedAt: number;
+};
+```
+
+---
+
+## Function Signatures for Wave 1+ Implementors
+
+### Watcher Module: `watch()`
+
+**Location:** `src/watcher.ts`
+
+```typescript
+/**
+ * Create a vault watcher that monitors filesystem changes.
+ * 
+ * @param vaultPath - Absolute or relative path to the vault directory.
+ * @param config - Optional VaultConfig with settings (e.g., ignore patterns).
+ * @returns A VaultWatcher instance.
+ * 
+ * @remarks
+ * - Wraps Node.js fs.watch internally.
+ * - Emits WatchEvent on every file change (add, change, unlink).
+ * - Call .stop() to release the fs.watch handle.
+ * - Caller is responsible for cleanup; no auto-cleanup on process exit.
+ */
+export function watch(
+  vaultPath: string,
+  config?: VaultConfig
+): VaultWatcher;
+```
+
+**Event Flow:**
+1. Caller invokes `watch(vaultPath)`.
+2. Watcher subscribes to Node.js `fs.watch(vaultPath)`.
+3. On filesystem changes, emits `WatchEvent` via `on('change', ...)`.
+4. On watch errors (e.g., permission denied), emits `Error` via `on('error', ...)`.
+5. Caller calls `stop()` to clean up.
+
+**Example Usage:**
+```typescript
+const watcher = watch("/path/to/vault");
+watcher.on("change", (event) => {
+  console.log(`${event.type}: ${event.filepath}`);
+});
+watcher.on("error", (err) => {
+  console.error("Watch error:", err);
+});
+// ... later ...
+watcher.stop();
+```
+
+---
+
+### Governance Module: `checkGovernance()`
+
+**Location:** `src/governance.ts`
+
+```typescript
+/**
+ * Evaluate governance rules against vault state.
+ * 
+ * @param rules - Array of GovernanceRule to evaluate (in declaration order).
+ * @param state - Current IndexState from the vault.
+ * @returns GovernanceResult with passed flag and violations list.
+ * 
+ * @remarks
+ * - Rules are evaluated in declaration order; first match wins.
+ * - All filepaths in violations are normalized (resolved).
+ * - Result is synchronous; no async operations.
+ * - Violations are sorted by filePath for consistent output.
+ */
+export function checkGovernance(
+  rules: GovernanceRule[],
+  state: IndexState
+): GovernanceResult;
+```
+
+**Evaluation Logic:**
+1. Iterate through `rules` in order.
+2. For each rule, check if any file in `state.files` matches `rule.pattern`.
+3. If a match is found:
+   - If `rule.effect === "deny"`, record a violation with `severity: "error"`.
+   - If `rule.effect === "allow"`, continue (no violation).
+4. Return `GovernanceResult` with `passed` and `violations`.
+
+**Example Usage:**
+```typescript
+const rules: GovernanceRule[] = [
+  {
+    id: "no-agent-writes-to-archive",
+    description: "Agents must not modify archived files",
+    pattern: "archive/**",
+    effect: "deny",
+    appliesTo: "agents"
+  }
+];
+
+const result = checkGovernance(rules, vaultState);
+if (!result.passed) {
+  for (const v of result.violations) {
+    console.error(`[${v.severity}] ${v.ruleId}: ${v.message}`);
+  }
+}
+```
+
+---
+
+## Exports
+
+All new types are exported from `src/index.ts`:
+
+```typescript
+export type {
+  // ... existing types ...
+  // Phase 3 — Watcher and Governance
+  VaultWatcher,
+  GovernanceViolation,
+  GovernanceResult,
+  // ... other types ...
+};
+```
+
+Consumers can now import:
+```typescript
+import {
+  VaultWatcher,
+  GovernanceViolation,
+  GovernanceResult,
+  WatchEvent,
+  GovernanceRule,
+  IndexState
+} from "oxori";
+```
+
+---
+
+## Build Status
+
+✅ **`pnpm build` verified successful**  
+- TypeScript types compile with zero errors.
+- All exports are correctly bound.
+- Ready for Wave 1 implementation.
+
+---
+
+## Implementation Notes for Wave 1
+
+1. **Watcher (`src/watcher.ts`):**
+   - Must implement `VaultWatcher` interface exactly.
+   - Use Node.js `fs.watch()` internally (not `fs.watchFile` — different semantics).
+   - Normalize filepaths via `path.resolve()`.
+   - Handle recursive directory watching.
+   - Debounce rapid successive events if needed (document behavior).
+
+2. **Governance (`src/governance.ts`):**
+   - Must implement `checkGovernance()` function exactly.
+   - Match filepaths against `rule.pattern` using glob matching or regex (TBD in Wave 1 design).
+   - Preserve rule order (first match wins).
+   - Record **all** violations, not just the first.
+   - Sort violations by `filePath` for deterministic output.
+   - Include human-readable messages in violations.
+
+3. **Testing:**
+   - Governance module requires ≥95% coverage (per gate criterion #16).
+   - Writer module requires ≥90% coverage.
+   - Fixtures: `governance-vault/` with sample rules (designed by Yori).
+
+---
+
+## Sign-Off
+
+**Document Owner:** Tron (Senior TypeScript Engineer)  
+**Reviewed by:** (Awaiting Flynn)  
+**Status:** Pending Flynn Approval
+
+---
+
+## Appendix: Related Decisions
+
+- **castor-phase3-gate.md** — 22-criterion gate checklist
+- **flynn-phase3-types-review.md** — (To be written after this document)
+- **yori-fixture-design.md** — governance-vault/ fixture specification
+# Phase 3 Test Audit + Skeleton Plan — Summary
+
+**Author:** Yori (Test Engineer)  
+**Date:** April 3, 2024  
+**Status:** ✅ Complete
+
+---
+
+## Part 1: Audit + Fill Existing it.todo() Stubs
+
+### Findings
+
+Audited all existing test files and identified 14 `it.todo()` stubs across the codebase:
+
+| File | Stubs | Fillable? | Action |
+|------|-------|-----------|--------|
+| `tests/parser.test.ts` | 3 | ❌ No | Error handling requires Phase 3 work |
+| `tests/indexer.test.ts` | 8 | ❌ No | Output file writing is Phase 3 feature |
+| `tests/query.test.ts` | 3 | ✅ Yes | **FILLED** |
+| **Total** | **14** | **3 filled** | **11 remain pending** |
+
+### Filled Tests (Query Module)
+
+All 3 query stubs have been **implemented** as they test Phase 2 functionality:
+
+1. ✅ **"handles leading and trailing whitespace gracefully"** (line 150)
+   - Tests that tokenizer correctly handles `"  tag:auth  "`
+   - Implementation: Added assertion to verify single token produced
+
+2. ✅ **"throws QUERY_PARSE_ERROR when operator has no right operand"** (line 294)
+   - Tests error case: `parse(tokenize("tag:auth AND"))`
+   - Implementation: Added try/catch to verify error code and action suggestion
+
+3. ✅ **"throws QUERY_PARSE_ERROR for double operators"** (line 295)
+   - Tests error case: `parse(tokenize("tag:x AND AND tag:y"))`
+   - Implementation: Added try/catch to verify error code
+
+**Result:** All 3 query tests now pass. Query module test coverage: **50/50 passed** (100%)
+
+### Remaining Stubs (Pending Phase 3)
+
+The following 11 stubs depend on Phase 3 implementations and remain unfilled:
+
+**Parser (3 stubs):**
+- `parseFile()` error handling: malformed YAML, file not found, filepath in error
+
+**Indexer (8 stubs):**
+- Vault scanning: vault path not found error
+- Index file output: .oxori/index directory creation, files.md, tags.md, links.md
+- Edge cases: empty vault, duplicate filenames
+
+These are correctly left as stubs because they require:
+- Error object contracts not yet finalized (Phase 3)
+- File I/O operations to write index outputs (Phase 3)
+- Complete errorhandling infrastructure
+
+---
+
+## Part 2: New Phase 3 Test Skeleton Files
+
+### Created: `tests/watcher.test.ts`
+
+Purpose: Tests for `src/watcher.ts` — file system watcher with WatchEvent emission.
+
+**Skeletons (10 it.todo() tests):**
+
+```typescript
+describe('watch()', () => {
+  it.todo('emits change event when a markdown file is created')
+  it.todo('emits change event when a markdown file is modified')
+  it.todo('emits change event when a markdown file is deleted')
+  it.todo('does not emit change for non-markdown files')
+  it.todo('stop() closes the watcher cleanly')
+  it.todo('emits error event on invalid vault path')
+  it.todo('type field on WatchEvent is correct for create/modify/delete')
+  it.todo('path field on WatchEvent is absolute path')
+  it.todo('handles rapid successive changes without crashing')
+  it.todo('can watch nested subdirectories')
+})
+```
+
+**Coverage Goals:**
+- Core watcher behavior (create, modify, delete)
+- File type filtering (.md only)
+- Clean shutdown and error handling
+- WatchEvent type validation (type field, absolute paths)
+- Edge cases (rapid changes, nested directories)
+
+### Created: `tests/governance.test.ts`
+
+Purpose: Tests for `src/governance.ts` — governance rule checking engine.
+
+**Skeletons (10 it.todo() tests):**
+
+```typescript
+describe('checkGovernance()', () => {
+  it.todo('returns passed:true when no rules are violated')
+  it.todo('returns passed:false when a rule is violated')
+  it.todo('required-tag rule flags files missing a required tag')
+  it.todo('no-orphan rule flags files with no links')
+  it.todo('max-links rule flags files exceeding link count')
+  it.todo('violations array contains filePath and ruleId')
+  it.todo('severity:error violations cause passed:false')
+  it.todo('severity:warning violations do NOT cause passed:false')
+  it.todo('empty rules array always returns passed:true')
+  it.todo('checkedAt field is a valid timestamp')
+})
+```
+
+**Coverage Goals:**
+- Core rule evaluation (pass/fail)
+- Rule types: required-tag, no-orphan, max-links
+- Violation object structure and severity levels
+- Edge cases (no rules, empty violations)
+- Timestamp validation on GovernanceResult
+
+---
+
+## Part 3: Phase 3 CLI Stubs
+
+Added 12 new `it.todo()` stubs to `tests/cli.test.ts` for Phase 3 commands:
+
+### `oxori watch <path>` (6 stubs)
+
+```typescript
+describe('oxori watch', () => {
+  it.todo('starts watching a vault directory for changes')
+  it.todo('emits watcher events when files are added')
+  it.todo('emits watcher events when files are modified')
+  it.todo('emits watcher events when files are deleted')
+  it.todo('exits gracefully on SIGINT')
+  it.todo('prints error and exits if vault path does not exist')
+})
+```
+
+### `oxori check <path>` (6 stubs)
+
+```typescript
+describe('oxori check', () => {
+  it.todo('runs governance checks on all files in vault')
+  it.todo('outputs violations when rules are violated')
+  it.todo('exits with code 0 when all checks pass')
+  it.todo('exits with non-zero code when violations found')
+  it.todo('accepts --rules flag to specify custom rules file')
+  it.todo('outputs JSON when --json flag is passed')
+})
+```
+
+---
+
+## Test Results Summary
+
+### Before Changes
+- Test Files: 5
+- Tests Passed: 127
+- Tests Todo: 14
+- Total: 141
+
+### After Changes
+- Test Files: 7 (added watcher.test.ts, governance.test.ts)
+- Tests Passed: 130 (3 newly filled from query stubs)
+- Tests Todo: 43 (11 existing pending + 20 new Phase 3 + 12 new CLI)
+- Total: 173
+
+### Command Output
+```
+✓ tests/query.test.ts (50 tests) — ALL FILLED
+✓ tests/parser.test.ts (19 tests | 3 skipped) — 3 error stubs remain pending
+✓ tests/graph.test.ts (24 tests) — complete
+✓ tests/indexer.test.ts (23 tests | 8 skipped) — 8 output stubs remain pending
+✓ tests/cli.test.ts (37 tests | 12 skipped) — 12 new Phase 3 stubs
+↓ tests/watcher.test.ts (10 tests | 10 skipped) — phase 3 skeleton
+↓ tests/governance.test.ts (10 tests | 10 skipped) — phase 3 skeleton
+
+Test Files  7 passed | 2 skipped
+Tests       130 passed | 43 todo
+All tests pass ✅
+```
+
+---
+
+## Deliverables Checklist
+
+- ✅ **Part 1:** Audited all existing `it.todo()` stubs
+  - 3 query stubs **FILLED AND PASSING**
+  - 11 remaining stubs flagged as Phase 3 dependencies
+- ✅ **Part 2:** Created Phase 3 skeleton files
+  - `tests/watcher.test.ts` — 10 it.todo() stubs for file watcher
+  - `tests/governance.test.ts` — 10 it.todo() stubs for governance engine
+- ✅ **Part 3:** Added CLI stubs to `tests/cli.test.ts`
+  - 6 stubs for `oxori watch` command
+  - 6 stubs for `oxori check` command
+- ✅ **Validation:** `pnpm test` passes with 130/130 tests
+- ✅ **Documentation:** Summary written to this file
+
+---
+
+## Next Steps for Implementation Teams
+
+### Phase 2 Remaining Work (Parser/Indexer)
+- **Parser team (Tron):** Implement error handling for parseFile() and fill 3 parser stubs
+- **Indexer team (Tron):** Implement index file output and fill 8 indexer stubs
+
+### Phase 3 Implementation Work
+- **Watcher team:** Implement `src/watcher.ts` and fill 10 watcher stubs + 6 CLI watch stubs
+- **Governance team:** Implement `src/governance.ts` and fill 10 governance stubs + 6 CLI check stubs
+
+### Test Fixture Requirements
+- Phase 3 tests will need fixtures in `tests/fixtures/` (to be created during implementation)
+- CLI watch/check tests may need isolated temp directories (test setup already in place)
+
+---
+
+## Notes for Test Implementation
+
+1. **WatchEvent Type:** Verify all events emit with `type: "add" | "change" | "unlink"`, absolute `filepath`, and `timestamp` (ms)
+2. **GovernanceRule Types:** Tests should cover error vs warning severity levels and their effect on `passed` field
+3. **CLI Integration:** Watch and check commands should handle SIGINT/SIGTERM gracefully
+4. **Error Messages:** All failures should include `action` suggestion for users

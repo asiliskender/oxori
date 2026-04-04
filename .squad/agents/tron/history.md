@@ -330,3 +330,32 @@ Added three symbols to `src/query.ts`:
 - `IndexState.files` is `Map<string, FileEntry>` — iterating `state.files` yields `[filepath, FileEntry]` tuples; both are used (filepath added to matches, FileEntry passed to matchers).
 - `FileEntry.wikilinks` stores lowercased stems — `link` filter always compares against `lowerValue` (no further `.toLowerCase()` needed on the stored values).
 - Empty state → early return `{ matches: new Set(), totalMatched: 0, executionMs: 0 }` avoids an unnecessary loop.
+
+---
+
+## Phase 3 — Wave 1: Watcher Implementation
+
+**Date:** 2026-04-03
+
+### Summary
+
+Implemented `src/watcher.ts` — the vault filesystem watcher module.
+
+- Created `VaultWatcherImpl` (internal class, extends `EventEmitter`, implements `VaultWatcher`)
+- Exported only `watch(vaultPath, config?)` as the public factory function
+- Added `export { watch } from "./watcher.js"` to `src/index.ts`
+- Wrote decision note: `.squad/decisions/inbox/tron-watcher-impl.md`
+
+### Implementation notes
+
+- `fs.watch` `"change"` events → `WatchEvent.type = "change"`
+- `fs.watch` `"rename"` + file exists → `"add"` (create)
+- `fs.watch` `"rename"` + file missing → `"unlink"` (delete)
+- `.md` filter in callback — non-markdown events silently dropped
+- `setImmediate` defers constructor-time errors so callers attach listeners first
+- Type definition in `src/types.ts` was authoritative — used `filepath` and `"add"/"change"/"unlink"` (task description had different names)
+
+### Build & test
+
+- `pnpm build` ✅ zero errors
+- `pnpm test` ✅ 130 passed, 43 todo (all watcher tests are `it.todo()` stubs)

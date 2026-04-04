@@ -65,3 +65,9 @@ export { tokenize, parse, evaluate } from "./query.js";
 
 // Graph Traversal
 export { walk } from "./graph.js";
+
+// Governance
+export { checkGovernance } from "./governance.js";
+
+// Watcher
+export { watch } from "./watcher.js";
