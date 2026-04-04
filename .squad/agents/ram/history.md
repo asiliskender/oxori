@@ -75,3 +75,26 @@ Replaced the Phase 2 Wave 1 stub with a full BFS implementation.
 - Changed two `toThrowError("not implemented")` assertions to check for empty `WalkResult`
 
 **TypeScript:** `npx tsc --noEmit` → 0 errors
+
+## Phase 3 — Governance Implementation
+
+**Date:** 2025-01-29
+
+### Completed: O-3-xx — `src/governance.ts`
+
+Implemented `checkGovernance()` — the governance rule evaluation engine.
+
+**What was done:**
+- Created `src/governance.ts` with `checkGovernance(rules, state)` as the sole export
+- Used `micromatch.isMatch()` for glob-based filepath pattern matching (transitive dep, already typed)
+- Implemented first-match-wins semantics per Tron Phase 3 spec (per-file rule evaluation stops at first matching pattern)
+- `deny` matches → `GovernanceViolation` with `severity: "error"`; `allow` matches → silently accepted
+- Violations sorted by `filePath` for deterministic output
+- `passed` is `true` only if no `"error"`-severity violations exist
+- Exported `checkGovernance` from `src/index.ts`
+
+**Key finding — type mismatch in task spec:**
+- Task prompt described rule types (`required-tag`, `no-orphan`, `max-links`, `required-frontmatter`) with a `type` discriminant and per-rule fields. The actual `GovernanceRule` type (set by Tron in Wave 1) uses `pattern + effect + appliesTo` — a glob-based allow/deny policy model. Implementation follows the actual types.
+
+**TypeScript:** `pnpm build` → 0 errors  
+**Tests:** `pnpm test` → 130 passed, 43 todo (governance tests all `.todo()`)
