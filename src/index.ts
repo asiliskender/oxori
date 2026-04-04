@@ -20,6 +20,10 @@ export type {
   Result,
   WatchEvent,
   GovernanceRule,
+  // Phase 3 — Watcher and Governance
+  VaultWatcher,
+  GovernanceViolation,
+  GovernanceResult,
   // Phase 2 — Query Engine
   Token,
   TokenKind,

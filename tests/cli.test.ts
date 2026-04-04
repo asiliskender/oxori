@@ -271,3 +271,28 @@ describe('oxori graph', () => {
     expect(stdout.trim()).toBe('')
   })
 })
+
+// -----------------------------------------------------------------------------
+// oxori watch (Phase 3)
+// -----------------------------------------------------------------------------
+describe('oxori watch', () => {
+  it.todo('starts watching a vault directory for changes')
+  it.todo('emits watcher events when files are added')
+  it.todo('emits watcher events when files are modified')
+  it.todo('emits watcher events when files are deleted')
+  it.todo('exits gracefully on SIGINT')
+  it.todo('prints error and exits if vault path does not exist')
+})
+
+// -----------------------------------------------------------------------------
+// oxori check (Phase 3)
+// -----------------------------------------------------------------------------
+describe('oxori check', () => {
+  it.todo('runs governance checks on all files in vault')
+  it.todo('outputs violations when rules are violated')
+  it.todo('exits with code 0 when all checks pass')
+  it.todo('exits with non-zero code when violations found')
+  it.todo('accepts --rules flag to specify custom rules file')
+  it.todo('outputs JSON when --json flag is passed')
+})
+

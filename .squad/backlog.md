@@ -472,30 +472,249 @@ Query language is the heart of Phase 2. Make docs crystal clear with lots of exa
 
 ---
 
-### Phase 3 Kickoff
+### Phase 3 Refinement (from retro actions A1-A8)
+
+**Refinement applied:**
+- A1: Runtime export check added to gate criteria (criterion #7)
+- A2: Types-first discipline: Tron writes types before implementation (Wave 1)
+- A3: Yori writes test skeletons only after types approved (after Wave 1)
+- A4: New modules (writer, governance, index) require ≥ 90% coverage; governance ≥ 95% (criterion #16)
+- A5: All backlog ACs now include explicit TypeScript signatures
+- A6: Gate checklist written at kickoff (Wave 0 — see `.squad/decisions/inbox/castor-phase3-gate.md`)
+- A7: CLI tests for oxori write/append/config in gate (criterion #15)
+- A8: README updated as part of Wave 0 planning, documented in wave plan below
+
+---
+
+### Phase 3 Kickoff (Flynn — Wave 0)
 
 **Issue: Phase 3 Kickoff — Read/Write API and Governance**
 **Label:** phase-3, gate, squad:Flynn
 **Assigned to:** Flynn
 **Depends on:** Write Phase 2 release notes and query language docs
+**Wave:** 0 (kickoff, types planning, gate checklist)
 
 **Context:**
-Phase 3 is where humans and agents can write back to the vault. Governance enforces rules on agent writes, protecting critical paths. Flynn reviews write and governance logic carefully — this is critical for safety.
+Phase 3 is where humans and agents can write back to the vault. Governance enforces rules on agent writes, protecting critical paths. Flynn writes the gate checklist at kickoff and approves type contracts before implementation begins.
 
 **Acceptance Criteria:**
-- [ ] All Phase 3 issues completed and PR-linked
-- [ ] Phase 2 merged to main and tagged v0.2.0
-- [ ] All Phase 3 tests passing (pnpm test -- --coverage)
-- [ ] Coverage >= 80%, governance module >= 95%
-- [ ] writer.ts handles all file creation and append edge cases
-- [ ] governance.ts correctly parses and enforces rules
-- [ ] SDK public API in index.ts is clean and well-documented
-- [ ] No writes bypass governance for agents (only humans do, by design)
-- [ ] All governance test scenarios passing
-- [ ] Architecture docs include governance section
+- [ ] Phase 3 gate checklist written and documented (→ `.squad/decisions/inbox/castor-phase3-gate.md`)
+- [ ] All 22 gate criteria agreed upon by team
+- [ ] Wave 0 plan complete: roles, dependencies, critical path (see wave plan below)
+- [ ] Dumont confirmed docs structure (writer, governance, SDK sections)
+- [ ] Yori has governance-vault/ test fixture design reviewed
+- [ ] Phase 2 merged to main and tagged v0.2.0 ✓
+- [ ] Ready to lock types in Wave 1 (Tron)
 
 **Notes:**
-This phase enables the "humans and agents think together" vision. Get governance right — it's the safety layer.
+Gate checklist must be visible before any implementation — this is critical for preventing scope creep and gate failures. See `.squad/decisions/inbox/castor-phase3-gate.md` for the complete 22-criterion checklist.
+
+---
+
+### Phase 3 Wave 0 Plan — Kickoff and Types Planning
+
+**Wave 0 Goals:** Gate checklist written, types planned, fixtures designed, no implementation code.
+
+**Wave 0 Participants:**
+- **Flynn:** Gate checklist, architecture review (→ done via `.squad/decisions/inbox/castor-phase3-gate.md`)
+- **Tron:** Survey Phase 3 requirements, plan types.ts additions (no implementation yet)
+- **Dumont:** Agree docs structure (write-api.md, governance.md, sdk-api.md sections)
+- **Yori:** Design test fixtures (governance-vault/ with sample rules)
+- **Ram:** Awaiting types lock from Tron
+
+**Critical Path:**
+1. Flynn + Tron + Castor review 22-criterion gate checklist (1 hr) ✓
+2. Tron plans types.ts additions (Phase 3 types: CreateOptions, GovernanceRules, Actor, WriteAction, SearchResult)
+3. Ram records confirmed signatures in history.md (before implementation)
+4. Dumont confirms docs outline
+5. Yori finishes fixture design
+6. **Gate:** Wave 0 complete when types.ts design document ready for Flynn review
+
+**Wave 0 Deliverables (no code):**
+- ✅ `castor-phase3-gate.md` — 22-criterion gate checklist (in `.squad/decisions/inbox/`)
+- ✅ Docs outline approved (by Dumont + Ram)
+- [ ] Test fixtures designed (governance-vault/ structure, sample governance.md rules)
+- [ ] types.ts Phase 3 design (by Tron) — not yet implemented, just documented
+
+**Wave 0 Timeline:** ~1 day (parallel work, no blocking)
+
+---
+
+### Wave 1 Plan — Types Locked
+
+**Wave 1 Goals:** types.ts Phase 3 additions locked and Flynn-approved. Test skeletons ready. No implementation.
+
+**Wave 1 Timeline:** ~1-2 days
+
+**Parallel Work:**
+1. **Tron** (1 day):
+   - Implement Phase 3 types.ts additions (CreateOptions, GovernanceRules, Actor, WriteAction, SearchResult, etc.)
+   - Document each type with JSDoc
+   - Run `npx tsc --noEmit` — zero errors
+   - Submit to Flynn for review
+
+2. **Yori** (0.5 day, starts after Tron submits types):
+   - Create governance-vault/ fixture with sample governance.md
+   - Document fixture: what rules are enforced, what scenarios it covers
+
+3. **Ram** (wait for Tron):
+   - After Flynn approves types, read src/types.ts
+   - Record confirmed function signatures in history.md (writer, governance, Vault)
+   - Note parameter order, return types — this is the authoritative spec
+
+4. **Dumont** (0.5 day):
+   - Create markdown templates for write-api.md, governance.md, sdk-api.md (empty sections)
+
+**Wave 1 Gate:** Flynn reviews types.ts → approves → team proceeds to Wave 2
+
+---
+
+### Wave 2 Plan — Writer and Governance Implementation
+
+**Wave 2 Goals:** writer.ts and governance.ts fully implemented. Yori writes integration tests. Coverage ≥ 90%.
+
+**Wave 2 Timeline:** ~2 days
+
+**Parallel Work:**
+1. **Ram** (1.5 days):
+   - Implement writer.ts: `create()` and `append()` functions
+   - Implement governance.ts: `parseGovernance()` and `enforceRule()` functions
+   - All JSDoc + examples
+   - `npx tsc --noEmit` and `npx eslint` zero errors
+   - Ready for Yori's tests
+
+2. **Yori** (starts after Ram implementation ready, 1.5 days):
+   - Implement tests/writer.test.ts (12+ cases)
+   - Implement tests/governance.test.ts (16+ cases, especially edge cases like glob patterns, conflicting rules)
+   - Run coverage: writer.ts ≥ 90%, governance.ts ≥ 95%
+   - All tests pass
+
+**Wave 2 Deliverables:**
+- src/writer.ts (exported from index.ts)
+- src/governance.ts (exported from index.ts)
+- tests/writer.test.ts (12+ tests)
+- tests/governance.test.ts (16+ tests)
+- Coverage: 80%+ overall, writer ≥ 90%, governance ≥ 95%
+- Runtime export check passes
+
+**Wave 2 Gate:** All writer + governance tests pass, coverage thresholds met, code review approved
+
+---
+
+### Wave 3 Plan — Vault SDK and CLI Commands
+
+**Wave 3 Goals:** Vault class and SDK integration complete. CLI commands implemented and tested.
+
+**Wave 3 Timeline:** ~2 days
+
+**Parallel Work:**
+1. **Ram** (1 day):
+   - Implement src/index.ts Vault class and `open()` function
+   - Methods: query(), walk(), create(), append(), getGovernanceRules()
+   - All methods async
+   - JSDoc on all public methods
+   - Error handling with descriptive messages
+   - `npx tsc --noEmit` zero errors
+
+2. **Tron** (starts after Vault ready, 1 day):
+   - Implement CLI commands: `oxori write`, `oxori append`, `oxori config`
+   - All commands respect --vault flag
+   - Use Vault SDK internally (thin wrappers, logic in SDK)
+
+3. **Yori** (parallel, 1.5 days):
+   - Implement tests/index.test.ts (SDK integration, 14+ cases)
+   - Update tests/cli.test.ts with write/append/config tests
+   - Test governance scenarios (agent blocked, human allowed)
+   - Integration tests: create → query → verify in index
+
+**Wave 3 Deliverables:**
+- src/index.ts: Vault class + `open()` function
+- CLI commands: oxori write, append, config
+- tests/index.test.ts (14+ tests)
+- tests/cli.test.ts updates (write, append, config tests)
+- Coverage: 80%+ overall, index.ts ≥ 90%
+- CLI tests pass, governance scenarios verified
+
+**Wave 3 Gate:** All SDK + CLI tests pass, coverage thresholds met, integration verified
+
+---
+
+### Wave 4 Plan — Documentation and Release
+
+**Wave 4 Goals:** All documentation complete, coverage verified, final gate approval.
+
+**Wave 4 Timeline:** ~1 day
+
+**Sequential Work:**
+1. **Dumont** (0.5 day):
+   - Write docs/write-api.md (complete API reference, examples)
+   - Write docs/governance.md (rule syntax, examples, enforcement)
+   - Write docs/sdk-api.md (Vault class reference)
+   - Update README.md with Phase 3 examples
+   - Update docs/architecture.md with Phase 3 section
+
+2. **Yori** (0.5 day):
+   - Verify final coverage: `npx vitest run --coverage`
+   - Full per-file table for all modules with thresholds
+   - Confirm indexer.ts coverage improved to ≥ 90%
+
+3. **Flynn** (0.5 day):
+   - Final gate check against all 22 criteria
+   - Run verification commands: tsc, eslint, build, test, runtime exports
+   - Approve or block with specific fixes
+
+**Wave 4 Deliverables:**
+- docs/write-api.md (complete)
+- docs/governance.md (complete)
+- docs/sdk-api.md (complete)
+- README.md updated (Phase 3 features, examples)
+- docs/architecture.md updated (Phase 3 section)
+- RELEASES.md v0.3.0 (by Dumont, final issue)
+
+**Wave 4 Gate:** Flynn approves all 22 criteria → merge to main + tag v0.3.0 + publish npm
+
+---
+
+### Dependencies and Critical Path
+
+```
+Wave 0 (kickoff)
+  ├─ Flynn: gate checklist ✓
+  ├─ Tron: types plan
+  ├─ Dumont: docs structure
+  └─ Yori: fixtures plan
+      ↓
+Wave 1 (types locked)
+  ├─ Tron: types.ts implementation
+  ├─ Ram: signatures recorded in history.md
+  ├─ Yori: fixtures built
+  └─ Dumont: doc templates
+      ↓ (Flynn approves types)
+Wave 2 (writer + governance)
+  ├─ Ram: writer.ts + governance.ts (parallel implementation)
+  └─ Yori: tests (parallel after implementation)
+      ↓
+Wave 3 (SDK + CLI)
+  ├─ Ram: Vault class + SDK
+  ├─ Tron: CLI commands (starts after Vault)
+  └─ Yori: integration tests (parallel)
+      ↓
+Wave 4 (release)
+  ├─ Dumont: docs
+  ├─ Yori: coverage verification
+  └─ Flynn: final gate
+      ↓
+✅ v0.3.0 release to npm
+```
+
+**Critical Path (must complete sequentially):**
+1. Wave 0: Gate checklist + type planning (1 day)
+2. Wave 1: types.ts locked (1 day, gates Wave 2)
+3. Wave 2: writer + governance (2 days, gates Wave 3)
+4. Wave 3: Vault + CLI (2 days, gates Wave 4)
+5. Wave 4: Release (1 day)
+
+**Total: 7 days (with heavy parallelism in Waves 2-3)**
 
 ---
 
@@ -504,26 +723,81 @@ This phase enables the "humans and agents think together" vision. Get governance
 **Issue: Implement writer.ts for file creation and append**
 **Label:** phase-3, squad:Ram
 **Assigned to:** Ram
-**Depends on:** Phase 3 Kickoff — Read/Write API and Governance
+**Depends on:** Phase 3 Kickoff (types locked by Tron in Wave 1)
+**Wave:** 2 (implementation)
 
 **Context:**
 Writer creates new markdown files and appends to existing ones, always respecting frontmatter conventions. It doesn't enforce governance — that's governance.ts. Writer just handles the mechanics of writing markdown with proper frontmatter.
 
+**TypeScript Contract** (exact signatures from src/types.ts Phase 3):
+```typescript
+interface CreateOptions {
+  title?: string;
+  tags?: string[];
+  frontmatter?: Record<string, unknown>;
+  body: string;
+}
+
+export async function create(
+  path: string, 
+  options: CreateOptions
+): Promise<void>;
+
+export async function append(
+  path: string, 
+  content: string
+): Promise<void>;
+```
+
 **Acceptance Criteria:**
-- [ ] writer.ts exports: create(path: string, options: CreateOptions): Promise<void>, append(path: string, content: string): Promise<void>
-- [ ] CreateOptions includes: title (optional, goes in frontmatter), tags (array), frontmatter (schemaless object), body (string)
-- [ ] create() generates consistent frontmatter format: title, tags, dates, custom frontmatter, then body
-- [ ] append() adds content to file body without touching frontmatter
-- [ ] Both functions normalize paths with path.resolve()
-- [ ] create() throws if file already exists (no overwrite)
-- [ ] append() creates file if not present (convenience)
-- [ ] Dates in frontmatter use ISO 8601 format, always UTC
-- [ ] Handles special characters in frontmatter values (escaping, quoting)
-- [ ] All operations are idempotent within constraints (create fails on re-run, append is safe)
-- [ ] Edge cases: very long titles, special characters, large appends
+- [ ] `create(path: string, options: CreateOptions): Promise<void>`
+  - Creates new markdown file with frontmatter (title, tags, dates, custom fields, body)
+  - Throws error if file already exists (no overwrite)
+  - Normalizes paths with `path.resolve()`
+  - Generates frontmatter in consistent YAML format
+  - Title and tags from CreateOptions.title and CreateOptions.tags (optional)
+  - Dates: `created_at` and `updated_at` in ISO 8601 UTC format (e.g., `2026-04-03T14:30:00Z`)
+  - Custom frontmatter fields (from CreateOptions.frontmatter) merged into YAML
+  - Handles special characters in values (YAML escaping/quoting)
+  - Body appended after frontmatter
+- [ ] `append(path: string, content: string): Promise<void>`
+  - Appends content to file body without modifying frontmatter
+  - Creates file if not present (uses create with default options)
+  - Updates `updated_at` field in frontmatter to current time
+- [ ] Both functions normalize paths (absolute and relative work)
+- [ ] Edge cases tested and handled:
+  - Very long titles (no crash)
+  - Special characters in frontmatter (correct YAML escaping)
+  - Large appends (> 1MB)
+  - Non-existent parent directories (optional: create or throw)
+- [ ] All operations complete in < 100ms
+- [ ] Idempotent within design constraints:
+  - `create()` fails on re-run for same path (expected)
+  - `append()` safe to call multiple times (adds content each time)
+
+**Test Coverage Requirements:**
+- tests/writer.test.ts: 12+ cases
+  - [ ] create with all CreateOptions fields
+  - [ ] create with missing optional fields
+  - [ ] create fails when file exists
+  - [ ] append to existing file
+  - [ ] append creates file if absent
+  - [ ] special characters in title/tags/frontmatter values
+  - [ ] ISO 8601 dates in frontmatter
+  - [ ] very long titles
+  - [ ] large append content
+  - [ ] paths normalization (absolute/relative)
+  - [ ] frontmatter roundtrip (write → read → verify)
+  - [ ] updated_at changes on append
+- Coverage: ≥ 90%
+
+**CLI Test Integration (from Phase 3 gate criterion #15):**
+- When Tron implements CLI commands, tests must cover:
+  - `oxori write --title "Test" --body "content"`
+  - `oxori append [file] --body "more"`
 
 **Notes:**
-Writer is dumb — it writes what you tell it to write. Governance sits on top and says "no, don't write there". Keep them separate for testability.
+Writer is dumb — it writes what you tell it to write. Governance sits on top and says "no, don't write there". Keep them separate for testability. No dependency on governance or indexer — pure file I/O with frontmatter formatting.
 
 ---
 
@@ -531,24 +805,95 @@ Writer is dumb — it writes what you tell it to write. Governance sits on top a
 **Label:** phase-3, squad:Ram
 **Assigned to:** Ram
 **Depends on:** Implement writer.ts for file creation and append
+**Wave:** 2 (implementation, parallel with writer.ts)
 
 **Context:**
-Governance is a markdown file at `.oxori/governance.md` that specifies rules for what agents can and cannot do. Rules protect critical paths like governance.md itself, allow writes to specific directories, enforce frontmatter fields, etc.
+Governance is a markdown file at `.oxori/governance.md` that specifies rules for what agents can and cannot do. Rules protect critical paths like governance.md itself, allow writes to specific directories, enforce frontmatter fields, etc. Humans always bypass governance (by design).
+
+**TypeScript Contract** (exact signatures from src/types.ts Phase 3):
+```typescript
+type Actor = Agent | Human;
+interface Agent {
+  kind: "agent";
+  name: string;
+}
+interface Human {
+  kind: "human";
+}
+
+type WriteAction = "create" | "append";
+
+interface GovernanceRules {
+  allowedPaths: string[];      // glob patterns
+  blockedPaths: string[];      // glob patterns
+  requiredFrontmatter: string[]; // e.g., ["title", "date"]
+  relationRules?: Record<string, unknown>;
+}
+
+export async function parseGovernance(
+  filePath: string
+): Promise<GovernanceRules>;
+
+export function enforceRule(
+  path: string,
+  action: WriteAction,
+  rules: GovernanceRules,
+  actor: Agent | Human
+): boolean;
+```
 
 **Acceptance Criteria:**
-- [ ] governance.ts exports: parseGovernance(filePath: string): GovernanceRules, enforceRule(path: string, action: WriteAction, rules: GovernanceRules, actor: Agent|Human): boolean
-- [ ] GovernanceRules type represents: allowedPaths (glob patterns), blockedPaths (glob patterns), requiredFrontmatter (list), relationRules (custom relation enforcement)
-- [ ] Governance markdown format: clearly structured with YAML front matter or markdown headers
-- [ ] Example rules: agents can't write to .oxori/ (except index/), must include title and date in frontmatter
-- [ ] enforceRule() returns true if action is allowed, false otherwise
-- [ ] Humans always bypass governance (design principle)
-- [ ] Agents are subject to rules
-- [ ] Missing governance.md means no restrictions (default allow, not deny)
-- [ ] Rule evaluation is deterministic
-- [ ] At least 8 unit tests: simple rules, glob patterns, conflicting rules, human bypass
+- [ ] `parseGovernance(filePath: string): Promise<GovernanceRules>`
+  - Parses `.oxori/governance.md` into structured GovernanceRules
+  - Returns default rules if file missing (no restrictions, fail-safe)
+  - Parses markdown + optional YAML frontmatter
+  - Extracts rules: allowedPaths, blockedPaths (glob patterns), requiredFrontmatter (field list)
+  - Handles malformed governance.md gracefully (throws descriptive error or defaults)
+- [ ] `enforceRule(path: string, action: WriteAction, rules: GovernanceRules, actor: Agent|Human): boolean`
+  - Returns `true` if action is allowed, `false` if denied
+  - **Humans always bypass** — returns `true` for all actions (actor.kind === "human")
+  - **Agents subject to rules** — checks path against allowedPaths and blockedPaths
+  - Path matching uses glob patterns (e.g., `.oxori/**` blocks .oxori/ subdirs)
+  - Example rules: agents can't write to .oxori/ (except index/), must include title in frontmatter
+  - Returns `false` with informative reason if action denied
+- [ ] All rule evaluation is **deterministic** (same inputs → same output)
+- [ ] Glob pattern matching is robust (handles *, **, ? wildcards)
+- [ ] Edge cases:
+  - Conflicting rules (most restrictive wins)
+  - Missing governance.md (no restrictions)
+  - Malformed governance.md (throws error with recovery suggestion)
+  - Empty allowedPaths/blockedPaths (safe defaults)
+  - Non-existent paths in rules (safe, not a crash)
+
+**Test Coverage Requirements:**
+- tests/governance.test.ts: 16+ cases
+  - [ ] parseGovernance: valid governance.md
+  - [ ] parseGovernance: missing governance.md (defaults)
+  - [ ] parseGovernance: malformed governance.md (error thrown)
+  - [ ] enforceRule: human always allowed
+  - [ ] enforceRule: agent blocked by blockedPaths
+  - [ ] enforceRule: agent allowed by allowedPaths
+  - [ ] enforceRule: glob patterns (*, **, ?)
+  - [ ] enforceRule: conflicting rules
+  - [ ] enforceRule: .oxori/ protection (standard rule)
+  - [ ] enforceRule: requiredFrontmatter check (future, document but may not implement in Phase 3)
+  - [ ] edge case: empty allowedPaths/blockedPaths
+  - [ ] edge case: very long path names
+  - [ ] edge case: unicode characters in paths
+  - [ ] determinism: same inputs always produce same output
+  - [ ] performance: rule enforcement < 10ms
+  - [ ] standard rule set: example governance.md with realistic rules
+- Coverage: ≥ 95% (safety-critical module)
+
+**CLI Test Integration (Phase 3 gate criterion #15):**
+- When Tron implements `oxori config`, test must show governance rules
+- When Tron implements `oxori write --agent`, test governance blocking
+
+**README Update (Phase 3 gate criterion #8):**
+- Add section in README.md explaining governance and agent/human semantics
 
 **Notes:**
-Governance is intentionally simple — markdown, not YAML. Future: could support more complex rule DSLs, but start simple. Reference PROJECT.md governance section.
+Governance is intentionally simple — markdown, not complex DSL. Future could support more complex rule DSLs. Reference `.oxori/governance.md` format and examples. Human bypass is **by design** — not a security hole; the point is that humans are responsible, agents are constrained.
 
 ---
 
@@ -556,23 +901,66 @@ Governance is intentionally simple — markdown, not YAML. Future: could support
 **Label:** phase-3, squad:Ram
 **Assigned to:** Ram
 **Depends on:** Design and implement governance rule parser
+**Wave:** 2 (implementation, after governance.ts)
 
 **Context:**
-SafeWriter wraps writer and governance together: before writing, check governance rules. If actor is human, allow. If actor is agent, check rules. If allowed, write. If denied, throw error with explanation.
+SafeWrite wraps writer and governance together: before writing, check governance rules. If actor is human, allow and write. If actor is agent, check rules, enforce, and write only if allowed. This is the integration point for safe agent operations.
+
+**TypeScript Contract** (exact signatures from src/types.ts Phase 3):
+```typescript
+export async function safeWrite(
+  path: string,
+  options: CreateOptions,
+  actor: Agent | Human,
+  vaultPath: string
+): Promise<Result<void, OxoriError>>;
+
+export async function safeAppend(
+  path: string,
+  content: string,
+  actor: Agent | Human,
+  vaultPath: string
+): Promise<Result<void, OxoriError>>;
+```
 
 **Acceptance Criteria:**
-- [ ] governance.ts exports: safeWrite(path: string, content: CreateOptions, actor: Agent|Human, vault: Vault): Promise<Result<void, Error>>
-- [ ] Agent writes are subject to governance rules
-- [ ] Human writes bypass governance
-- [ ] Errors include action suggestions: "Blocked: agents cannot write to .oxori/. Ask a human to edit this file."
-- [ ] Logs write attempts (debug level) with actor, path, allowed/denied
-- [ ] safeWrite updates index cache after successful write
+- [ ] `safeWrite(path: string, options: CreateOptions, actor: Agent|Human, vaultPath: string): Promise<Result<void, OxoriError>>`
+  - Checks governance rules before writing
+  - If human (`actor.kind === "human"`), allow write (bypass governance)
+  - If agent, call `enforceRule()` — allow only if returns true
+  - If denied, return `Err(OxoriError)` with action suggestion: `"Blocked: agents cannot write to .oxori/. Ask a human to edit this file."`
+  - On success, call `writer.create()` and return `Ok(void)`
+  - Uses `Result<T, E>` pattern (matches Phase 1 error handling)
+- [ ] `safeAppend(path: string, content: string, actor: Agent|Human, vaultPath: string): Promise<Result<void, OxoriError>>`
+  - Same governance check as safeWrite
+  - Calls `writer.append()` if allowed
+- [ ] Logging (debug level):
+  - Log all write attempts: `{ actor: name/type, path, action, allowed: boolean }`
+  - Example: `"Write attempt: agent=claude, path=/docs/notes.md, action=create, allowed=true"`
+- [ ] Governance rules loaded from `.oxori/governance.md` in vaultPath
 - [ ] Handles concurrent writes gracefully (or documents that Git handles them)
-- [ ] Works with both create and append operations
-- [ ] Edge case: governance.md itself cannot be written by agents
+- [ ] Both create and append operations supported
+- [ ] Edge case: governance.md itself cannot be written by agents (strict rule)
+- [ ] Errors include action suggestions (not cryptic error codes)
+- [ ] Performance: governance check + write complete in < 100ms
+
+**Integration Requirements:**
+- [ ] Used by Vault SDK (phase-3-issue-5: vault.create() and vault.append() call safeWrite)
+- [ ] CLI write commands use safeWrite when `--agent` flag provided (for testing)
+- [ ] Human writes bypass governance (design principle verified in tests)
+
+**Test Coverage Requirements:**
+- Part of tests/governance.test.ts and tests/index.test.ts (SDK integration)
+- Specific cases:
+  - [ ] Agent write blocked by governance → error with suggestion
+  - [ ] Human write allowed → success (governance not checked)
+  - [ ] safeWrite returns Result type (not throws)
+  - [ ] Logging captures all write attempts
+  - [ ] .oxori/governance.md protected from agent writes
+- Coverage included in overall thresholds
 
 **Notes:**
-SafeWrite is the integration point. Vault class will call safeWrite for agent operations. Humans call writer directly (or shouldn't — but the design allows it).
+SafeWrite is the integration point between writer (dumb I/O) and governance (smart enforcement). Vault class calls safeWrite for agent operations. Humans call writer directly (or use safeWrite with human actor, which is a no-op governance-wise but still tracked in logs).
 
 ---
 
@@ -580,23 +968,95 @@ SafeWrite is the integration point. Vault class will call safeWrite for agent op
 **Label:** phase-3, squad:Ram
 **Assigned to:** Ram
 **Depends on:** Integrate governance with writer for safe agent writes
+**Wave:** 3 (integration, after safeWrite)
 
 **Context:**
-Public SDK that users and agents import. Provides high-level interface to Oxori: open a vault, query it, walk the graph, write files. This is the main entry point for the library.
+Public SDK that users and agents import. Provides high-level interface to Oxori: open a vault, query it, walk the graph, write files, check governance. This is the main entry point for the library.
+
+**TypeScript Contract** (exact signatures from src/types.ts Phase 3):
+```typescript
+export class Vault {
+  query(q: string): Promise<Set<string>>;
+  walk(start: string, opts?: WalkOptions): Promise<WalkResult>;
+  create(path: string, opts: CreateOptions, actor: Agent | Human): Promise<Result<void, OxoriError>>;
+  append(path: string, content: string, actor: Agent | Human): Promise<Result<void, OxoriError>>;
+  getGovernanceRules(): GovernanceRules;
+}
+
+export async function open(path: string): Promise<Vault>;
+```
 
 **Acceptance Criteria:**
-- [ ] index.ts exports: Vault class (only class in SDK, stateful), functions: open(path: string): Promise<Vault>
-- [ ] Vault class methods: query(q: string): Promise<Set<string>>, walk(start: string, opts: WalkOptions): Promise<WalkResult>, create(path, opts), append(path, content), write(path, opts, actor: Agent|Human)
-- [ ] open() creates Vault instance, loads index cache, parses governance, ready for queries
-- [ ] All Vault methods are async
-- [ ] Error handling uses Result<T, E> pattern (or throw descriptive errors)
-- [ ] index.ts is the only public entry point — no internal imports from user code
-- [ ] Named exports only, no defaults
-- [ ] TypeDoc comments on all public methods
-- [ ] Example: const vault = await open('./my-vault'); const matches = await vault.query('type:decision');
+- [ ] `open(path: string): Promise<Vault>`
+  - Creates and returns Vault instance
+  - Loads index cache from `.oxori/index/` (Phase 1 indexer)
+  - Parses governance rules from `.oxori/governance.md` (Phase 3)
+  - All state initialized and ready for queries/writes
+  - Throws descriptive error if path invalid or not a vault
+- [ ] `Vault` class methods (all async):
+  - [ ] `query(q: string): Promise<Set<string>>`
+    - Delegates to Phase 2 query engine (tokenize/parse/evaluate)
+    - Returns set of file paths matching query
+  - [ ] `walk(start: string, opts?: WalkOptions): Promise<WalkResult>`
+    - Delegates to Phase 2 graph traversal
+    - Returns WalkResult with nodes, edges, visitOrder
+  - [ ] `create(path: string, opts: CreateOptions, actor: Agent|Human): Promise<Result<void, OxoriError>>`
+    - Calls safeWrite (governance check)
+    - Returns Result<void> (not throws)
+  - [ ] `append(path: string, content: string, actor: Agent|Human): Promise<Result<void, OxoriError>>`
+    - Calls safeAppend (governance check)
+    - Returns Result<void>
+  - [ ] `getGovernanceRules(): GovernanceRules`
+    - Returns parsed governance rules (may call parseGovernance again or cache)
+- [ ] All public methods documented with TypeDoc comments (JSDoc)
+  - Includes `@param`, `@returns`, `@throws` tags
+  - Example usage in comments
+- [ ] Error handling uses Result<T, E> pattern (not throw)
+  - Callers can safely chain operations
+  - Errors are structured (OxoriError with code and action)
+- [ ] index.ts is the ONLY public entry point
+  - No internal imports from user code to src/writer.ts, src/governance.ts, src/query.ts, etc.
+  - All public APIs re-exported from index.ts
+- [ ] Named exports only (no default exports)
+  - `export { open, Vault }`
+  - `export type { CreateOptions, GovernanceRules, Agent, Human, WriteAction }`
+- [ ] Performance:
+  - `open()` completes in < 500ms (includes index load)
+  - Query/walk/write operations inherit their own thresholds
+
+**Integration Requirements:**
+- [ ] Called by CLI commands (Phase 3 issue 6: oxori write, oxori append, oxori config)
+- [ ] Example usage in README.md:
+  ```typescript
+  const vault = await open('./my-vault');
+  const matches = await vault.query('type:decision');
+  const walked = await vault.walk('file1.md', { direction: 'outgoing' });
+  await vault.create('/docs/new.md', { title: 'New Note', body: 'content' }, { kind: 'human' });
+  ```
+
+**Test Coverage Requirements:**
+- tests/index.test.ts: 14+ cases
+  - [ ] open() creates Vault with index loaded
+  - [ ] open() throws on invalid path
+  - [ ] query() delegates to query engine
+  - [ ] walk() delegates to graph traversal
+  - [ ] create() calls safeWrite
+  - [ ] append() calls safeAppend
+  - [ ] getGovernanceRules() returns parsed rules
+  - [ ] All methods are async (return Promises)
+  - [ ] Error handling via Result pattern
+  - [ ] Integration: create file → query finds it
+  - [ ] Integration: governance rules enforced on agent write
+  - [ ] Integration: human write bypasses governance
+  - [ ] All named exports present in dist/index.js (runtime check)
+  - [ ] No internal exports leaked (only open, Vault, and types)
+- Coverage: ≥ 90%
+
+**README Update (Phase 3 gate criterion #8, A8):**
+- Add "SDK Usage" section to README.md with Vault examples
 
 **Notes:**
-SDK is the face of Oxori for users. Keep it simple, intuitive, and well-documented. Vault should feel like a natural extension of file system operations.
+SDK is the face of Oxori for users. Keep it simple, intuitive, and well-documented. Vault should feel like a natural extension of file system operations. All complexity (types, governance) is hidden behind clean method signatures.
 
 ---
 
@@ -604,46 +1064,203 @@ SDK is the face of Oxori for users. Keep it simple, intuitive, and well-document
 **Label:** phase-3, squad:Tron
 **Assigned to:** Tron
 **Depends on:** Design and implement public SDK API (index.ts)
+**Wave:** 3 (implementation, after Vault SDK)
 
 **Context:**
-CLI commands for writing and appending files, plus configuration (vault settings, governance info). `oxori write --title "New File" --tags "#auth,#feature" --body "content"` creates file, `oxori append file.md "content"` appends.
+CLI commands for writing and appending files, plus configuration viewing. Commands are thin wrappers around the Vault SDK — logic lives in Vault class, CLI layer only handles I/O and argument parsing.
+
+**TypeScript Contract** (CLI commands in src/cli.ts):
+```typescript
+// No new exports from cli.ts — logic stays in Vault class
+// CLI commands are internal functions that parse args and call Vault methods
+```
 
 **Acceptance Criteria:**
-- [ ] `oxori write [--title T] [--tags t1,t2] [--path p] [--body B] [--frontmatter json]` creates file
-- [ ] Write command auto-generates filename from title if --path not provided (slug: lowercase, hyphens, no special chars)
-- [ ] `oxori append [file] [--body B]` appends content to file
-- [ ] Both commands respect governance if --agent flag provided (simulating agent write)
-- [ ] `oxori config` shows: vault path, governance rules, index stats, last reindex time
-- [ ] All commands work with --vault flag to target specific vault
-- [ ] Error messages clear and actionable
-- [ ] Commands integrate with Phase 2 query (can do: oxori query 'type:decision' and pipe to oxori write)
+
+- [ ] `oxori write [OPTIONS]`
+  - `--title T` (optional): file title for frontmatter
+  - `--tags t1,t2` (optional): comma-separated tags
+  - `--path p` (optional): file path; if omitted, auto-generate from title (lowercase, hyphens, no special chars)
+  - `--body B` (optional or stdin): content to write
+  - `--frontmatter json` (optional): JSON object with additional frontmatter fields
+  - `--vault v` (optional): target vault path (defaults to current directory)
+  - `--agent` (optional, testing only): simulate agent write (subject to governance)
+  - Creates file via Vault.create() with specified options
+  - Success: prints "✓ Created: /path/to/file.md"
+  - Error: prints descriptive message with suggestion
+
+- [ ] `oxori append FILE [OPTIONS]`
+  - `FILE`: path to file (or stdin if not provided)
+  - `--body B` (optional or stdin): content to append
+  - `--vault v` (optional): target vault path
+  - `--agent` (optional): simulate agent append
+  - Appends via Vault.append()
+  - Success: prints "✓ Appended to: /path/to/file.md"
+  - Error: prints descriptive message
+
+- [ ] `oxori config [--vault v]`
+  - `--vault v` (optional): target vault
+  - Displays:
+    - `Vault path: /absolute/path/to/vault`
+    - `Governance rules: [list of blockedPaths, allowedPaths]`
+    - `Index stats: N files, M tags, K links`
+    - `Last reindex: TIMESTAMP`
+  - Format: human-readable, not JSON (unless `--json` flag)
+  - `--json` flag: output JSON format for scripting
+
+**Acceptance Criteria (Implementation Quality):**
+- [ ] All commands respect `--vault` flag (allows targeting different vaults)
+- [ ] Error messages are clear and actionable
+  - Example: `"Error: File already exists. Use --force to overwrite or choose a different --path."`
+  - Governance denials include suggestions: `"Blocked: agents cannot write to .oxori/. Ask a human to edit this file."`
+- [ ] Commands integrate with Phase 2 query (e.g., `oxori query 'type:decision'` can pipe to `oxori write`)
+- [ ] `--agent` flag for testing governance (not for production use — document clearly)
+- [ ] All commands handle stdin/stdout gracefully
+- [ ] Verbose output on success, concise errors on failure
+
+**Test Coverage Requirements** (from Phase 3 gate criterion #15):
+- tests/cli.test.ts describe blocks for write, append, config commands
+- Minimum test cases:
+  - [ ] `oxori write --title "Test Note" --body "content"` succeeds, creates file
+  - [ ] `oxori write` without --path auto-generates filename
+  - [ ] `oxori write` with special characters in title handles correctly
+  - [ ] `oxori write` with --tags, --frontmatter works
+  - [ ] `oxori write` to file that exists throws error
+  - [ ] `oxori append [file] --body "more content"` succeeds
+  - [ ] `oxori append` to non-existent file creates it
+  - [ ] `oxori config` outputs vault info
+  - [ ] `oxori config --json` outputs JSON
+  - [ ] `oxori write --agent` succeeds if governance allows
+  - [ ] `oxori write --agent` fails if governance denies (blocks .oxori/ for agents)
+  - [ ] `oxori write --vault /different/path` targets correct vault
+- All tests pass with `pnpm test`
+- Coverage: included in overall ≥ 80% threshold
+
+**README Update (Phase 3 gate criterion #8):**
+- Add CLI examples to README.md for oxori write, append, config
+
+**Integration Requirements:**
+- All commands use Vault SDK (via `await open(vaultPath)`)
+- No direct calls to writer.ts, governance.ts, or query.ts (use SDK abstraction)
+- CLI is thin — logic lives in SDK
 
 **Notes:**
-CLI write commands are convenience wrappers around SDK. Keep logic in Vault class, keep CLI thin. --agent flag is for testing governance — not for production use.
+CLI commands are convenience wrappers. Keep argument parsing clean, keep error handling graceful. The `--agent` flag is for testing governance enforcement in CI/test environments — not recommended for real human use. Humans should just use the SDK or call write commands without the flag (defaults to human actor).
 
 ---
 
 **Issue: Write comprehensive tests for Phase 3**
 **Label:** phase-3, squad:Yori
 **Assigned to:** Yori
-**Depends on:** Implement oxori write, oxori append, and oxori config CLI commands
+**Depends on:** Implement oxori write, append, and config CLI commands
+**Wave:** 2-3 (parallel with implementation, spans multiple waves)
 
 **Context:**
-Full test suite for writer, governance, SDK, and CLI write commands. Focus on edge cases: governance blocking writes, frontmatter edge cases, concurrent write safety.
+Full test suite for writer, governance, SDK, and CLI write commands. Focus on edge cases, error scenarios, and governance enforcement. Tests are written ONLY after implementation contracts are locked (after Ram's functions are Flynn-approved, Tron's CLI is ready).
 
-**Acceptance Criteria:**
-- [ ] tests/writer.test.ts: 12+ cases covering create, append, edge cases, special characters, dates
-- [ ] tests/governance.test.ts: 16+ cases covering rule parsing, enforcement, human bypass, edge cases, malformed governance.md
-- [ ] tests/index.test.ts (SDK): 14+ cases covering vault operations, governance integration, error handling
-- [ ] tests/cli.test.ts updates: write, append, config commands with governance scenarios
-- [ ] Fixtures include: governance-vault/ with governance.md, test rules
-- [ ] Integration tests: create file → verify in index → query for it → append content
-- [ ] Coverage >= 80%, governance >= 95%
-- [ ] Performance: all write operations complete in < 100ms
-- [ ] All tests pass with `pnpm test -- --coverage`
+**Test Files and Coverage Requirements:**
+
+1. **tests/writer.test.ts** (12+ cases, ≥ 90% coverage)
+   - [ ] `create()` with all CreateOptions fields set
+   - [ ] `create()` with missing optional fields (title, tags, frontmatter)
+   - [ ] `create()` throws when file exists (no overwrite)
+   - [ ] `create()` generates valid YAML frontmatter
+   - [ ] `create()` includes `created_at` and `updated_at` in ISO 8601 UTC
+   - [ ] `append()` to existing file (body appended, frontmatter unchanged)
+   - [ ] `append()` creates file if absent
+   - [ ] `append()` updates `updated_at` timestamp
+   - [ ] Special characters in title/tags/frontmatter (YAML escaping)
+   - [ ] Very long titles (no crash or truncation)
+   - [ ] Large append content (> 1MB)
+   - [ ] Frontmatter roundtrip: write → read → verify
+
+2. **tests/governance.test.ts** (16+ cases, ≥ 95% coverage)
+   - [ ] `parseGovernance()`: valid governance.md
+   - [ ] `parseGovernance()`: missing governance.md (defaults, no error)
+   - [ ] `parseGovernance()`: malformed governance.md (error thrown with helpful message)
+   - [ ] `enforceRule()`: human actor always returns true
+   - [ ] `enforceRule()`: agent blocked by blockedPaths glob
+   - [ ] `enforceRule()`: agent allowed by allowedPaths glob
+   - [ ] `enforceRule()`: glob patterns (*, **, ?)
+   - [ ] `enforceRule()`: conflicting rules (most restrictive wins)
+   - [ ] `enforceRule()`: standard .oxori/ protection (agents blocked)
+   - [ ] `enforceRule()`: agents can write to allowed directories
+   - [ ] `enforceRule()`: edge case — empty allowedPaths/blockedPaths
+   - [ ] `enforceRule()`: edge case — unicode characters in paths
+   - [ ] `enforceRule()`: deterministic (same inputs → same output)
+   - [ ] `enforceRule()`: performance < 10ms
+   - [ ] Example governance.md: realistic rule set
+   - [ ] safeWrite() / safeAppend() integration
+
+3. **tests/index.test.ts** (14+ cases for SDK integration, ≥ 90% coverage)
+   - [ ] `open(path)`: creates Vault, loads index, parses governance
+   - [ ] `open(path)`: throws on invalid vault path
+   - [ ] `vault.query(q)`: delegates to query engine
+   - [ ] `vault.walk(start)`: delegates to graph traversal
+   - [ ] `vault.create()`: calls safeWrite, returns Result
+   - [ ] `vault.append()`: calls safeAppend, returns Result
+   - [ ] `vault.getGovernanceRules()`: returns parsed rules
+   - [ ] All Vault methods are async (return Promises)
+   - [ ] Error handling: blocked action returns Err() not throw
+   - [ ] Integration: create file → query finds it
+   - [ ] Integration: create as human → success (governance bypassed)
+   - [ ] Integration: create as agent → blocked by rule → Err()
+   - [ ] All public exports present in runtime (dist/index.js)
+   - [ ] No internal exports leaked (only open, Vault, types)
+
+4. **tests/cli.test.ts updates** (CLI write/append/config tests)
+   - [ ] `oxori write --title "Test" --body "content"` succeeds
+   - [ ] `oxori write` without --path auto-generates filename
+   - [ ] `oxori write` with --tags, --frontmatter works
+   - [ ] `oxori write` to existing file throws error
+   - [ ] `oxori append [file] --body "more"` succeeds
+   - [ ] `oxori append` to non-existent file creates it
+   - [ ] `oxori config` outputs vault info
+   - [ ] `oxori config --json` outputs JSON format
+   - [ ] `oxori write --agent` succeeds if allowed
+   - [ ] `oxori write --agent` fails if governance denies
+   - [ ] All commands respect --vault flag
+   - [ ] Error messages include action suggestions
+
+**Test Fixtures Requirements:**
+- Use existing `basic-vault/` and `linked-vault/` from Phase 1 (Yori already has)
+- Create `governance-vault/` fixture (new for Phase 3):
+  - `.oxori/governance.md` with sample rules
+  - Test files in allowed and blocked directories
+  - Example: agents blocked from `.oxori/`, allowed in `/docs/`
+
+**Integration Tests:**
+- Scenario: create file → verify in index → query for it → append content → verify update
+- Scenario: governance blocking (agent attempt) → verify error with suggestion
+- Scenario: human bypass (human attempt to write to .oxori/) → success
+
+**Coverage Requirements:**
+- Overall: ≥ 80% (statement, branch, function, line)
+- `src/writer.ts`: ≥ 90%
+- `src/governance.ts`: ≥ 95% (safety-critical)
+- `src/index.ts` (SDK): ≥ 90%
+- `src/indexer.ts`: improved to ≥ 90% (Phase 2 debt from criterion #22)
+- All other Phase 1-2 modules maintain their thresholds
+- **Full per-file table required in submissions** (from Phase 2 Retro A4)
+
+**Performance Requirements:**
+- All write operations: < 100ms
+- Governance check: < 10ms
+- Query after write: < 100ms
+- Test performance: no test takes > 5s
+
+**Test Writing Discipline** (from Phase 2 Retro A3):
+- Use `it.todo()` ONLY if implementation is not ready (rare in Phase 3)
+- Real assertions after implementation contract locked (after Ram's functions approved)
+- Mock external dependencies (filesystem mocks if needed, but prefer real fixtures)
+
+**Execution Command:**
+```bash
+pnpm test -- --coverage
+```
 
 **Notes:**
-Governance tests are critical. Test: agent blocked, human allowed, conflicting rules, missing governance.md, malformed governance.md. Yori should closely review governance logic with Ram.
+Governance tests are critical. Enumerate every guard clause and edge case. The `--agent` flag for CLI tests allows simulating agent writes to verify governance enforcement — essential for testing the safety layer. This is the most complex test suite so far (governance has many branches) — take time to be thorough.
 
 ---
 
@@ -651,21 +1268,112 @@ Governance tests are critical. Test: agent blocked, human allowed, conflicting r
 **Label:** phase-3, squad:Dumont
 **Assigned to:** Dumont
 **Depends on:** Write comprehensive tests for Phase 3
+**Wave:** 4 (documentation and release)
 
 **Context:**
-Final issue of Phase 3. Document write API, governance design, SDK usage, and what's coming in Phase 4.
+Final issue of Phase 3. Document write API, governance design, SDK usage, and what's coming in Phase 4. Release notes must cover new features, breaking changes, and migration steps from v0.2.0.
 
 **Acceptance Criteria:**
-- [ ] docs/sdk-api.md: complete API reference for open(), Vault class, all methods with examples
-- [ ] docs/governance.md: how to write governance.md files, rule syntax, examples, enforcement behavior
-- [ ] docs/write-operations.md: create vs append, frontmatter conventions, dates, custom fields
-- [ ] README.md updated with SDK examples: open, query, walk, write
-- [ ] RELEASES.md v0.3.0: new features, breaking changes from v0.2.0, migration notes
-- [ ] docs/safety-principles.md: how governance protects agents, how humans bypass it, design rationale
-- [ ] Roadmap: Phase 4 focus on semantic search
+
+1. **docs/write-api.md** (complete API reference)
+   - [ ] `create(path: string, options: CreateOptions): Promise<void>` — full signature and documentation
+   - [ ] `append(path: string, content: string): Promise<void>` — full signature and documentation
+   - [ ] CreateOptions type definition with all fields
+   - [ ] Frontmatter format (YAML) explained with examples
+   - [ ] Date format (ISO 8601 UTC) with examples
+   - [ ] Edge cases and error conditions
+   - [ ] 5+ real-world examples
+   - [ ] Performance characteristics
+
+2. **docs/governance.md** (how to write and enforce governance)
+   - [ ] Governance file format (`.oxori/governance.md`)
+   - [ ] How to write rules: `allowedPaths`, `blockedPaths` (glob patterns explained)
+   - [ ] Human vs. agent semantics (why humans bypass)
+   - [ ] Example governance.md with realistic rules
+   - [ ] Rule conflicts and priority
+   - [ ] Default behavior (missing governance.md = no restrictions)
+   - [ ] 5+ examples: protecting .oxori/, allowing /docs/, blocking sensitive paths
+   - [ ] Troubleshooting: "agent blocked, what now?"
+
+3. **docs/sdk-api.md** (Vault class and open() reference)
+   - [ ] `open(path: string): Promise<Vault>` — full signature, documentation, examples
+   - [ ] `Vault` class: all public methods with signatures, documentation, examples
+   - [ ] Query integration: `vault.query(q)` with examples
+   - [ ] Graph integration: `vault.walk(start, opts)` with examples
+   - [ ] Write operations: `vault.create()`, `vault.append()`, actor parameter explanation
+   - [ ] Error handling: Result<T, E> pattern with examples
+   - [ ] 8+ code examples (open, query, walk, write as human, write as agent)
+   - [ ] Performance tips
+
+4. **docs/safety-principles.md** (new doc for Phase 3)
+   - [ ] Design principle: governance protects agents, humans are responsible
+   - [ ] Human bypass semantics and why
+   - [ ] Agent constraints and how to enforce them
+   - [ ] Example: why .oxori/governance.md can't be written by agents
+   - [ ] Best practices for governance rules
+   - [ ] Logging and audit (write attempts logged)
+
+5. **README.md updates** (Phase 3 feature highlights, examples)
+   - [ ] Add "Phase 3 — Write API and Governance" section
+   - [ ] Update feature list: write, governance, SDK examples
+   - [ ] Add SDK usage quick example: `const vault = await open('./my-vault'); await vault.create(...)`
+   - [ ] Add governance explanation (human vs. agent)
+   - [ ] Update CLI examples with oxori write, append, config
+   - [ ] Update version reference: v0.3.0
+   - [ ] Update table of contents (if present)
+
+6. **docs/architecture.md updates** (Phase 3 architecture section)
+   - [ ] Module overview: writer, governance, index.ts (SDK)
+   - [ ] Data flow: user → SDK → writer/governance → file system
+   - [ ] Vault class design and responsibilities
+   - [ ] How governance enforcement works (before write, check rules)
+   - [ ] Human vs. agent writes (architectural principle)
+   - [ ] Index synchronization after writes
+
+7. **RELEASES.md v0.3.0** (change log)
+   - [ ] New features:
+     - File creation and append via SDK
+     - Governance enforcement for agent writes
+     - Vault class for unified interface
+     - CLI commands: oxori write, append, config
+   - [ ] Breaking changes (if any):
+     - Document any API changes from v0.2.0 → v0.3.0
+   - [ ] Migration guide (if applicable):
+     - How to upgrade from v0.2.0
+     - How to add governance to existing vaults
+   - [ ] Bug fixes (if any):
+     - Indexer coverage improvements (Phase 2 debt)
+   - [ ] Performance improvements
+   - [ ] Known limitations / future work (Phase 4: semantic search)
+   - [ ] Contributors and acknowledgments
+
+**Integration Requirements:**
+- [ ] All code examples in docs must be compilable (or clearly marked as pseudo-code)
+- [ ] Examples use actual function signatures (no outdated parameter orders)
+- [ ] Docs reference the gate checklist in `.squad/decisions/inbox/castor-phase3-gate.md` (no duplication, just reference)
+- [ ] Cross-references between docs (e.g., docs/governance.md links to docs/sdk-api.md)
+- [ ] No markdown linting errors (check formatting, links, code blocks)
+
+**Quality Requirements:**
+- [ ] Clear language (not too technical, not too simplified)
+- [ ] All new concepts explained (frontmatter, governance, Actor types)
+- [ ] Consistent terminology (e.g., "agent write" vs. "agent-write")
+- [ ] Examples are practical and realistic
+- [ ] Documentation is ship-ready at v0.3.0 (similar quality to Phase 1 and 2 docs)
+
+**Timeline:**
+- Should be written during Wave 4 (after all implementation and testing complete)
+- Can start outline during Wave 0 (Dumont)
+- Final review before merge
 
 **Notes:**
-Phase 3 is pivotal — users can now read and write. Make sure docs are clear about governance, human vs agent semantics, and safety principles. This is where Oxori becomes a full knowledge layer.
+Phase 3 is pivotal — users can now read AND write to Oxori. Docs must be crystal clear about:
+1. How to use the write API (SDK and CLI)
+2. How governance protects agent writes
+3. Why humans bypass governance (design principle, not a security hole)
+4. How to write custom governance rules
+
+This is where Oxori becomes a full knowledge layer. Make sure users understand the safety model.
 
 ---
 

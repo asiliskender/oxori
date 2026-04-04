@@ -147,7 +147,11 @@ describe("tokenize()", () => {
       expect(eof?.position).toBe(input.length);
     });
 
-    it.todo("handles leading and trailing whitespace gracefully");
+    it("handles leading and trailing whitespace gracefully", () => {
+      const tokens = tokensNoEof("  tag:auth  ");
+      expect(tokens).toHaveLength(1);
+      expectToken(tokens[0], "FILTER", "tag:auth");
+    });
   });
 });
 
@@ -291,8 +295,26 @@ describe("parse()", () => {
       }
     });
 
-    it.todo("throws QUERY_PARSE_ERROR when operator has no right operand");
-    it.todo("throws QUERY_PARSE_ERROR for double operators: tag:x AND AND tag:y");
+    it("throws QUERY_PARSE_ERROR when operator has no right operand", () => {
+      try {
+        parse(tokenize("tag:auth AND"));
+        expect.fail("Should have thrown");
+      } catch (e: unknown) {
+        const err = e as OxoriError;
+        expect(err.code).toBe("QUERY_PARSE_ERROR");
+        expect(err.action?.length || 0).toBeGreaterThan(0);
+      }
+    });
+
+    it("throws QUERY_PARSE_ERROR for double operators: tag:x AND AND tag:y", () => {
+      try {
+        parse(tokenize("tag:x AND AND tag:y"));
+        expect.fail("Should have thrown");
+      } catch (e: unknown) {
+        const err = e as OxoriError;
+        expect(err.code).toBe("QUERY_PARSE_ERROR");
+      }
+    });
   });
 });
 

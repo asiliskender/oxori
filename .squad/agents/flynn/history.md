@@ -243,3 +243,57 @@ Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
 **Phase 3 primary risk:** Governance enforcement logic has complex conditional branches — coverage gaps are likely. Yori should enumerate every guard clause explicitly.
 
 **Phase 3 readiness:** ✅ Cleared. Primary debt: indexer.ts at 47.15% coverage (below 95% target) — should be addressed in Phase 3, not carried further.
+
+---
+
+### 2026-04-04: Phase 3 Gate Checklist Written — Wave 0 Complete
+
+**By:** Flynn (Tech Lead)
+
+**What:** Phase 3 gate checklist (.squad/decisions/inbox/flynn-phase3-gate.md) written at kickoff, applying all 8 Phase 2 retro action items (A1-A8) as mandatory criteria.
+
+**Why:** Gate checklists written at kickoff prevent downstream failures. Phase 2 gate was written during review (AFTER failures), creating reactive fixes. Phase 3 checklist is written before any implementation.
+
+**Checklist structure:**
+- 22 gate criteria covering: types-first, runtime exports, test skeletons, coverage, CLI tests, docs, writer, governance, Vault SDK, release
+- All criteria directly traced to Phase 2 retro action items
+- Wave-by-wave gate validation (Wave 0→1→2→3→4)
+- Clear blocking dependencies (types lock blocks implementation, implementation blocks tests)
+
+**Key criteria (with Phase 2 retro tracing):**
+1. **Criterion #2:** Runtime export check (Retro A1) — binary gate: all new exports must appear in dist/index.js
+2. **Criterion #3:** Types-first approval (Retro A2) — all types merged before implementation begins
+3. **Criterion #5:** Test skeletons after types locked (Retro A3) — prevents API mismatch from Phase 1
+4. **Criterion #6 + #20:** Full per-file coverage table (Retro A4) — no omissions, all modules reported
+5. **Criterion #4:** Function signatures in backlog ACs (Retro A5 + A8) — exact parameters, no spec drift
+6. **Criterion #7:** CLI tests for write/append/check (Retro A7) — governance scenarios verified
+7. **Criterion #8 + #9:** README + docs updated (Retro A8) — features documented before release
+
+**Risks mitigated:**
+- Runtime export check prevents dist/index.js mismatch (Phase 1 hidden bug pattern)
+- Types-first gate blocks "design-by-test" anti-pattern
+- Full coverage table requirement prevents "coverage omission" fix submissions
+- Wave gates prevent implementation-before-types
+- Semantic-release dry-run (Criterion #22) prevents release pipeline failures
+
+**Coverage thresholds set:**
+- writer.ts ≥ 90%
+- governance.ts ≥ 95% (complex rule logic — highest bar)
+- index.ts ≥ 90%
+- Global ≥ 80%
+- Inherited from Phase 2: parser ≥ 95%, query/graph ≥ 90%
+
+**Team alignment:**
+- Tron: Types-first discipline (Wave 1)
+- Ram: writer.ts + governance.ts implementation (Wave 2)
+- Yori: Test coverage strategy (96+ new test cases)
+- Tron: CLI commands (Wave 3)
+- Dumont: Documentation (Wave 4)
+- Clu: semantic-release dry-run before release (Wave 4)
+
+**Acceptance criteria for Wave 0:** Team reviews checklist, agrees on 22 criteria, documents signatures in backlog.md — Tron proceeds to types.ts design (no implementation yet).
+
+**Next:** Tron locks types.ts → Flynn approves → Wave 1 complete → Wave 2 implementation begins (Ram).
+
+---
+

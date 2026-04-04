@@ -720,3 +720,100 @@ export type GovernanceRule = {
   /** Scope: `"agents"` for MCP/agent writes only; `"all"` for future use. */
   appliesTo: "agents" | "all";
 };
+
+/**
+ * @description Represents a single governance rule violation detected during
+ * governance evaluation.
+ *
+ * @remarks
+ * Each violation corresponds to a rule that was evaluated against the vault state.
+ * The `ruleId` allows audit logs to trace which rule was violated. `severity`
+ * differentiates between blocking errors and warnings; implementation may use
+ * this to determine whether to reject a write operation or emit a diagnostic.
+ */
+export type GovernanceViolation = {
+  /** The unique ID of the rule that was violated. */
+  ruleId: string;
+  /** Human-readable message describing why the rule was violated. */
+  message: string;
+  /** The filepath (relative or absolute) affected by this violation. */
+  filePath: string;
+  /** Severity level: `"error"` prevents the write, `"warning"` allows but logs. */
+  severity: "error" | "warning";
+};
+
+/**
+ * @description Result of evaluating governance rules against vault state.
+ *
+ * @remarks
+ * `GovernanceResult` reports whether all evaluated rules passed and lists any
+ * violations found. The `checkedAt` timestamp aids in audit trails and determining
+ * whether a re-check is needed. A result is considered `passed` only if the
+ * `violations` array is empty.
+ *
+ * @example
+ * const result: GovernanceResult = {
+ *   passed: false,
+ *   violations: [
+ *     {
+ *       ruleId: "no-agent-writes-to-archive",
+ *       message: "agents cannot write to archive/**",
+ *       filePath: "archive/old.md",
+ *       severity: "error"
+ *     }
+ *   ],
+ *   checkedAt: Date.now()
+ * };
+ */
+export type GovernanceResult = {
+  /** True if all rules passed; false if any violation exists. */
+  passed: boolean;
+  /** Immutable list of violations found during evaluation. */
+  violations: readonly GovernanceViolation[];
+  /** Unix timestamp (ms) when the evaluation was performed. */
+  checkedAt: number;
+};
+
+/**
+ * @description Emits `WatchEvent` objects when the vault filesystem changes.
+ *
+ * @remarks
+ * `VaultWatcher` wraps Node.js `fs.watch` to provide typed events and clean
+ * resource cleanup. Listeners subscribe via the `on()` method; the watcher
+ * must be explicitly `stop()`-ped to release the underlying filesystem handle.
+ * Events are emitted in the order they occur on the filesystem.
+ *
+ * Typical usage:
+ * ```typescript
+ * const watcher = watch(vaultPath);
+ * watcher.on('change', (event) => {
+ *   console.log(`File ${event.filepath} was ${event.type}d`);
+ * });
+ * watcher.on('error', (err) => {
+ *   console.error('Watch error:', err);
+ * });
+ * // ... later ...
+ * watcher.stop();
+ * ```
+ */
+export interface VaultWatcher {
+  /**
+   * Subscribe to filesystem change events.
+   * @param event - The event type: `"change"` for file modifications, `"error"` for watcher errors.
+   * @param listener - Callback invoked when the event fires.
+   * @returns The watcher itself (for method chaining).
+   */
+  on(event: "change", listener: (e: WatchEvent) => void): this;
+  /**
+   * Subscribe to watcher errors.
+   * @param event - Always `"error"` for this overload.
+   * @param listener - Callback invoked when a filesystem watch error occurs.
+   * @returns The watcher itself (for method chaining).
+   */
+  on(event: "error", listener: (err: Error) => void): this;
+  /**
+   * Stop watching and clean up the underlying fs.watch handle.
+   * After calling `stop()`, no further events will be emitted.
+   */
+  stop(): void;
+};
