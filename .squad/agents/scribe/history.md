@@ -103,3 +103,27 @@ Ready for Phase 3: Write API + Governance.
 - `.squad/decisions.md` — Appended "## Phase 3 Wave 0 Decisions" section (merged inbox)
 
 **Status:** Wave 0 complete. Phase 3 Gate open (awaiting Wave 1 types approval). All agents on schedule.
+
+---
+
+## Phase 3 Wave 1 Commit — 2026-04-04T04:28:25Z
+
+**Commit:** 437f5e8 (feat(phase3): Wave 1 — watcher and governance engine)
+
+**Staged & Committed:**
+- src/watcher.ts (VaultWatcherImpl + watch factory)
+- src/governance.ts (checkGovernance rule evaluator)
+- .squad/decisions/inbox/ram-governance-impl.md
+- .squad/agents/ram/history.md
+
+**Actions Completed:**
+1. ✅ Git status verified uncommitted files
+2. ✅ Staged Wave 1 implementation files
+3. ✅ Created commit with full message (bypassed /tmp constraint with inline -m)
+4. ✅ Created orchestration log: .squad/orchestration-log/2026-04-04T04-28-25Z-wave1.md
+5. ✅ Merged inbox decisions into .squad/decisions.md (tron-watcher-impl, ram-governance-impl)
+6. ✅ Deleted merged inbox files
+7. ✅ Appended this history entry
+
+**Test Status:** 130 passed, 43 todo (all watcher & governance stubs remain as .todo())
+

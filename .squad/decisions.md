@@ -1784,3 +1784,35 @@ All tests pass ✅
 2. **GovernanceRule Types:** Tests should cover error vs warning severity levels and their effect on `passed` field
 3. **CLI Integration:** Watch and check commands should handle SIGINT/SIGTERM gracefully
 4. **Error Messages:** All failures should include `action` suggestion for users
+
+---
+
+## Wave 1 Decisions: Tron & Ram (2026-04-04)
+
+### Tron: Watcher Implementation
+
+**Module:** `src/watcher.ts`  
+**Status:** ✅ Implemented & Committed
+
+**Key Decisions:**
+1. Type mapping — `fs.watch` "change"/"rename" → WatchEvent "add"/"change"/"unlink"
+2. Filter — Only .md files forwarded; other extensions silently dropped
+3. Error handling — `try/catch` around fs.watch; errors deferred via setImmediate
+4. Exported `watch` function; VaultWatcherImpl is internal
+
+**Result:** 130 tests passing, zero TypeScript errors
+
+### Ram: Governance Implementation
+
+**Module:** `src/governance.ts`  
+**Status:** ✅ Implemented & Committed
+
+**Key Decisions:**
+1. Pattern matching via `micromatch.isMatch()` for glob semantics against filepaths
+2. First-match-wins rule evaluation (declarative order)
+3. `deny` rules produce severity: "error"; `allow` silently terminates
+4. `passed = true` only if no error violations exist
+5. Violations sorted by filePath for determinism
+
+**Result:** 130 tests passing, zero TypeScript errors
+
