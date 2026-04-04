@@ -127,3 +127,34 @@ Ready for Phase 3: Write API + Governance.
 
 **Test Status:** 130 passed, 43 todo (all watcher & governance stubs remain as .todo())
 
+
+## Phase 3 Wave 1 Commit (Yori test fill) — 2026-04-04T04:36:37Z
+
+✅ **Committed Yori's Wave 1 test fill work**
+
+**Commit:** ac3644c (test(phase3): fill watcher and governance test stubs)
+
+**Staged & Committed:**
+- tests/watcher.test.ts (10 stubs filled)
+- tests/governance.test.ts (13 assertions, 6 filled + 7 extra)
+- .squad/agents/yori/history.md
+- .squad/decisions/inbox/yori-wave1-tests.md
+
+**Actions Completed:**
+1. ✅ Git status verified 3 modified + 1 untracked squad file
+2. ✅ Staged test files and squad agent history
+3. ✅ Created commit with full conventional message (inline -m)
+4. ✅ Created orchestration log: .squad/orchestration-log/2026-04-04T04:36:37Z-yori-wave1-tests.md
+5. ✅ Merged inbox decisions into .squad/decisions.md
+6. ✅ Deleted merged inbox file
+7. ✅ Appended this history entry
+
+**Test Status:** 153 passed (up from 130), 27 todo (down from 43)
+
+**Coverage Results:**
+- governance.ts: 100% (all metrics)
+- watcher.ts: 97.4% (macOS-unreachable change branch documented)
+
+**Remaining Todos (4 documented stubs):**
+- required-tag, no-orphan, max-links, severity:warning (feature-deferred)
+
