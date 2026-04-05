@@ -210,6 +210,7 @@ Test vaults under `tests/fixtures/`:
 2. `watcher.ts` — chokidar-based filesystem monitoring for live index updates
 3. Obsidian compatibility documentation and testing
 4. Integration tests: full agent workflow via MCP
+5. **NPM publish** — add `@semantic-release/npm` back, configure `NPM_TOKEN` secret, publish to npm registry (deferred from pre-Phase 4 CI fixes)
 
 ## What NOT to Do
 
