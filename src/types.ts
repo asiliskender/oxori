@@ -1034,3 +1034,121 @@ export interface VaultWatcher {
    */
   stop(): void;
 };
+
+// ── Phase 4: Semantic Search ──────────────────────────────────────────────────
+
+/**
+ * A dense vector of float32 values representing a text embedding.
+ * Produced by an EmbeddingProvider and stored in .oxori/vectors/.
+ * @since 0.4.0
+ */
+export type Embedding = number[];
+
+/**
+ * An embedding provider. Abstracts over OpenAI, Anthropic, local ONNX, or
+ * any HTTP-compatible embeddings API.
+ *
+ * Implementations must be injected — no global singleton is permitted.
+ * The provider is stateless: multiple concurrent calls to embed() are safe.
+ *
+ * @since 0.4.0
+ */
+export interface EmbeddingProvider {
+  /**
+   * Embed a single piece of text. Returns a float32 vector on success,
+   * or an OxoriError on failure (network error, API error, etc.).
+   */
+  embed(text: string): Promise<Result<Embedding, OxoriError>>;
+  /** Number of dimensions in the output vector. e.g. 1536 for text-embedding-3-small. */
+  readonly dimensions: number;
+  /** Model identifier. e.g. "text-embedding-3-small". */
+  readonly model: string;
+}
+
+/**
+ * Configuration for the built-in OpenAI embedding provider.
+ * @since 0.4.0
+ */
+export interface OpenAIProviderConfig {
+  /** OpenAI API key. Can also be set via OXORI_API_KEY environment variable. */
+  apiKey: string;
+  /** Model to use. Defaults to "text-embedding-3-small". */
+  model?: string;
+  /** Base URL override. Defaults to "https://api.openai.com/v1". */
+  baseUrl?: string;
+}
+
+/**
+ * A single semantic search result.
+ * @since 0.4.0
+ */
+export interface SearchResult {
+  /** Absolute path to the matched file. */
+  filepath: string;
+  /** Cosine similarity score in [0, 1]. Higher = more similar. */
+  score: number;
+  /** Frontmatter title, if present. */
+  title?: string;
+  /** First 200 characters of the file body (frontmatter stripped). */
+  excerpt?: string;
+}
+
+/**
+ * Options for vault.search().
+ * @since 0.4.0
+ */
+export interface SearchOptions {
+  /** Maximum number of results to return. Defaults to 10. */
+  topK?: number;
+  /** Minimum similarity score to include in results. Defaults to 0. */
+  minScore?: number;
+}
+
+/**
+ * Metadata stored in .oxori/vectors/index.json for a single embedded file.
+ * @since 0.4.0
+ */
+export interface VectorEntry {
+  /** Absolute filepath of the source file. */
+  filepath: string;
+  /** SHA-256 hash of the source file content at embed time (for staleness detection). */
+  contentHash: string;
+  /** Model used to generate this embedding. */
+  model: string;
+  /** Embedding dimensions. */
+  dimensions: number;
+  /** ISO 8601 timestamp of when the embedding was generated. */
+  embeddedAt: string;
+  /** Filename of the binary .vec file (relative to .oxori/vectors/). */
+  vecFile: string;
+}
+
+/**
+ * The full .oxori/vectors/index.json structure.
+ * @since 0.4.0
+ */
+export interface VectorIndex {
+  /** Schema version for forward compatibility. */
+  version: number;
+  /** Map from absolute filepath to VectorEntry. */
+  entries: Record<string, VectorEntry>;
+}
+
+/**
+ * Phase 4 error codes for embedding and vector operations.
+ * Used as the `code` field of `OxoriError`.
+ *
+ * - `VECTORS_NOT_BUILT`         — No vector index found; run `oxori embed` first.
+ * - `EMBEDDING_API_ERROR`       — HTTP/network error calling the embedding API.
+ * - `EMBEDDING_PROVIDER_ERROR`  — Provider returned an unexpected response.
+ * - `VECTOR_FILE_CORRUPT`       — A .vec file failed magic/version validation.
+ * - `VECTOR_DIMENSIONS_MISMATCH`— Loaded vector dimensions differ from index metadata.
+ *
+ * @since 0.4.0
+ */
+export type EmbeddingErrorCode =
+  | "VECTORS_NOT_BUILT"
+  | "EMBEDDING_API_ERROR"
+  | "EMBEDDING_PROVIDER_ERROR"
+  | "VECTOR_FILE_CORRUPT"
+  | "VECTOR_DIMENSIONS_MISMATCH";

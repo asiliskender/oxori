@@ -46,6 +46,15 @@ PathRule,
   WalkResult,
   WalkDirection,
   WalkVia,
+  // Phase 4 — Semantic Search
+  Embedding,
+  EmbeddingProvider,
+  OpenAIProviderConfig,
+  SearchResult,
+  SearchOptions,
+  VectorEntry,
+  VectorIndex,
+  EmbeddingErrorCode,
 } from "./types.js";
 export { ok, err, FILTER_FIELDS } from "./types.js";
 
