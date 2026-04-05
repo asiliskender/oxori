@@ -330,3 +330,97 @@
 **Commit:** `76853b8` — "chore: remove CONTRIBUTING.md and all references"
 
 **Status:** ✅ Complete. All references cleaned. Pushed to feature/pre-phase4-cleanup.
+
+### Phase 4 Semantic Search — Architecture and Type Contract Design Doc (2026-04-05)
+
+**Task:** Write `docs/semantic-search.md` as a Wave 0 (design-first) artifact before implementation begins. This is the authoritative type contract that Wave 1 implementation must match exactly.
+
+**Deliverable:** `docs/semantic-search.md` (27,091 bytes, 8 major sections)
+
+**Sections completed:**
+
+1. **Overview** — What semantic search adds (optional, layered on Phases 1–3), optionality contract (core works without vectors), data flow (files → parser → embeddings → .oxori/vectors/ → search).
+
+2. **Type Contracts (TypeScript)** — Complete, authoritative type shapes:
+   - `Embedding` — float32 array type alias
+   - `EmbeddingProvider` interface with `embed()` method, `dimensions`, and `model` properties
+   - `OpenAIProviderConfig` interface (apiKey required, model and baseUrl optional)
+   - `createOpenAIProvider(config)` factory function
+   - `createStubProvider(dimensions?)` factory for testing
+   - `SearchResult` interface (filepath, score, title?, excerpt?)
+   - `SearchOptions` interface (topK?, minScore?)
+
+3. **Binary Vector Storage Format** — How vectors persist on disk:
+   - `.vec` file format: magic (0x4F584F52 = "OXOR"), version (u32 LE), dimensions (u32 LE), then N × float32 (IEEE 754 LE)
+   - `.oxori/vectors/index.json` structure: version, model, dimensions, and per-file metadata (vectorHash, contentHash, embeddedAt, provider)
+   - Staleness detection: vectors marked stale if content hash changes, model/dimensions mismatch, or file missing
+
+4. **OpenAI HTTP Call** — Exact specification:
+   - `POST {baseUrl}/embeddings` (default: https://api.openai.com/v1/embeddings)
+   - Headers: Authorization (Bearer token), Content-Type (application/json)
+   - Request body: { "input": "{text}", "model": "{model}" }
+   - Response extraction: data[0].embedding
+   - Error handling: validate dimension count, return OxoriError for HTTP/network errors
+   - Implementation: use Node.js native fetch() only
+
+5. **CLI Interface** — Two commands with complete flags and examples:
+   - `oxori embed [--provider --api-key --model --force]` — Build vector index
+   - `oxori search <query> [--provider --api-key --top-k --min-score --json]` — Query vectors
+   - Full table of options for each command
+   - Example outputs (plain text table and JSON)
+   - Error handling (missing index → exit 1 with guidance)
+
+6. **SDK Integration** — `vault.search(query, options?)` method:
+   - Returns `Promise<Result<SearchResult[], OxoriError>>`
+   - Optionality contract: returns err with code "VECTORS_NOT_BUILT" if index missing
+   - Complete JSDoc with @remarks, @example, @since sections
+   - Implementation considerations (provider storage, query embedding, vector loading, cosine similarity)
+
+7. **Mock/Stub Provider** — `createStubProvider()` for tests:
+   - Deterministic, offline, no HTTP calls
+   - Hash-based algorithm: sum char codes → seed PRNG → generate N floats [-1, 1]
+   - Example usage showing same input → same output, different input → different output
+   - Test code example with expect() assertions
+   - Important: all tests MUST use stub, never real OpenAI provider
+
+8. **Performance Notes** — Realistic performance characteristics:
+   - Embedding: 50–200ms per call via API + network latency, 1–5 min for 1000 files, incremental updates only re-embed stale files
+   - Search: < 100ms for 10K files (linear in file count, in-memory cosine similarity)
+   - Storage: 6 KB per file at 1536 dims, ~60 MB for 10K files
+
+9. **Implementation Notes** — Technical details for Wave 1:
+   - Vector normalization formula (unit vector via L2 norm)
+   - Cosine similarity formula (dot product of normalized vectors)
+   - Content hash (SHA-256 of stripped body)
+   - Filepath hashing (SHA-256 truncated to 16 chars for .vec filename)
+   - Error codes table (8 codes for VECTORS_NOT_BUILT, EMBEDDING_API_ERROR, etc.)
+
+10. **Design Decisions (ADRs)** — 5 decisions with rationale and consequences:
+    - Optional Semantic Search — zero config for core, opt-in for embeddings
+    - Binary Vector Storage — compact (4–5× smaller than JSON), fast loading
+    - Stub Provider — deterministic offline testing, no real API calls in tests
+    - Staleness via Content Hash — Git-friendly, distributed-workflow-safe
+    - Cosine Similarity — standard for embeddings, intuitive [0,1] range, fast compute
+
+**Design Principles Applied:**
+
+- **Type-first:** All types are concrete TypeScript interfaces, not pseudo-code. Implementation has a reference to follow.
+- **Executable examples:** CLI examples are copy-paste-ready. SDK examples are runnable code. Test examples show real vitest patterns.
+- **Complete specification:** No ambiguities — error codes, HTTP request/response, binary format magic bytes, flag names, all exact.
+- **Optionality contract honored:** Core Oxori unchanged. Semantic search is bolt-on, not required.
+- **Wave 0 artifact:** This is the contract. Wave 1 implementation must match it exactly. Breaking changes require new ADR + docs update.
+- **Test-first mindset:** Stub provider designed for testing before production use.
+
+**Standards applied:**
+
+- Markdown-first with actual type signatures (not pseudo-code)
+- Clear for future maintainers: each section justified with rationale
+- Consistent tone and structure matching existing docs/architecture.md
+- All examples derived from specification, not invented
+- JSDoc annotations on all public SDK methods
+
+**Files created/updated:**
+- `docs/semantic-search.md` — New, 27,091 bytes, 8 sections + 5 ADRs
+- Commit `55e9484` — "docs(phase4): write semantic search architecture and type contract design doc" with closes #50
+
+**Status:** ✅ Complete. Phase 4 Wave 0 type contract ready for Wave 1 implementation. All type signatures, CLI flags, SDK methods, error codes, and performance characteristics are specified and locked.
