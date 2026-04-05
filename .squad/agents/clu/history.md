@@ -156,3 +156,26 @@
 
 **Result:** ci and release workflows now use GitVersion for deterministic versioning; semantic-release focuses on publishing and changelog generation without version analysis.
 
+## 2026-04-05: Feature Branch + RELEASE-NOTES Refactor
+
+**What:** Created `feature/pre-phase4-cleanup` branch and refactored release documentation per pre-Phase 4 cleanup directives:
+
+1. **Feature Branch Created** — `feature/pre-phase4-cleanup` for all pre-Phase 4 work (main branch now protected)
+2. **RELEASES.md → RELEASE-NOTES.md** — Replaced RELEASES.md with clean, user-focused v0.3.0 release notes only
+   - Removed v0.1.0 historical section
+   - Removed [Unreleased] marker and phase references
+   - Kept only what users need: new features, changed items, documentation updates
+3. **Reference Audit** — Confirmed no references to RELEASES.md in package.json, .releaserc, .github/workflows, or code files
+
+**Why:** 
+- RELEASES.md was growing with version history; RELEASE-NOTES.md shows current release only
+- Simpler versioning workflow — future releases update RELEASE-NOTES.md in-place
+- User-focused — current users see current release without historical cruft
+- Automated release tools can generate new RELEASE-NOTES.md from conventional commits directly
+
+**Commit:**
+- `60beef5` — chore: rename RELEASES.md to RELEASE-NOTES.md (v0.3.0 only)
+
+**Decision Document:**
+- `.squad/decisions/inbox/clu-branch-releases.md` — Captures rationale and next steps
+
