@@ -411,3 +411,11 @@ Added comprehensive Doxygen/TSDoc documentation to all 9 source files.
 **From Flynn (#26):** Phase 4 kickoff ADR approved. GovernanceRule discriminated union is architecturally correct pending implementation conditions. Wave 0 is the gate before any Wave 1 implementation. EmbeddingProvider interface must use DI (injected at call time, no singleton). Semantic search must be lazy-loaded, never imported unconditionally. Tron finalizes types in Wave 1.
 
 **From Yori (#46, #47):** Coverage baselines set. indexer.ts 96.02%, parser.ts 99.23% — both exceed ≥95% threshold. Ready to write test skeletons in Wave 1 (after types locked). Stub provider pattern confirmed for deterministic offshore testing.
+
+### Issue #27 — Phase 4 Semantic Search Types (2026-04-05)
+
+- **What was already there**: A previous partial run had added a `// === Semantic Search (Phase 4) ===` section with types using plain `type` aliases and sparse JSDoc. Also missing `@since 0.4.0` tags and detailed inline comments.
+- **What I replaced it with**: The exact spec from `docs/semantic-search.md` — `interface` forms for `EmbeddingProvider`, `OpenAIProviderConfig`, `SearchResult`, `SearchOptions`, `VectorEntry`, `VectorIndex`; `type Embedding = number[]`; and a new `EmbeddingErrorCode` union.
+- **OxoriErrorCode note**: No `OxoriErrorCode` union exists in types.ts — `OxoriError.code` is typed `string`. The task asked to add codes to an "existing OxoriErrorCode type"; since it doesn't exist, I introduced `EmbeddingErrorCode` as a new named union for the 5 Phase 4 error codes. This is additive, doesn't narrow the existing `code: string` field, and is exported for callers who want exhaustiveness checking.
+- **Pre-existing errors in search.ts**: 9 TypeScript errors remain in Ram's `src/search.ts` (array index access on `number[]` under `noUncheckedIndexedAccess`). These are NOT my types — my additions actually fixed the 7 prior import errors that existed before this commit.
+- **Section header style**: Used `// ── Phase 4: Semantic Search ─────` dashes to match task spec (deviates from existing `// === X ===` sections in the file — explicit spec overrides house style).

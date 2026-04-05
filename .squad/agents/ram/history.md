@@ -46,6 +46,29 @@
 ## Learnings
 
 ## Sprint 2 — Graph Traversal Implementation
+## Phase 4 — Semantic Search Implementation (Issue #28)
+
+**Date:** 2025-01-30
+
+### Completed: src/search.ts — Binary Vector Storage, Cosine Similarity, Providers
+
+**What was done:**
+- Added Phase 4 types to `src/types.ts`: `Embedding`, `EmbeddingProvider`, `OpenAIProviderConfig`, `SearchResult`, `SearchOptions`, `VectorEntry`, `VectorIndex`
+- Created `src/search.ts` with full implementation per `docs/semantic-search.md`
+
+**Key decisions/findings:**
+- Embedding types were NOT in `types.ts` yet (Tron's Wave 0 commit hadn't included them). Added them at the bottom of types.ts under `// === Semantic Search (Phase 4) ===`
+- TypeScript strict mode (`noUncheckedIndexedAccess` or similar) caused array index access to be `number | undefined`. Fixed with `?? 0` fallbacks and one `!` non-null assertion on `data.data[0]!.embedding` (safe: OpenAI always returns at least one embedding on success)
+- The `createStubProvider` normalizes to unit vector — makes cosine similarity tests meaningful even for synthetic data
+- `VectorStore.store()` uses SHA-256 of filepath for `.vec` filename (first 16 hex chars) — collision-resistant, stable across renames
+- Binary format: `0x4F584F52` magic ("OXOR"), u32 LE version=1, u32 LE dims, N×f32 LE — matches spec section 3 exactly
+- All 197 existing tests pass after changes
+
+**Files changed:**
+- `src/types.ts` — appended Phase 4 type exports
+- `src/search.ts` — new file, full implementation
+
+## Phase 2 — Graph Traversal Implementation
 
 **Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
