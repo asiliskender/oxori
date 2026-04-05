@@ -2303,3 +2303,13 @@ These directives apply from Phase 4 onwards and must be reviewed at each phase k
 **D7 — README scope:** README covers only: what is it, how to install, how to use. No roadmap, phases, or future plans.
 
 **D8 — .md file review before each phase:** All team members review .md files before each phase, updating stale content and retro/lessons-learned items.
+
+**D9 — Conventional commit format at phase end:**
+When a phase/sprint ends, the final commit message MUST use the correct conventional commit type that reflects the magnitude of the changes, because the CI pipeline derives the semver version number from commit messages (GitVersion + semantic-release):
+- Breaking API changes → `feat!: ...` or footer `BREAKING CHANGE:` → major bump
+- New features/capabilities added → `feat: ...` → minor bump
+- Fixes/patches only → `fix: ...` → patch bump
+Use the type that honestly reflects what changed in the phase.
+
+**D10 — Remove CONTRIBUTING.md:**
+Delete CONTRIBUTING.md entirely. Remove all references to it from other files (README.md, docs/, .github/, etc.).
