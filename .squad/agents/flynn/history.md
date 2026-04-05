@@ -359,3 +359,23 @@ Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
 
 ---
 
+### 2026-04-05: Phase 4 Kickoff ADR written
+
+**Delivered:** `.squad/decisions/inbox/flynn-phase4-kickoff.md` (refs #26)
+
+**GovernanceRule discriminated union (#45):** Approved. `PathRule | TagRule | LinkRule` on `ruleType` discriminant is the correct TypeScript pattern — enables exhaustive switch, narrowed types per branch, and expresses all three governance concern axes. `appliesTo: "humans"` addition is a breaking change but acceptable: governance is new in v0.3.0 and `"humans"` is semantically required for TagRule/LinkRule to be meaningful. Four pre-merge conditions documented (GovernanceViolation/GovernanceResult consistency, evaluator exhaustiveness, tsc clean, no regressions).
+
+**Wave 0 confirmed:** All four issues (#45 types, #46 indexer.ts ≥95%, #47 parser.ts ≥95%, #50 arch doc) must be closed before Wave 1 types.ts work begins. No exceptions.
+
+**Semantic search optionality:** Confirmed as hard invariant. `src/semantic.ts` must use lazy loading — never unconditionally imported in `src/index.ts`. All non-semantic tests pass without embedding config or network.
+
+**EmbeddingProvider DI:** Global singleton pattern rejected. Provider always injected at call time. Vault SDK accepts optional `embeddingProvider` in config; omission throws descriptive `OxoriError`. Tron finalizes interface in Wave 1 types.ts; Flynn reviews before Yori writes skeletons.
+
+**Wave structure:** Wave 0 → Wave 1 (types) → Wave 2 (impl+tests, parallel) → Wave 3 (CLI integration) → Wave 4 (docs+release+gate). No cross-wave shortcuts.
+
+**Clu semantic-release dry-run:** Declared mandatory before v0.4.0 tag. Deferred three consecutive phases — Phase 4 is the deadline.
+
+**Lesson:** The GovernanceRule `description` field was required (non-optional) in the Phase 1 original type. Making it optional in the discriminated union is technically a breaking change to the type contract but is safe because governance shipped in v0.3.0 (new), there are no external consumers yet, and optional description enables clean programmatic rules. When reviewing type shape changes, always check whether optional→required or required→optional changes affect existing call sites.
+
+---
+
