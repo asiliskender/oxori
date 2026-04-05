@@ -18,6 +18,9 @@ import type {
   GovernanceResult,
   GovernanceViolation,
   IndexState,
+  PathRule,
+  TagRule,
+  LinkRule,
 } from "./types.js";
 
 // ─── Public API ──────────────────────────────────────────────────────────────
@@ -53,20 +56,81 @@ export function checkGovernance(
 ): GovernanceResult {
   const violations: GovernanceViolation[] = [];
 
-  for (const [filePath] of state.files) {
+  for (const [filePath, fileEntry] of state.files) {
     for (const rule of rules) {
       if (!micromatch.isMatch(filePath, rule.pattern)) continue;
 
-      if (rule.effect === "deny") {
-        violations.push({
-          ruleId: rule.id,
-          message: rule.description,
-          filePath,
-          severity: "error",
-        });
+      // Dispatch on the ruleType discriminant for exhaustive narrowing.
+      switch (rule.ruleType) {
+        case "path": {
+          const pathRule: PathRule = rule;
+          if (pathRule.effect === "deny") {
+            violations.push({
+              ruleId: pathRule.id,
+              // description is optional on PathRule; fall back to a default message.
+              message: pathRule.description ?? `deny rule '${pathRule.id}' matched '${filePath}'`,
+              filePath,
+              severity: "error",
+            });
+          }
+          // First matching rule wins — stop evaluating further rules for this file.
+          break;
+        }
+
+        case "tag": {
+          const tagRule: TagRule = rule;
+          // FileEntry.tags is a ReadonlySet<string> containing all expanded tag levels.
+          if (!fileEntry.tags.has(tagRule.requiredTag)) {
+            violations.push({
+              ruleId: tagRule.id,
+              message:
+                tagRule.description ??
+                `file '${filePath}' matched pattern '${tagRule.pattern}' but is missing required tag '${tagRule.requiredTag}'`,
+              filePath,
+              severity: "error",
+            });
+          }
+          // First matching rule wins.
+          break;
+        }
+
+        case "link": {
+          const linkRule: LinkRule = rule;
+          // FileEntry.wikilinks contains outbound wikilink stems — use its size as outbound link count.
+          const outboundCount = fileEntry.wikilinks.size;
+
+          if (linkRule.minLinks !== undefined && outboundCount < linkRule.minLinks) {
+            violations.push({
+              ruleId: linkRule.id,
+              message:
+                linkRule.description ??
+                `file '${filePath}' has ${outboundCount} outbound links, minimum required is ${linkRule.minLinks}`,
+              filePath,
+              severity: "error",
+            });
+          } else if (linkRule.maxLinks !== undefined && outboundCount > linkRule.maxLinks) {
+            violations.push({
+              ruleId: linkRule.id,
+              message:
+                linkRule.description ??
+                `file '${filePath}' has ${outboundCount} outbound links, maximum allowed is ${linkRule.maxLinks}`,
+              filePath,
+              severity: "error",
+            });
+          }
+          // First matching rule wins.
+          break;
+        }
+
+        default: {
+          // Exhaustiveness guard: if a new ruleType is added to the union but
+          // not handled here, TypeScript will flag this as an error at compile time.
+          const _exhaustive: never = rule;
+          void _exhaustive;
+        }
       }
 
-      // First matching rule wins — stop evaluating further rules for this file.
+      // All rule types: first match per file terminates further rule evaluation.
       break;
     }
   }

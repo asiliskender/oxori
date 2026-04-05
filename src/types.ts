@@ -807,28 +807,27 @@ export type WalkResult = {
   truncated: boolean;
 };
 
-// === Governance (Sprint 3) ===
+// === Governance (Sprint 3 / Sprint 4 discriminated union) ===
 
 /**
- * @brief A single governance rule parsed from `.oxori/governance.md`.
+ * @brief A path-based governance rule. Controls whether writes to matching files are allowed or denied.
  *
- * A single governance rule parsed from `.oxori/governance.md`.
+ * This is the original GovernanceRule shape, extended with a `ruleType` discriminator
+ * so TypeScript can narrow the union at rule-evaluation time.
  * Defined in Sprint 1 to avoid type churn when governance lands in Sprint 3.
  *
  * @remarks
- * `pattern` is a glob or regex string matched against the filepath or content
- * of a proposed agent write. The `effect` determines whether the matched write
- * is permitted (`"allow"`) or blocked (`"deny"`).
+ * `pattern` is a glob string matched against the target filepath.
+ * `effect` determines whether a matching write is permitted (`"allow"`) or blocked (`"deny"`).
  *
- * `appliesTo` scopes the rule: `"agents"` means it only applies to writes
- * originating from the MCP server / agent API — human writes (Obsidian, direct
- * file edits) are never subject to governance by design. `"all"` is reserved for
- * future use but defined now for forward compatibility.
+ * `appliesTo` scopes the rule: `"agents"` applies only to MCP/agent writes;
+ * `"humans"` applies only to direct human edits; `"all"` applies to both.
  *
  * Rules are evaluated in declaration order. The first matching rule wins.
  *
  * @example
- * const rule: GovernanceRule = {
+ * const rule: PathRule = {
+ *   ruleType: "path",
  *   id: "no-agent-writes-to-archive",
  *   description: "Agents must not modify archived files",
  *   pattern: "archive/**",
@@ -836,20 +835,95 @@ export type WalkResult = {
  *   appliesTo: "agents"
  * };
  *
- * @since 0.3.0
+ * @since 0.4.0 (ruleType added; previously the single flat GovernanceRule shape)
  */
-export type GovernanceRule = {
+export type PathRule = {
+  ruleType: "path";
   /** Unique identifier for this rule. Used in error messages and audit logs. */
   id: string;
   /** Human-readable explanation of what this rule enforces. */
-  description: string;
-  /** Glob or regex string matched against the target filepath or content. */
+  description?: string;
+  /** Glob pattern matched against the target filepath. */
   pattern: string;
   /** Whether a matching write is permitted or blocked. */
   effect: "allow" | "deny";
-  /** Scope: `"agents"` for MCP/agent writes only; `"all"` for future use. */
-  appliesTo: "agents" | "all";
+  /** Scope: `"agents"` for MCP/agent writes; `"humans"` for direct edits; `"all"` for both. */
+  appliesTo: "agents" | "humans" | "all";
 };
+
+/**
+ * @brief A tag-based governance rule. Files matching `pattern` must have `requiredTag`.
+ *
+ * @remarks
+ * If a file matches the glob `pattern` but its `FileEntry.tags` set does not contain
+ * `requiredTag`, a `GovernanceViolation` with `severity: "error"` is recorded.
+ *
+ * @since 0.4.0
+ */
+export type TagRule = {
+  ruleType: "tag";
+  /** Unique identifier for this rule. Used in error messages and audit logs. */
+  id: string;
+  /** Human-readable explanation of what this rule enforces. */
+  description?: string;
+  /** Glob pattern matched against the target filepath. */
+  pattern: string;
+  /** Tag that must be present on every file matching `pattern`. */
+  requiredTag: string;
+  /** Scope: `"agents"` for MCP/agent writes; `"humans"` for direct edits; `"all"` for both. */
+  appliesTo: "agents" | "humans" | "all";
+};
+
+/**
+ * @brief A link-based governance rule. Files matching `pattern` must have link counts within bounds.
+ *
+ * @remarks
+ * Outbound link count is derived from `FileEntry.wikilinks.size`.
+ * If `minLinks` is set and the file's outbound link count is below it, a violation is recorded.
+ * If `maxLinks` is set and the count exceeds it, a violation is recorded.
+ *
+ * @since 0.4.0
+ */
+export type LinkRule = {
+  ruleType: "link";
+  /** Unique identifier for this rule. Used in error messages and audit logs. */
+  id: string;
+  /** Human-readable explanation of what this rule enforces. */
+  description?: string;
+  /** Glob pattern matched against the target filepath. */
+  pattern: string;
+  /** Minimum required outbound wikilinks. Violation if file has fewer. */
+  minLinks?: number;
+  /** Maximum allowed outbound wikilinks. Violation if file exceeds this. */
+  maxLinks?: number;
+  /** Scope: `"agents"` for MCP/agent writes; `"humans"` for direct edits; `"all"` for both. */
+  appliesTo: "agents" | "humans" | "all";
+};
+
+/**
+ * @brief A governance rule. One of: PathRule (allow/deny writes), TagRule (require tags), LinkRule (enforce link counts).
+ *
+ * A single governance rule parsed from `.oxori/governance.md`.
+ * Defined in Phase 1 to avoid type churn when governance lands in Phase 3.
+ *
+ * @remarks
+ * Rules are evaluated in declaration order. The first matching rule wins.
+ * TypeScript narrows the union via the `ruleType` discriminant — use a
+ * `switch (rule.ruleType)` in evaluation code to get exhaustive checking.
+ *
+ * @example
+ * const rule: GovernanceRule = {
+ *   ruleType: "path",
+ *   id: "no-agent-writes-to-archive",
+ *   description: "Agents must not modify archived files",
+ *   pattern: "archive/**",
+ *   effect: "deny",
+ *   appliesTo: "agents"
+ * };
+ *
+ * @since 0.3.0 (original flat shape); 0.4.0 (discriminated union)
+ */
+export type GovernanceRule = PathRule | TagRule | LinkRule;
 
 /**
  * @brief A single governance rule violation detected during evaluation.

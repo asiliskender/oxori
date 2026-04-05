@@ -57,7 +57,7 @@ function denyRule(
   pattern: string,
   description = `deny ${pattern}`,
 ): GovernanceRule {
-  return { id, description, pattern, effect: "deny", appliesTo: "agents" };
+  return { ruleType: "path", id, description, pattern, effect: "deny", appliesTo: "agents" };
 }
 
 /** An allow rule that explicitly permits all files matching a glob. */
@@ -66,7 +66,7 @@ function allowRule(
   pattern: string,
   description = `allow ${pattern}`,
 ): GovernanceRule {
-  return { id, description, pattern, effect: "allow", appliesTo: "agents" };
+  return { ruleType: "path", id, description, pattern, effect: "allow", appliesTo: "agents" };
 }
 
 // ---------------------------------------------------------------------------

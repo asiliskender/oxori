@@ -23,6 +23,9 @@ export type {
   Result,
   WatchEvent,
   GovernanceRule,
+PathRule,
+  TagRule,
+  LinkRule,
   // Sprint 3 — Watcher and Governance
   VaultWatcher,
   GovernanceViolation,
