@@ -279,3 +279,309 @@ describe("checkGovernance()", () => {
     expect(result.violations[0]?.ruleId).toBe("first-deny");
   });
 });
+
+// ---------------------------------------------------------------------------
+// TagRule — requires files to have a specific tag
+// ---------------------------------------------------------------------------
+
+describe("TagRule — requires files to have a specific tag", () => {
+  /** Build a FileEntry with a specific set of tags. */
+  function makeTaggedEntry(filepath: string, tags: string[]): FileEntry {
+    return {
+      filepath,
+      filename: filepath.split("/").pop()!.replace(".md", ""),
+      frontmatter: {},
+      tags: new Set<string>(tags),
+      wikilinks: new Set<string>(),
+      typedRelations: new Map(),
+      lastModified: 0,
+    };
+  }
+
+  function makeTagState(entries: [string, string[]][]): IndexState {
+    const files = new Map<string, FileEntry>(
+      entries.map(([p, tags]) => [p, makeTaggedEntry(p, tags)]),
+    );
+    return {
+      files,
+      tags: new Map(),
+      links: new Map(),
+      totalFiles: files.size,
+      lastIndexed: Date.now(),
+    };
+  }
+
+  it("no violation when file matches pattern and has the required tag", () => {
+    const state = makeTagState([["notes/article.md", ["published", "blog"]]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "tag",
+        id: "require-published",
+        pattern: "notes/**",
+        requiredTag: "published",
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("violation when file matches pattern but is missing the required tag", () => {
+    const state = makeTagState([["notes/draft.md", ["draft"]]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "tag",
+        id: "require-published",
+        pattern: "notes/**",
+        requiredTag: "published",
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0]?.ruleId).toBe("require-published");
+    expect(result.violations[0]?.filePath).toBe("notes/draft.md");
+    expect(result.violations[0]?.severity).toBe("error");
+  });
+
+  it("no violation when file does NOT match the pattern (tag irrelevant)", () => {
+    // File is in journal/ — the tag rule targets notes/** — no match, no violation
+    const state = makeTagState([["journal/entry.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "tag",
+        id: "require-published",
+        pattern: "notes/**",
+        requiredTag: "published",
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("violation message includes the missing tag when no custom description provided", () => {
+    const state = makeTagState([["notes/missing-tag.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "tag",
+        id: "require-status",
+        pattern: "notes/**",
+        requiredTag: "status/ready",
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.violations[0]?.message).toContain("status/ready");
+  });
+
+  it("uses custom description in violation when provided", () => {
+    const state = makeTagState([["notes/x.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "tag",
+        id: "require-review",
+        description: "All notes must have a review tag",
+        pattern: "notes/**",
+        requiredTag: "reviewed",
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.violations[0]?.message).toBe("All notes must have a review tag");
+  });
+
+  it("multiple files — only files missing the tag produce violations", () => {
+    const state = makeTagState([
+      ["notes/good.md", ["published"]],
+      ["notes/bad.md", ["draft"]],
+      ["notes/also-bad.md", []],
+    ]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "tag",
+        id: "require-published",
+        pattern: "notes/**",
+        requiredTag: "published",
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(2);
+    const violatedPaths = result.violations.map((v) => v.filePath);
+    expect(violatedPaths).toContain("notes/bad.md");
+    expect(violatedPaths).toContain("notes/also-bad.md");
+    expect(violatedPaths).not.toContain("notes/good.md");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// LinkRule — enforces min/max outbound links
+// ---------------------------------------------------------------------------
+
+describe("LinkRule — enforces min/max outbound links", () => {
+  /** Build a FileEntry with a specific set of wikilinks. */
+  function makeLinkEntry(filepath: string, links: string[]): FileEntry {
+    return {
+      filepath,
+      filename: filepath.split("/").pop()!.replace(".md", ""),
+      frontmatter: {},
+      tags: new Set<string>(),
+      wikilinks: new Set<string>(links),
+      typedRelations: new Map(),
+      lastModified: 0,
+    };
+  }
+
+  function makeLinkState(entries: [string, string[]][]): IndexState {
+    const files = new Map<string, FileEntry>(
+      entries.map(([p, links]) => [p, makeLinkEntry(p, links)]),
+    );
+    return {
+      files,
+      tags: new Map(),
+      links: new Map(),
+      totalFiles: files.size,
+      lastIndexed: Date.now(),
+    };
+  }
+
+  it("no violation when file has at least minLinks outbound links", () => {
+    const state = makeLinkState([["notes/well-linked.md", ["a", "b", "c"]]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "require-min-links",
+        pattern: "notes/**",
+        minLinks: 2,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("violation when file has fewer links than minLinks", () => {
+    const state = makeLinkState([["notes/lonely.md", ["one-link"]]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "require-min-links",
+        pattern: "notes/**",
+        minLinks: 3,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0]?.ruleId).toBe("require-min-links");
+    expect(result.violations[0]?.severity).toBe("error");
+  });
+
+  it("violation when file has more links than maxLinks", () => {
+    const state = makeLinkState([["notes/over-linked.md", ["a", "b", "c", "d", "e"]]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "cap-max-links",
+        pattern: "notes/**",
+        maxLinks: 3,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(false);
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0]?.ruleId).toBe("cap-max-links");
+  });
+
+  it("no violation when link count is within min/max range", () => {
+    const state = makeLinkState([["notes/balanced.md", ["a", "b", "c"]]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "link-range",
+        pattern: "notes/**",
+        minLinks: 2,
+        maxLinks: 5,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("no violation when file does NOT match the pattern", () => {
+    // File is in archive/ — rule only targets notes/**
+    const state = makeLinkState([["archive/old.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "require-links",
+        pattern: "notes/**",
+        minLinks: 1,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.passed).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("violation message includes actual and required counts", () => {
+    const state = makeLinkState([["notes/orphan.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "no-orphans",
+        pattern: "notes/**",
+        minLinks: 2,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.violations[0]?.message).toContain("0");
+    expect(result.violations[0]?.message).toContain("2");
+  });
+
+  it("uses custom description in violation when provided", () => {
+    const state = makeLinkState([["notes/x.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "custom-desc-link",
+        description: "Notes must link to at least 1 other note",
+        pattern: "notes/**",
+        minLinks: 1,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.violations[0]?.message).toBe("Notes must link to at least 1 other note");
+  });
+
+  it("only minLinks violation triggered — not maxLinks — when count is too low", () => {
+    // Both minLinks and maxLinks set, count is below minLinks (not above maxLinks)
+    const state = makeLinkState([["notes/sparse.md", []]]);
+    const rules: GovernanceRule[] = [
+      {
+        ruleType: "link",
+        id: "link-bounds",
+        pattern: "notes/**",
+        minLinks: 1,
+        maxLinks: 10,
+        appliesTo: "agents",
+      },
+    ];
+    const result = checkGovernance(rules, state);
+    expect(result.violations).toHaveLength(1);
+    expect(result.violations[0]?.message).toContain("minimum");
+  });
+});
