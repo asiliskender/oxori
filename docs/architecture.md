@@ -360,7 +360,6 @@ oxori/
 │       ├── ci.yml
 │       └── release.yml
 ├── README.md
-├── CONTRIBUTING.md
 ├── PROJECT.md
 ├── package.json
 ├── tsconfig.json

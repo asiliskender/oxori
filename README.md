@@ -303,10 +303,6 @@ The query engine filters files by tag, type, path, and frontmatter. Graph traver
 
 See [docs/architecture.md](docs/architecture.md) for complete system design.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, testing, and commit conventions.
-
 ## License
 
 MIT — use Oxori however you like. Your vault, your rules.

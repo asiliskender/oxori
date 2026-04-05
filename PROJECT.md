@@ -82,7 +82,6 @@ oxori/
 │       └── release.yml         # auto-version + publish on merge to main
 ├── README.md
 ├── CLAUDE.md
-├── CONTRIBUTING.md
 ├── package.json
 ├── tsconfig.json
 ├── tsup.config.ts
