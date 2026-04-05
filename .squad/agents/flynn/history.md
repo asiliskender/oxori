@@ -387,3 +387,38 @@ Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
 
 **From Yori (#46, #47):** Coverage baselines set. indexer.ts 96.02%, parser.ts 99.23% — both exceed ≥95% threshold. Ready to write test skeletons in Wave 1 (after types locked). Stub provider pattern confirmed for deterministic offline testing.
 
+
+---
+
+## 2026-04-05: Phase 4 Gate Review — CONDITIONAL PASS
+
+**Verdict:** CONDITIONAL PASS — all hard criteria met, branch approved for merge.
+
+**Gate results:**
+- 8/8 test suites pass, 262 tests, 23 todo
+- Overall coverage: 93.27% ✅ (target ≥80%)
+- indexer.ts: 96.02% ✅ | parser.ts: 99.23% ✅
+- GovernanceRule discriminated union `PathRule | TagRule | LinkRule` — confirmed in types.ts
+- `oxori embed` + `oxori search` CLI commands — confirmed in cli.ts
+- All tests use `createStubProvider()` — no live API calls
+- `docs/semantic-search.md`, `docs/architecture.md`, `README.md`, `RELEASE-NOTES.md` — all updated
+- semantic-release dry-run: ✅ Clu validated (5 missing plugins found and fixed — carry as lesson)
+- clean clone verification: ✅ Clu confirmed
+
+**Coverage decision — search.ts 80.49% vs 85% target:**
+The primary gap is `createOpenAIProvider.embed()` — the live HTTP fetch path that requires a real API key. This is untestable without either mocking `fetch` or a live key. Secondary gap: `VAULT_NOT_FOUND` catch (6 lines) and `failed++` embed-error path (3 lines) — these ARE testable but weren't covered. Even covering those 9 lines, coverage reaches ~83%, still below 85%. To hit 85%, Yori must either mock `fetch` for createOpenAIProvider tests or apply `/* c8 ignore */` annotations on the live API surface. Accepted as Phase 5 debt — not a merge blocker.
+
+**Lesson — coverage targets on live-API modules:**
+When setting coverage thresholds for modules that contain live network calls (EmbeddingProvider, any HTTP client), either:
+1. Exclude the live-API surface from coverage with `/* c8 ignore next */` annotations upfront, or  
+2. Set the threshold at a level that assumes the live path is excluded, or  
+3. Mock `fetch` globally in tests (vi.spyOn) to exercise error paths.
+Setting an 85% target without accounting for the untestable surface creates a gap that looks like a failure but is actually a design decision. Document this at kickoff, not at gate.
+
+**Lesson — semantic-release plugin installation:**
+Don't declare semantic-release plugins in `package.json` without verifying they're installed in devDependencies. Clu had to install 5 missing plugins at the end of Phase 4 because the config was declared but never tested. Add a plugin-install check to the Wave 0 checklist at phase kickoff.
+
+**Minor finding — commit issue-ref discipline:**
+4 of 20 commits lacked `refs #` / `closes #`: all squad meta-doc commits (Clu history, Ram log, Wave 0 doc, D12 bootstrapping). D12 itself was introduced by one of those commits (bootstrapping exception). Not a blocker, but future phases should include agent history/log commits in the issue-ref requirement or explicitly exempt them in D12.
+
+**Verdict written to:** `.squad/decisions/inbox/flynn-phase4-gate.md`
