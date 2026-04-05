@@ -186,7 +186,7 @@ function resolveNeighbors(
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
- * Performs a BFS walk of the file relationship graph starting from `start`.
+ * @brief Performs a BFS walk of the file relationship graph starting from `start`.
  *
  * Traversal honours:
  * - `depth`     — maximum edge-hop distance from the seed node (default: `Infinity`)
@@ -218,6 +218,8 @@ function resolveNeighbors(
  * // All tag neighbours capped at 50 nodes
  * const result = walk("/vault/auth.md", state, { via: "tags", maxNodes: 50 });
  * console.log(result.truncated); // true if vault is large
+ *
+ * @since 0.2.0
  */
 export function walk(
   start: string,

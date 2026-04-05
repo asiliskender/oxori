@@ -2279,3 +2279,27 @@ Phase 3 delivered watcher and governance — the two modules needed for real-tim
 Good sprint, team. Three phases in, and the process is measurably better than where we started. The first clean gate pass isn't luck — it's the compound interest on retro action items that were actually enforced. Phase 4 is where governance gets real (discriminated unions, tag/link rules) and the remaining debt gets paid.
 
 — Flynn
+
+---
+
+## Pre-Phase 4 Directives — by Onur Asiliskender
+
+> Captured: 2026-04-05
+
+These directives apply from Phase 4 onwards and must be reviewed at each phase kickoff.
+
+**D1 — Language:** User communicates in Turkish; team always responds in English. All code and documentation in English.
+
+**D2 — Protected main / Feature branches:** Main is protected. Every phase (or significant work unit) must use a feature branch, push, and open a PR. No direct commits to main.
+
+**D3 — Trunk-based development:** Short-lived feature branches, frequent integration with main. No long-running branches.
+
+**D4 — Retro/lessons-learned review:** Mandatory review of lessons learned and retro notes before every phase kickoff.
+
+**D5 — Doxygen-compatible docstrings:** All source code exports must have JSDoc/TSDoc docstrings compatible with Doxygen.
+
+**D6 — RELEASE-NOTES.md:** Use RELEASE-NOTES.md (not RELEASES.md). Contains only the current/latest release notes — no history.
+
+**D7 — README scope:** README covers only: what is it, how to install, how to use. No roadmap, phases, or future plans.
+
+**D8 — .md file review before each phase:** All team members review .md files before each phase, updating stale content and retro/lessons-learned items.

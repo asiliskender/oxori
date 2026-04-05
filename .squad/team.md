@@ -36,8 +36,12 @@
 
 | Phase | Focus | Status |
 |-------|-------|--------|
-| 1 | Parser + Markdown Index | ✅ Complete |
-| 2 | Query Engine + Graph Walk | 🔜 Planned |
-| 3 | Write API + Governance | 🔜 Planned |
-| 4 | Semantic Search | 🔜 Planned |
-| 5 | MCP Server + Watcher | 🔜 Planned |
+| 1 | Parser + Markdown Index | ✅ Complete (v0.1.0) |
+| 2 | Query Engine + Graph Walk | ✅ Complete (v0.2.0) |
+| 3 | Write API + Governance | ✅ Complete (v0.3.0) |
+| 4 | Governance Rules + CLI + Coverage | 🔜 Next |
+| 5 | MCP Server + Obsidian Compat | 🔜 Planned |
+
+## Workflow
+
+**Feature Branch Model (D2 Directive):** All work follows feature-branch → PR → review → merge pattern. Main branch is protected. Every phase uses a dedicated feature branch (e.g., `feature/phase-4-governance`), with Flynn's approval required before merging to main.

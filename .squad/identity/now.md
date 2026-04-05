@@ -1,12 +1,12 @@
 ---
-updated_at: 2026-04-04T04:45:30Z
-focus_area: Phase 3 — COMPLETE ✅ v0.3.0 SHIPPED — Phase 4 Ready
+updated_at: 2026-04-05T00:00:00Z
+focus_area: Pre-Phase 4 Audit Complete — 8 Directives Applied — Phase 4 Ready
 active_issues: []
 ---
 
 # What We're Focused On
 
-**Current state:** Phase 3 SHIPPED. v0.3.0 released. All 12 gate criteria passed on first attempt. Phase 4 ready to kick off.
+**Current state:** Phase 3 SHIPPED (v0.3.0). All 12 gate criteria passed on first attempt. Pre-Phase 4 directives applied. Feature branch workflow mandatory (D2). Phase 4 ready to kick off.
 
 **Completed:** Phase 1 — Parser + Markdown Index ✅
 - src/types.ts, src/parser.ts, src/indexer.ts, src/cli.ts — all implemented and tested
@@ -40,3 +40,15 @@ active_issues: []
 **Team:** Flynn (Lead), Tron (Core Dev), Ram (Platform Dev), Yori (Tester), Dumont (Docs), Clu (DevOps), Castor (Product), Quorra (Agent Builder)
 **User:** Onur Asiliskender
 **Session started:** 2026-04-03 | Phase 3 completed: 2026-04-04
+
+**Pre-Phase 4 Directives Status:**
+- ✅ D1: Language policy (Turkish user ↔ English team/code) established
+- ✅ D2: Feature branch workflow mandatory — all work on branches, PR-based merges to main
+- ✅ D3: Trunk-based development — short-lived branches, frequent integration
+- ✅ D4: Retro/lessons-learned review at phase kickoff (Phase 2, Phase 3 retros complete)
+- ✅ D5: Doxygen-compatible docstrings required (JSDoc/TSDoc for all exports)
+- ✅ D6: RELEASE-NOTES.md (not RELEASES.md) — current release only
+- ✅ D7: README scope limited (what, install, use — no roadmap/phases)
+- ✅ D8: All team members review .md files at phase kickoff
+
+**Feature Branch Requirement:** Currently on `feature/pre-phase4-cleanup`. All Phase 4 work will follow this model: feature branch → test locally → PR with Flynn review → merge to main → tag and release.

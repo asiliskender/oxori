@@ -223,3 +223,51 @@ Ready for Phase 3: Write API + Governance.
 3. ✅ Staged changes with git add -A
 4. ✅ Committed with Co-authored-by trailer
 5. ✅ Pushed to origin/main — 4 objects sent, complete decision archive archived
+
+---
+
+## Pre-Phase 4 Audit & Directives Merge — 2026-04-05T00:00:00Z
+
+✅ **Merged 8 pre-Phase 4 directives into decisions archive and audited all .squad/ .md files**
+
+### Files Audited & Updated
+
+| File | Action | Changes |
+|------|--------|---------|
+| `.squad/decisions.md` | ✅ Merged directives | Appended "Pre-Phase 4 Directives" section with D1–D8 |
+| `.squad/identity/now.md` | ✅ Updated status | Phase 3 complete, directives applied, feature branch workflow active |
+| `.squad/team.md` | ✅ Updated phases | Phases 1–3 marked ✅ Complete; Phase 4 labeled "Next"; added Workflow section for D2 |
+| `.squad/backlog.md` | ✅ Updated status | Phases 1–3 marked ✅ COMPLETE with version tags (v0.1.0, v0.2.0, v0.3.0) |
+| `.squad/agents/scribe/history.md` | ✅ Appended | This entry documenting the audit |
+
+### Directives Applied
+
+**8 directives merged into decisions.md:**
+- **D1 — Language:** Turkish user ↔ English team/code
+- **D2 — Protected main / Feature branches:** Feature branch for all work, PR-based workflow
+- **D3 — Trunk-based development:** Short-lived branches, frequent integration
+- **D4 — Retro/lessons-learned review:** Mandatory at phase kickoff
+- **D5 — Doxygen-compatible docstrings:** JSDoc/TSDoc for all exports
+- **D6 — RELEASE-NOTES.md:** Current release only, no history
+- **D7 — README scope:** Only what/how-to, no roadmap/phases
+- **D8 — .md file review:** Team reviews at each phase kickoff
+
+### Audit Findings
+
+**Status:** No stale content found. All phase records accurate.
+
+- ✅ identity/now.md reflects Phase 3 completion and Phase 4 readiness
+- ✅ team.md phase table updated to reflect actual completion status
+- ✅ backlog.md phase headers updated with completion marks and version numbers
+- ✅ decisions.md now contains full Phase 2 & 3 retrospectives + Phase 3 gate verdict
+- ✅ All 8 directives captured and ready for Phase 4 kickoff
+
+**Stale Content:** None detected. Phase 1–3 history is accurate; Phase 4 goals align with backlog.
+
+**Phase 4 Readiness:** ✅ All mandatory pre-kickoff items complete
+- Phases 1–3 marked complete in backlog ✅
+- 8 directives merged into decisions ✅
+- Feature branch workflow in place (currently on `feature/pre-phase4-cleanup`) ✅
+- Retro/lessons-learned items archived (Phase 2 & 3 retros in decisions.md) ✅
+
+---

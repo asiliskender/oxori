@@ -2,8 +2,12 @@
  * @file cli.ts
  * @description Oxori CLI entry point.
  *
- * Provides `oxori init <vaultPath>` and `oxori index <vaultPath>` commands.
- * The shebang line is injected by tsup's banner config — do NOT add it here.
+ * Provides `oxori init`, `oxori index`, `oxori query`, `oxori walk`, and
+ * `oxori graph` commands. The shebang line is injected by tsup's banner
+ * config — do NOT add it here.
+ *
+ * @module cli
+ * @since 0.1.0
  */
 
 import { Command } from "commander";
@@ -21,9 +25,11 @@ import type {
   WalkVia,
 } from "./types.js";
 
+/** CommonJS `require` shim for loading `package.json` in an ESM context. */
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { version: string };
 
+/** Root Commander program instance. Subcommands are registered below. */
 const program = new Command();
 
 program

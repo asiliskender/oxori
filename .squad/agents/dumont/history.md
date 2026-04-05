@@ -227,3 +227,82 @@
 - RELEASES.md — Added v0.3.0 [Unreleased] entry at top
 
 **Status:** ✅ Complete. Phase 3 documentation is ready for release and user consumption.
+
+### README and Docs Cleanup — Removal of Phases, Roadmap, and Team References (2026-04-05)
+
+**Task:** Clean up README.md, docs/architecture.md, and CONTRIBUTING.md to remove all future-tense language, phase references, roadmap mentions, and internal team/squad references. Documentation should reflect current state only.
+
+**User directive:**
+- README should ONLY explain what the project is, how to install it, how to use it
+- No future plans, phases, roadmap, squad/team references
+- All code and docs in English
+- This is a TypeScript library + CLI named "oxori"
+
+**Changes made:**
+
+1. **README.md**
+   - Removed "Features (v0.3.0 — Phase 1, 2, & 3)" header, changed to just "## Features"
+   - Removed 🔜 "Semantic search" (Phase 4) and "MCP server" (Phase 5) lines — keep only completed features
+   - Removed "vectors/" reference and "(Phase 4)" comment from vault structure diagram
+   - Removed "(Phase 3)" comment from governance.md reference
+   - Rewrote Architecture section overview paragraph:
+     - Removed all phase references ("Phase 2 adds...", "Phase 3 adds...", "Phases 4-5 will...")
+     - Condensed to current-state description of query engine, graph traversal, watcher, governance
+     - Added clear reference to docs/architecture.md for complete design
+   - Maintained version badge (v0.3.0), installation instructions, CLI usage examples, SDK examples
+   - Kept all functional features, governance rules, and contributing section
+
+2. **docs/architecture.md**
+   - Updated Overview section:
+     - Removed "Oxori is built in five distinct phases..." and "By Phase 5, the system provides..."
+     - Replaced with current-state description: "Oxori provides a layered architecture: parsing and indexing form the foundation, followed by query filtering, graph traversal, semantic search, governance rules, write operations, and real-time file watching."
+   - Renamed and rewrote "## Phase 3 Additions" section to "## Key Capabilities"
+     - Removed "Phase 3 introduces two critical capabilities that complete the core Oxori platform"
+     - Changed intro to "Oxori provides the following key capabilities"
+     - Removed "and are ready for Phase 5's MCP server and agent orchestration" from watcher/governance summary
+   - Updated data flow section headers:
+     - Changed "### Indexing (Phase 1)" → "### Indexing"
+     - Changed "### Querying (Phase 2)" → "### Querying"
+     - Changed "### Graph Traversal (Phase 2)" → "### Graph Traversal"
+     - Changed "### Writing (Phase 3)" → "### Writing"
+     - Changed "### Semantic Search (Phase 4)" → "### Semantic Search"
+     - Changed "### MCP Server (Phase 5)" → "### MCP Server"
+   - Kept all technical content, design decisions, and implementation details
+
+3. **CONTRIBUTING.md**
+   - Updated opening paragraph:
+     - Removed "Oxori is built by a team of specialists working in phases. Each phase is a complete, shippable npm release..."
+     - Replaced with "Oxori is an open-source project developed in short-lived feature branches integrated back to main frequently. Each contribution is tested, documented, and reviewed before merge."
+   - Updated "## Creating a Pull Request" section:
+     - Removed "create a branch... use kebab-case:" → added "use kebab-case from `main`:"
+     - Added new item: "**Keep it short-lived** — branch should exist for days, not weeks. Integrate to main frequently."
+     - Changed review line from "Wait for review — Flynn (architecture) reviews all Phase PRs before merge" to "Wait for review — maintainers review all PRs before merge"
+   - Replaced entire "## Phases and Releases" section with "## Releases and Versioning"
+     - Removed Phase table (1-5 with scope/release/status)
+     - Removed "Phase Process" (7 step workflow tied to phases)
+     - Removed "Phase Gates" (tests/coverage/architecture review tied to phases)
+     - Replaced with cleaner structure:
+       - **Version Bumping** — How commit types trigger version bumps (feat/fix/breaking changes)
+       - **Release Process** — What happens when PRs merge to main (automated via semantic-release)
+   - Updated "## CI/CD Pipeline" section name from "### Release Pipeline" to "### Automatic Releases"
+   - Kept all development setup, code conventions, commit types, testing guidelines, and technical standards
+
+**Inconsistencies found and fixed:**
+- architecture.md still referenced Phase 3 capabilities in section header (fixed)
+- README referenced Phase numbers for future features (removed)
+- CONTRIBUTING.md listed 5 phases as "planned" when only Phase 1-3 are complete (removed entire phase table)
+- Internal team name "Flynn" appeared in review process (generalized to "maintainers")
+
+**Files modified:**
+- README.md — 11 lines changed (removed future features, phase references, simplified architecture overview)
+- docs/architecture.md — 22 lines changed (removed phase language, updated section headers, current-state descriptions)
+- CONTRIBUTING.md — 60 lines changed (removed phase workflow, added trunk-based branch guidance, generalized review process)
+
+**Standards applied:**
+- All removed content was future-tense or internal process (no functional code affected)
+- Maintained technical accuracy and depth
+- Kept all completed features, real examples, and API references
+- Followed user directive strictly: current state only, no roadmap, no team references
+- Tone remains professional and developer-focused
+
+**Status:** ✅ Complete. All documentation reflects current-state Oxori only. Ready for feature branch pre-phase4-cleanup.

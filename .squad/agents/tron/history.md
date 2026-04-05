@@ -359,3 +359,35 @@ Implemented `src/watcher.ts` — the vault filesystem watcher module.
 
 - `pnpm build` ✅ zero errors
 - `pnpm test` ✅ 130 passed, 43 todo (all watcher tests are `it.todo()` stubs)
+
+---
+
+## 2025 — Doxygen-compatible TSDoc docstrings (pre-phase4-cleanup)
+
+Added comprehensive Doxygen/TSDoc documentation to all 9 source files.
+
+### Files documented
+
+| File | Changes |
+|------|---------|
+| `src/types.ts` | Added `@brief`, `@since`, `@typeParam` to every exported type/interface/constant/helper. `@description` → `@brief` + prose pattern throughout. |
+| `src/parser.ts` | Added `@brief` and `@since 0.1.0` to all exported functions. |
+| `src/indexer.ts` | Added `@brief` and `@since 0.1.0` to `createEmptyState`, `indexFile`, `removeFile`, `indexVault`. |
+| `src/query.ts` | Added `@brief` and `@since 0.2.0` to `tokenize`, `parse`, `evaluate`. |
+| `src/graph.ts` | Added `@brief` and `@since 0.2.0` to `walk`. |
+| `src/watcher.ts` | Full class-level TSDoc on `VaultWatcherImpl` (`@brief`, `@example`). Constructor docstring with `@param` for both args. Private field `watcher` documented. `stop()` documented with idempotency note. `watch()` factory upgraded with `@brief`, `@example`, `@since`. |
+| `src/governance.ts` | Added `@brief` and `@since 0.3.0` to `checkGovernance`. |
+| `src/cli.ts` | Added `@module`, `@since` to file header. Docstrings on `require` shim and `program` constant. |
+| `src/index.ts` | Added `@module` and `@since` to barrel file header. |
+
+### Type design notes
+
+- `Result<T, E>` now has `@typeParam T` and `@typeParam E` annotations
+- `ok()` and `err()` helpers have full `@typeParam`, `@param`, `@returns`, `@example`, `@since`
+- `VaultWatcher` interface methods upgraded from bare `@param` to `@brief` + `@param`
+- Version grouping: core types = `0.1.0`, query/graph = `0.2.0`, watcher/governance = `0.3.0`
+
+### Build result
+
+- `pnpm build` ✅ zero errors after all doc changes
+- Commit: `docs: add Doxygen-compatible TSDoc docstrings to all source files`

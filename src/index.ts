@@ -4,6 +4,9 @@
  *
  * Re-exports all public types, helpers, and functions. Consumers import
  * from `"oxori"` — this file is the single authoritative export surface.
+ *
+ * @module oxori
+ * @since 0.1.0
  */
 
 // Types and Result helpers

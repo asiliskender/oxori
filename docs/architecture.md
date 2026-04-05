@@ -4,9 +4,9 @@
 
 ## Overview
 
-Oxori is a TypeScript library and CLI that makes markdown files queryable, traversable, and semantically searchable — without an external database. The vault itself remains a collection of plain markdown files, and **the index is also markdown**, stored under `.oxori/index/` and human-readable. This design enables both humans and AI agents to work on the same knowledge base while maintaining Git-friendly workflows and filesystem-level concurrency semantics.
+Oxori is a TypeScript library and CLI that makes markdown files queryable, traversable, and independently organized — without an external database. The vault itself remains a collection of plain markdown files, and **the index is also markdown**, stored under `.oxori/index/` and human-readable. This design enables both humans and AI agents to work on the same knowledge base while maintaining Git-friendly workflows and filesystem-level concurrency semantics.
 
-Oxori is built in five distinct phases, each delivering a shippable npm release. Phase 1 focuses on parsing and indexing. By Phase 5, the system provides a complete MCP server for AI agents, governance rules to constrain agent writes, semantic vector search, and graph traversal with typed relationships.
+Oxori provides a layered architecture: parsing and indexing form the foundation, followed by query filtering, graph traversal, semantic search, governance rules, write operations, and real-time file watching.
 
 The architecture prioritizes **predictability over cleverness**: all file paths are normalized and absolute, errors are structured and recoverable, types are strict with no `any`, and operations are idempotent — re-indexing is always safe.
 
@@ -53,7 +53,7 @@ The architecture prioritizes **predictability over cleverness**: all file paths 
 - The in-memory cache uses Maps and Sets with absolute filepaths as keys (for files), raw tag strings as keys (for tags), and lowercase filename stems as keys (for links). This ensures O(1) lookups and avoids case-sensitivity bugs.
 - Index files are markdown, not JSON. Each line in `files.md` is a summary of one file (filepath, frontmatter summary). `tags.md` lists each tag and its associated files. `links.md` lists each link relationship. This makes the index inspectable, diff-friendly, and human-readable.
 - Index files are written after parsing completes, so a partial crash never leaves a corrupt index. The vault is always consistent.
-- The indexer tracks `lastModified` (mtime) for each file to enable incremental updates in Phase 5. Watcher can skip re-parsing files that haven't changed.
+- The indexer tracks `lastModified` (mtime) for each file to enable incremental updates and skip re-parsing unchanged files.
 - Exclude patterns (glob-based) allow users to skip folders like `.obsidian/` or `node_modules/`.
 
 **Produces:**
@@ -161,9 +161,9 @@ The architecture prioritizes **predictability over cleverness**: all file paths 
 
 **Provides:** MCP tools for querying, graph traversal, semantic search, file reading, and file writing. Resources for exposing the entire vault as queryable data structures.
 
-## Phase 3 Additions
+## Key Capabilities
 
-Phase 3 introduces two critical capabilities that complete the core Oxori platform:
+Oxori provides the following key capabilities:
 
 ### Watcher Layer (`src/watcher.ts`)
 
@@ -172,7 +172,7 @@ The **watcher** monitors the vault filesystem for real-time changes (new files, 
 - `"change"` — existing file content modified
 - `"unlink"` — file deleted or moved out of the vault
 
-The watcher is optional and typically used in long-running processes (MCP server, agent interactions) to keep the index in sync without full re-scans. For one-shot CLI commands, a full re-index is simpler and sufficient.
+The watcher is optional and typically used in long-running processes to keep the index in sync without full re-scans. For one-shot CLI commands, a full re-index is simpler and sufficient.
 
 **API:** `const watcher = watch(vaultPath, config?); watcher.on('change', handler); watcher.stop();`
 
@@ -189,11 +189,11 @@ Rules are evaluated in declaration order; the first matching rule wins. This ena
 
 **API:** `const result = checkGovernance(rules, state); if (!result.passed) { result.violations.forEach(v => handle(v)); }`
 
-Both additions are pure functions with no I/O or mutation — they integrate seamlessly with existing layers and are ready for Phase 5's MCP server and agent orchestration.
+Both layers are pure functions with no I/O or mutation — they integrate seamlessly with existing layers.
 
 ## Data Flow
 
-### Indexing (Phase 1)
+### Indexing
 
 1. User runs `oxori index` in a vault directory.
 2. CLI initializes the indexer with the vault path.
@@ -205,7 +205,7 @@ Both additions are pure functions with no I/O or mutation — they integrate sea
 8. Indexer stores the `IndexState` in memory (in-process cache).
 9. CLI prints summary: "Indexed 42 files, 15 tags, 128 links" and exits.
 
-### Querying (Phase 2)
+### Querying
 
 1. User runs `oxori query "type:decision AND status:open"`.
 2. CLI loads the vault and index from disk (if not already loaded).
@@ -214,7 +214,7 @@ Both additions are pure functions with no I/O or mutation — they integrate sea
 5. Query returns a list of matching filepaths.
 6. CLI prints the results and exits.
 
-### Graph Traversal (Phase 2)
+### Graph Traversal
 
 1. User runs `oxori walk decisions/api-choice.md --depth 2`.
 2. CLI loads the vault and index from disk.
@@ -224,7 +224,7 @@ Both additions are pure functions with no I/O or mutation — they integrate sea
 6. Graph returns all reachable filepaths.
 7. CLI prints the results and exits.
 
-### Writing (Phase 3)
+### Writing
 
 1. User (or agent via MCP) calls `vault.write("memory/plan.md", { frontmatter: { type: "memory" }, body: "..." })`.
 2. Write API generates frontmatter (adds `created_at`, normalizes timestamps, etc.).
@@ -236,7 +236,7 @@ Both additions are pure functions with no I/O or mutation — they integrate sea
 8. Write API returns success.
 9. Next query or walk operation sees the new file without needing to re-index.
 
-### Semantic Search (Phase 4)
+### Semantic Search
 
 1. User runs `oxori search "authentication approach"`.
 2. CLI loads the vault and index from disk.
@@ -246,7 +246,7 @@ Both additions are pure functions with no I/O or mutation — they integrate sea
 6. Search returns the top-K results sorted by similarity score.
 7. CLI prints the results with scores and exits.
 
-### MCP Server (Phase 5)
+### MCP Server
 
 1. Agent (Claude, Cursor, etc.) connects to the MCP server.
 2. Agent calls an MCP tool, e.g. "query vault for open decisions".
@@ -282,7 +282,7 @@ function getString(fm: FrontmatterEntry, key: string): string | undefined {
 }
 ```
 
-Named as a type (rather than inline `Record<string, unknown>`) to enable future schema refinement (e.g., stricter validation in Phase 3+) without breaking existing code.
+Named as a type (rather than inline `Record<string, unknown>`) to enable future schema refinement without breaking existing code.
 
 **`ParsedFile`** — The intermediate form produced by the parser. Mutable by design (parser builds it incrementally). Contains filepath, filename, frontmatter (Record<string, unknown>), tags (Set<string>), wikilinks (Set<string>), typedRelations (Map<string, string[]>), and body. Example: parsing `/vault/auth.md` with `depends_on: [[login]]` produces a `ParsedFile` with `typedRelations.get("depends_on")` returning `["login"]`.
 
@@ -321,51 +321,39 @@ Action: Ask a human to update this file or move it out of archive/.
 
 **MCP Error Handling:** MCP calls always return structured responses. Errors are included in the response with code, message, and optional action. The client (Claude, Cursor) receives the error and can display it to the user or retry with a different approach.
 
-## Build Phases
-
-| Phase | Focus | Key Modules | Release | Status |
-|-------|-------|-------------|---------|--------|
-| 1 | Parser + Markdown Index | `types.ts`, `parser.ts`, `indexer.ts`, `cli.ts` (init/index) | v0.1.0 | Planned |
-| 2 | Query + Graph Traversal | `query.ts`, `graph.ts`, `cli.ts` (query/walk/graph) | v0.2.0 | Planned |
-| 3 | Write API + Governance | `writer.ts`, `governance.ts`, `index.ts` (public SDK), `cli.ts` (write) | v0.3.0 | Planned |
-| 4 | Semantic Search | `search.ts`, embeddings providers | v0.4.0 | Planned |
-| 5 | MCP + Watcher | `mcp.ts`, `watcher.ts`, Obsidian docs | v0.5.0 | Planned |
-
-Each phase is a complete npm release with a new version number, release notes, and changelog. Phases are merged to `main` only when fully complete with tests (80%+ coverage), documentation, and Flynn's architectural approval.
-
 ## File Structure
 
 ```
 oxori/
 ├── src/
-│   ├── index.ts                # Public SDK entry point (Phase 3)
+│   ├── index.ts                # Public SDK entry point
 │   ├── cli.ts                  # CLI entry point and commands
 │   ├── parser.ts               # Markdown file parser
 │   ├── indexer.ts              # Vault scanner and in-memory cache builder
-│   ├── graph.ts                # Graph traversal (Phase 2)
-│   ├── search.ts               # Semantic vector search (Phase 4)
-│   ├── query.ts                # Query AST and evaluator (Phase 2)
-│   ├── writer.ts               # File creation/append (Phase 3)
-│   ├── governance.ts           # Governance rule parsing and enforcement (Phase 3)
-│   ├── watcher.ts              # Filesystem change monitor (Phase 5)
-│   ├── mcp.ts                  # MCP server (Phase 5)
-│   └── types.ts                # Shared type definitions (all phases)
+│   ├── graph.ts                # Graph traversal
+│   ├── search.ts               # Semantic vector search
+│   ├── query.ts                # Query AST and evaluator
+│   ├── writer.ts               # File creation/append
+│   ├── governance.ts           # Governance rule parsing and enforcement
+│   ├── watcher.ts              # Filesystem change monitor
+│   ├── mcp.ts                  # MCP server
+│   └── types.ts                # Shared type definitions
 ├── tests/
 │   ├── parser.test.ts
 │   ├── indexer.test.ts
-│   ├── query.test.ts           # Phase 2
-│   ├── graph.test.ts           # Phase 2
-│   ├── writer.test.ts          # Phase 3
-│   ├── governance.test.ts      # Phase 3
-│   ├── search.test.ts          # Phase 4
+│   ├── query.test.ts
+│   ├── graph.test.ts
+│   ├── writer.test.ts
+│   ├── governance.test.ts
+│   ├── search.test.ts
 │   └── fixtures/               # Test vaults
 │       ├── basic-vault/
 │       ├── governance-vault/
 │       └── linked-vault/
 ├── docs/
 │   ├── architecture.md         # This file
-│   ├── phase1-api.md           # Phase 1 API docs
-│   └── releases/               # Release notes per phase
+│   ├── query-language.md       # Query language reference
+│   └── releases/               # Release notes
 │       └── v0.1.0.md
 ├── .github/
 │   └── workflows/
@@ -475,8 +463,8 @@ oxori/
 - Enables local adoption first. Users can start with the free core and opt into semantic search later.
 
 **Tradeoffs:** 
-- Semantic search is not available until Phase 4.
-- Users who want embeddings must configure a provider (OpenAI, Anthropic, etc.).
+- Semantic search requires configuring an embedding provider (OpenAI, Anthropic, etc.).
+- Vector embeddings are optional — core Oxori functionality works without them.
 
 ## Build System and Tooling
 

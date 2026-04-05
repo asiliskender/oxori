@@ -23,6 +23,8 @@ import type {
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 /**
+ * @brief Evaluates governance rules against the current vault state.
+ *
  * Evaluate governance rules against the current vault state.
  *
  * Rules are evaluated in declaration order per file; the first matching rule
@@ -42,6 +44,8 @@ import type {
  *     console.error(`[${v.severity}] ${v.ruleId}: ${v.message}`);
  *   }
  * }
+ *
+ * @since 0.3.0
  */
 export function checkGovernance(
   rules: GovernanceRule[],

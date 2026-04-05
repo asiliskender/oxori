@@ -127,7 +127,7 @@ function splitFilterToken(raw: string): {
 const OPERATOR_KEYWORDS = new Set(["and", "or", "not"]);
 
 /**
- * Tokenizes a raw query string into a flat array of {@link Token} objects.
+ * @brief Tokenizes a raw query string into a flat array of {@link Token} objects.
  *
  * @remarks
  * Rules applied in order:
@@ -153,6 +153,8 @@ const OPERATOR_KEYWORDS = new Set(["and", "or", "not"]);
  * //   { kind: "FILTER",   value: "type:note",   position: 13 },
  * //   { kind: "EOF",      value: "",            position: 22 },
  * // ]
+ *
+ * @since 0.2.0
  */
 export function tokenize(query: string): Token[] {
   const tokens: Token[] = [];
@@ -399,6 +401,8 @@ function parseOr(cursor: TokenCursor): QueryNode {
 // ---------------------------------------------------------------------------
 
 /**
+ * @brief Parses a flat `Token[]` array into a typed {@link QueryAST}.
+ *
  * Parses a flat `Token[]` array (produced by {@link tokenize}) into a
  * typed {@link QueryAST}.
  *
@@ -430,6 +434,8 @@ function parseOr(cursor: TokenCursor): QueryNode {
  *
  * @example
  * parse(tokenize("")) // { root: null }
+ *
+ * @since 0.2.0
  */
 export function parse(tokens: Token[]): QueryAST {
   const cursor = new TokenCursor(tokens);
@@ -563,6 +569,8 @@ function matchNode(file: FileEntry, node: QueryNode, state: IndexState): boolean
 // ---------------------------------------------------------------------------
 
 /**
+ * @brief Evaluates a parsed {@link QueryAST} against a vault {@link IndexState}.
+ *
  * Evaluates a parsed {@link QueryAST} against a vault {@link IndexState}.
  *
  * @remarks
@@ -591,6 +599,8 @@ function matchNode(file: FileEntry, node: QueryNode, state: IndexState): boolean
  *   const ast = parse(tokens);
  *   const result = evaluate(ast, state);
  *   console.log(result.totalMatched); // number of matching files
+ *
+ * @since 0.2.0
  */
 export function evaluate(ast: QueryAST, state: IndexState): QueryResult {
   const startMs = Date.now();

@@ -16,7 +16,7 @@
 // === Frontmatter ===
 
 /**
- * @description Schemaless frontmatter type. Any YAML key-value pair is valid.
+ * @brief Schemaless frontmatter type. Any YAML key-value pair is valid.
  * Used as the `frontmatter` field in both `ParsedFile` and `FileEntry`.
  *
  * @remarks
@@ -26,13 +26,17 @@
  *
  * @example
  * const fm: FrontmatterEntry = { status: "wip", priority: 2, tags: ["project/auth"] };
+ *
+ * @since 0.1.0
  */
 export type FrontmatterEntry = Record<string, unknown>;
 
 // === Parsed File ===
 
 /**
- * @description Represents a single markdown file after it has been fully parsed.
+ * @brief Intermediate mutable form of a markdown file produced by the parser.
+ *
+ * Represents a single markdown file after it has been fully parsed.
  * This is the intermediate form produced by the parser and consumed by the indexer.
  * It is mutable by design — the parser builds it up incrementally before handing
  * it off to the indexer, which converts it into the immutable `FileEntry`.
@@ -61,6 +65,8 @@ export type FrontmatterEntry = Record<string, unknown>;
  *   typedRelations: new Map([["depends_on", ["login"]]]),
  *   body: "## Auth module\n..."
  * };
+ *
+ * @since 0.1.0
  */
 export type ParsedFile = {
   /** Absolute path to the file, normalized via `path.resolve()`. */
@@ -85,7 +91,9 @@ export type ParsedFile = {
 // === Index Entries ===
 
 /**
- * @description The immutable representation of a file stored in the in-memory cache.
+ * @brief Immutable index entry for a file stored in the in-memory cache.
+ *
+ * The immutable representation of a file stored in the in-memory cache.
  * Produced by the indexer from a `ParsedFile` and stored in `IndexState.files`.
  *
  * @remarks
@@ -106,6 +114,8 @@ export type ParsedFile = {
  *   typedRelations: new Map([["depends_on", ["login"]]]),
  *   lastModified: 1712134400000
  * };
+ *
+ * @since 0.1.0
  */
 export type FileEntry = {
   /** Absolute path, normalized via `path.resolve()`. */
@@ -125,7 +135,9 @@ export type FileEntry = {
 };
 
 /**
- * @description Tracks a single tag and the set of files that carry it.
+ * @brief Tag-to-files reverse index entry.
+ *
+ * Tracks a single tag and the set of files that carry it.
  * Stored in `IndexState.tags`, keyed by the tag string.
  *
  * @remarks
@@ -139,6 +151,8 @@ export type FileEntry = {
  *   tag: "project/auth",
  *   files: new Set(["/vault/auth.md", "/vault/oauth.md"])
  * };
+ *
+ * @since 0.1.0
  */
 export type TagEntry = {
   /** The tag string, e.g. `"project/auth"`. */
@@ -148,7 +162,9 @@ export type TagEntry = {
 };
 
 /**
- * @description Tracks a wikilink target and all files that reference it.
+ * @brief Wikilink-to-sources reverse index entry.
+ *
+ * Tracks a wikilink target and all files that reference it.
  * Stored in `IndexState.links`, keyed by the lowercased filename stem.
  *
  * @remarks
@@ -162,6 +178,8 @@ export type TagEntry = {
  *   target: "login",
  *   sources: new Set(["/vault/auth.md", "/vault/session.md"])
  * };
+ *
+ * @since 0.1.0
  */
 export type LinkEntry = {
   /** Lowercased filename stem being linked to. */
@@ -171,7 +189,9 @@ export type LinkEntry = {
 };
 
 /**
- * @description A single typed edge in the file relationship graph.
+ * @brief A single typed relation edge between two vault files.
+ *
+ * A single typed edge in the file relationship graph.
  * Derived from `FileEntry.typedRelations` during graph traversal.
  *
  * @remarks
@@ -188,6 +208,8 @@ export type LinkEntry = {
  *   relationType: "depends_on",
  *   target: "login"
  * };
+ *
+ * @since 0.1.0
  */
 export type TypedRelation = {
   /** Absolute filepath of the file that declares this relation. */
@@ -201,7 +223,9 @@ export type TypedRelation = {
 // === Index State ===
 
 /**
- * @description The complete in-memory cache built by the indexer on startup.
+ * @brief Complete in-memory vault cache holding all indexed file data.
+ *
+ * The complete in-memory cache built by the indexer on startup.
  * All query, graph, and search operations read from this structure.
  *
  * @remarks
@@ -220,6 +244,8 @@ export type TypedRelation = {
  *   totalFiles: 1,
  *   lastIndexed: Date.now()
  * };
+ *
+ * @since 0.1.0
  */
 export type IndexState = {
   /** filepath → FileEntry */
@@ -237,7 +263,9 @@ export type IndexState = {
 // === Vault Configuration ===
 
 /**
- * @description Configuration for opening an Oxori vault.
+ * @brief Configuration for opening an Oxori vault.
+ *
+ * Configuration for opening an Oxori vault.
  * Passed to the top-level `Vault` constructor or `Oxori.open()` SDK call.
  *
  * @remarks
@@ -255,6 +283,8 @@ export type IndexState = {
  *   vaultPath: "/Users/alice/notes",
  *   excludePatterns: [".obsidian/**", "archive/**"]
  * };
+ *
+ * @since 0.1.0
  */
 export type VaultConfig = {
   /** Absolute path to the vault root directory. */
@@ -272,7 +302,9 @@ export type VaultConfig = {
 // === Error Handling ===
 
 /**
- * @description Structured error type for all Oxori operations.
+ * @brief Structured error type for all Oxori operations.
+ *
+ * Structured error type for all Oxori operations.
  * Includes a machine-readable `code`, a human-readable `message`, and an
  * optional `action` string that tells the user how to fix the problem.
  *
@@ -292,6 +324,8 @@ export type VaultConfig = {
  *   action: "Run `oxori init <path>` to create a new vault.",
  *   filepath: "/vault"
  * };
+ *
+ * @since 0.1.0
  */
 export type OxoriError = {
   /** Human-readable description of what went wrong. */
@@ -305,9 +339,14 @@ export type OxoriError = {
 };
 
 /**
- * @description Tagged union for recoverable operation results.
+ * @brief Tagged union type for recoverable operation results.
+ *
+ * Tagged union for recoverable operation results.
  * All functions that can fail should return `Result<T, E>` instead of throwing,
  * unless the failure is truly unrecoverable (programmer error).
+ *
+ * @typeParam T - The success value type.
+ * @typeParam E - The error type; defaults to `OxoriError`.
  *
  * @remarks
  * Discriminate on the `ok` field:
@@ -327,22 +366,45 @@ export type OxoriError = {
  *   if (b === 0) return err({ message: "Division by zero", code: "MATH_ERROR" });
  *   return ok(a / b);
  * }
+ *
+ * @since 0.1.0
  */
 export type Result<T, E = OxoriError> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
 /**
- * Constructs a successful `Result` wrapping the given value.
+ * @brief Constructs a successful `Result` wrapping the given value.
+ *
+ * @typeParam T - The type of the success value.
  * @param value - The success value to wrap.
+ * @returns A `Result` discriminated as `ok: true` with the provided value.
+ *
+ * @example
+ * ```typescript
+ * const result = ok(42); // { ok: true, value: 42 }
+ * ```
+ *
+ * @since 0.1.0
  */
 export function ok<T>(value: T): Result<T, never> {
   return { ok: true, value };
 }
 
 /**
- * Constructs a failed `Result` wrapping the given error.
+ * @brief Constructs a failed `Result` wrapping the given error.
+ *
+ * @typeParam E - The type of the error value.
  * @param error - The error to wrap.
+ * @returns A `Result` discriminated as `ok: false` with the provided error.
+ *
+ * @example
+ * ```typescript
+ * const result = err({ message: "Not found", code: "FILE_NOT_FOUND" });
+ * // { ok: false, error: { message: "Not found", code: "FILE_NOT_FOUND" } }
+ * ```
+ *
+ * @since 0.1.0
  */
 export function err<E>(error: E): Result<never, E> {
   return { ok: false, error };
@@ -351,7 +413,9 @@ export function err<E>(error: E): Result<never, E> {
 // === Watcher (Phase 5) ===
 
 /**
- * @description Describes a filesystem event emitted by the watcher module.
+ * @brief Describes a filesystem event emitted by the watcher module.
+ *
+ * Describes a filesystem event emitted by the watcher module.
  * Defined in Phase 1 to avoid type churn when the watcher lands in Phase 5.
  *
  * @remarks
@@ -368,6 +432,8 @@ export function err<E>(error: E): Result<never, E> {
  *   filepath: "/vault/auth.md",
  *   timestamp: Date.now()
  * };
+ *
+ * @since 0.3.0
  */
 export type WatchEvent = {
   /** The kind of filesystem change. */
@@ -381,7 +447,9 @@ export type WatchEvent = {
 // === Query Engine (Phase 2) ===
 
 /**
- * @description Enumerates every token kind the query tokenizer can emit.
+ * @brief Enumerates every token kind the query tokenizer can emit.
+ *
+ * Enumerates every token kind the query tokenizer can emit.
  *
  * @remarks
  * - `FILTER`   — a `field:value` or `field=value` atom before operator parsing
@@ -390,11 +458,15 @@ export type WatchEvent = {
  * - `LPAREN`   — opening parenthesis `(`
  * - `RPAREN`   — closing parenthesis `)`
  * - `EOF`      — sentinel emitted once the input is exhausted
+ *
+ * @since 0.2.0
  */
 export type TokenKind = "FILTER" | "OPERATOR" | "VALUE" | "LPAREN" | "RPAREN" | "EOF";
 
 /**
- * @description A single token produced by the query tokenizer.
+ * @brief A single token produced by the query tokenizer.
+ *
+ * A single token produced by the query tokenizer.
  *
  * @remarks
  * `position` is a zero-based character offset into the original query string.
@@ -404,6 +476,8 @@ export type TokenKind = "FILTER" | "OPERATOR" | "VALUE" | "LPAREN" | "RPAREN" | 
  * @example
  * // Tokenizing `tag:zettel AND type:note` yields (among others):
  * const t: Token = { kind: "FILTER", value: "tag:zettel", position: 0 };
+ *
+ * @since 0.2.0
  */
 export type Token = {
   /** The grammatical category of this token. */
@@ -415,7 +489,9 @@ export type Token = {
 };
 
 /**
- * @description AST leaf node representing a single field-operator-value filter.
+ * @brief AST leaf node representing a single field-operator-value filter.
+ *
+ * AST leaf node representing a single field-operator-value filter.
  *
  * @remarks
  * Three operator forms are supported:
@@ -429,6 +505,8 @@ export type Token = {
  *
  * @example
  * const node: FilterNode = { type: "filter", field: "tag", operator: ":", value: "zettel" };
+ *
+ * @since 0.2.0
  */
 export type FilterNode = {
   type: "filter";
@@ -441,7 +519,9 @@ export type FilterNode = {
 };
 
 /**
- * @description AST interior node representing a boolean combination of child nodes.
+ * @brief AST interior node representing a boolean combination of child nodes.
+ *
+ * AST interior node representing a boolean combination of child nodes.
  *
  * @remarks
  * A discriminated union on `type` ensures exhaustive handling in the evaluator:
@@ -461,6 +541,8 @@ export type FilterNode = {
  *     { type: "filter", field: "type", operator: "=", value: "note" },
  *   ],
  * };
+ *
+ * @since 0.2.0
  */
 export type OperatorNode = {
   type: "and" | "or" | "not";
@@ -469,7 +551,9 @@ export type OperatorNode = {
 };
 
 /**
- * @description AST node representing a parenthesized sub-expression.
+ * @brief AST node representing a parenthesized sub-expression.
+ *
+ * AST node representing a parenthesized sub-expression.
  *
  * @remarks
  * `GroupNode` exists as a distinct node type (rather than being erased during
@@ -482,6 +566,8 @@ export type OperatorNode = {
  *   type: "group",
  *   child: { type: "or", children: [ ... ] },
  * };
+ *
+ * @since 0.2.0
  */
 export type GroupNode = {
   type: "group";
@@ -490,17 +576,23 @@ export type GroupNode = {
 };
 
 /**
- * @description The discriminated union of every node that can appear in a query AST.
+ * @brief The discriminated union of every node that can appear in a query AST.
+ *
+ * The discriminated union of every node that can appear in a query AST.
  *
  * @remarks
  * Pattern-matching on `node.type` exhaustively covers all cases:
  * `"filter"` → {@link FilterNode}, `"and" | "or" | "not"` → {@link OperatorNode},
  * `"group"` → {@link GroupNode}.
+ *
+ * @since 0.2.0
  */
 export type QueryNode = FilterNode | OperatorNode | GroupNode;
 
 /**
- * @description The top-level result of parsing a query string.
+ * @brief The top-level result of parsing a query string into an AST.
+ *
+ * The top-level result of parsing a query string.
  *
  * @remarks
  * `root: null` is the canonical representation of the empty query (match all
@@ -509,6 +601,8 @@ export type QueryNode = FilterNode | OperatorNode | GroupNode;
  *
  * @example
  * const ast: QueryAST = { root: null }; // matches every file
+ *
+ * @since 0.2.0
  */
 export type QueryAST = {
   /** The root node of the parsed query tree, or `null` for "match all". */
@@ -516,7 +610,9 @@ export type QueryAST = {
 };
 
 /**
- * @description The result returned by a query execution.
+ * @brief Result returned by a query execution against the vault index.
+ *
+ * The result returned by a query execution.
  *
  * @remarks
  * `matches` is a `ReadonlySet` to signal that callers must not mutate it.
@@ -529,6 +625,8 @@ export type QueryAST = {
  *   totalMatched: 2,
  *   executionMs: 1.4,
  * };
+ *
+ * @since 0.2.0
  */
 export type QueryResult = {
   /** File paths (vault-relative) of every file that satisfied the query. */
@@ -540,7 +638,9 @@ export type QueryResult = {
 };
 
 /**
- * @description The exhaustive list of index fields that a filter expression may target.
+ * @brief Exhaustive list of index fields that a filter expression may target.
+ *
+ * The exhaustive list of index fields that a filter expression may target.
  *
  * @remarks
  * Defined as a `const` tuple so it can be used at runtime (e.g. to validate
@@ -554,22 +654,30 @@ export type QueryResult = {
  * - `"frontmatter"` — arbitrary frontmatter key (combined with value as `key=value`)
  * - `"title"`       — the `title` frontmatter key or inferred H1
  * - `"link"`        — a wikilink target present in the file's body
+ *
+ * @since 0.2.0
  */
 export const FILTER_FIELDS = ["tag", "type", "path", "frontmatter", "title", "link"] as const;
 
 /**
- * @description The union of valid field names accepted by a {@link FilterNode}.
+ * @brief Union of valid field names accepted by a filter expression.
+ *
+ * The union of valid field names accepted by a {@link FilterNode}.
  *
  * @example
  * const field: FilterField = "tag"; // valid
  * const bad: FilterField = "author"; // TS error — not a recognised field
+ *
+ * @since 0.2.0
  */
 export type FilterField = (typeof FILTER_FIELDS)[number];
 
 // === Graph Traversal (Phase 2) ===
 
 /**
- * @description A single directed edge in the file-relationship graph.
+ * @brief A single directed edge in the file-relationship graph.
+ *
+ * A single directed edge in the file-relationship graph.
  *
  * @remarks
  * All paths are vault-relative strings (the same format used throughout the
@@ -584,6 +692,8 @@ export type FilterField = (typeof FILTER_FIELDS)[number];
  * @example
  * const e: Edge = { source: "notes/a.md", target: "notes/b.md", kind: "wikilink" };
  * const r: Edge = { source: "notes/a.md", target: "notes/b.md", kind: "relation", relationType: "references" };
+ *
+ * @since 0.2.0
  */
 export type Edge = {
   /** Vault-relative path of the originating file. */
@@ -600,17 +710,23 @@ export type Edge = {
 };
 
 /**
- * @description Controls which direction edges are followed during a graph walk.
+ * @brief Controls which direction edges are followed during a graph walk.
+ *
+ * Controls which direction edges are followed during a graph walk.
  *
  * @remarks
  * - `"outgoing"` — follow edges where the start node is the source (default)
  * - `"incoming"` — follow edges where the start node is the target (backlinks)
  * - `"both"`     — follow edges in either direction
+ *
+ * @since 0.2.0
  */
 export type WalkDirection = "incoming" | "outgoing" | "both";
 
 /**
- * @description Constrains which edge kinds are traversed during a graph walk.
+ * @brief Constrains which edge kinds are traversed during a graph walk.
+ *
+ * Constrains which edge kinds are traversed during a graph walk.
  *
  * @remarks
  * The template literal form `relation:${string}` lets callers target a specific
@@ -621,11 +737,15 @@ export type WalkDirection = "incoming" | "outgoing" | "both";
  * @example
  * const via: WalkVia = "links";               // only wikilinks
  * const via2: WalkVia = "relation:inspired-by"; // only "inspired-by" relations
+ *
+ * @since 0.2.0
  */
 export type WalkVia = "links" | "tags" | "both" | `relation:${string}`;
 
 /**
- * @description Options bag passed to `graph.walk()`.
+ * @brief Options bag passed to `graph.walk()`.
+ *
+ * Options bag passed to `graph.walk()`.
  *
  * @remarks
  * All fields are optional; omitting them yields a sensible default walk:
@@ -639,6 +759,8 @@ export type WalkVia = "links" | "tags" | "both" | `relation:${string}`;
  *
  * @example
  * const opts: WalkOptions = { depth: 2, direction: "outgoing", via: "links", maxNodes: 500 };
+ *
+ * @since 0.2.0
  */
 export type WalkOptions = {
   /** Maximum edge-hop depth from the seed node. Defaults to `Infinity`. */
@@ -652,7 +774,9 @@ export type WalkOptions = {
 };
 
 /**
- * @description The result returned by a `graph.walk()` call.
+ * @brief The result returned by a `graph.walk()` call.
+ *
+ * The result returned by a `graph.walk()` call.
  *
  * @remarks
  * `nodes` and `edges` are `ReadonlySet` to prevent accidental mutation by
@@ -669,6 +793,8 @@ export type WalkOptions = {
  *   visitOrder: ["notes/a.md", "notes/b.md"],
  *   truncated: false,
  * };
+ *
+ * @since 0.2.0
  */
 export type WalkResult = {
   /** All vault-relative file paths visited during the walk (including the seed). */
@@ -684,7 +810,9 @@ export type WalkResult = {
 // === Governance (Phase 3) ===
 
 /**
- * @description A single governance rule parsed from `.oxori/governance.md`.
+ * @brief A single governance rule parsed from `.oxori/governance.md`.
+ *
+ * A single governance rule parsed from `.oxori/governance.md`.
  * Defined in Phase 1 to avoid type churn when governance lands in Phase 3.
  *
  * @remarks
@@ -707,6 +835,8 @@ export type WalkResult = {
  *   effect: "deny",
  *   appliesTo: "agents"
  * };
+ *
+ * @since 0.3.0
  */
 export type GovernanceRule = {
   /** Unique identifier for this rule. Used in error messages and audit logs. */
@@ -722,7 +852,9 @@ export type GovernanceRule = {
 };
 
 /**
- * @description Represents a single governance rule violation detected during
+ * @brief A single governance rule violation detected during evaluation.
+ *
+ * Represents a single governance rule violation detected during
  * governance evaluation.
  *
  * @remarks
@@ -730,6 +862,8 @@ export type GovernanceRule = {
  * The `ruleId` allows audit logs to trace which rule was violated. `severity`
  * differentiates between blocking errors and warnings; implementation may use
  * this to determine whether to reject a write operation or emit a diagnostic.
+ *
+ * @since 0.3.0
  */
 export type GovernanceViolation = {
   /** The unique ID of the rule that was violated. */
@@ -743,7 +877,9 @@ export type GovernanceViolation = {
 };
 
 /**
- * @description Result of evaluating governance rules against vault state.
+ * @brief Result of evaluating governance rules against vault state.
+ *
+ * Result of evaluating governance rules against vault state.
  *
  * @remarks
  * `GovernanceResult` reports whether all evaluated rules passed and lists any
@@ -764,6 +900,8 @@ export type GovernanceViolation = {
  *   ],
  *   checkedAt: Date.now()
  * };
+ *
+ * @since 0.3.0
  */
 export type GovernanceResult = {
   /** True if all rules passed; false if any violation exists. */
@@ -775,7 +913,9 @@ export type GovernanceResult = {
 };
 
 /**
- * @description Emits `WatchEvent` objects when the vault filesystem changes.
+ * @brief Interface for a vault filesystem watcher that emits typed change events.
+ *
+ * Emits `WatchEvent` objects when the vault filesystem changes.
  *
  * @remarks
  * `VaultWatcher` wraps Node.js `fs.watch` to provide typed events and clean
@@ -795,25 +935,28 @@ export type GovernanceResult = {
  * // ... later ...
  * watcher.stop();
  * ```
+ *
+ * @since 0.3.0
  */
 export interface VaultWatcher {
   /**
-   * Subscribe to filesystem change events.
+   * @brief Subscribes to filesystem change events for `.md` files.
    * @param event - The event type: `"change"` for file modifications, `"error"` for watcher errors.
-   * @param listener - Callback invoked when the event fires.
+   * @param listener - Callback invoked with a {@link WatchEvent} when the event fires.
    * @returns The watcher itself (for method chaining).
    */
   on(event: "change", listener: (e: WatchEvent) => void): this;
   /**
-   * Subscribe to watcher errors.
+   * @brief Subscribes to watcher errors.
    * @param event - Always `"error"` for this overload.
    * @param listener - Callback invoked when a filesystem watch error occurs.
    * @returns The watcher itself (for method chaining).
    */
   on(event: "error", listener: (err: Error) => void): this;
   /**
-   * Stop watching and clean up the underlying fs.watch handle.
-   * After calling `stop()`, no further events will be emitted.
+   * @brief Stops watching and releases the underlying `fs.watch` handle.
+   *
+   * After calling `stop()`, no further events will be emitted. Safe to call multiple times.
    */
   stop(): void;
 };
