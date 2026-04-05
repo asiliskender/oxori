@@ -10,10 +10,11 @@
  * Run: pnpm test:coverage
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import { indexVault } from '../src/indexer'
+import { dirname, join, resolve } from 'path'
+import { mkdir, writeFile, rm } from 'node:fs/promises'
+import { indexVault, indexFile, removeFile, createEmptyState } from '../src/indexer'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -224,17 +225,44 @@ describe('indexVault', () => {
   // Edge cases
   // ---------------------------------------------------------------------------
   describe('edge cases', () => {
-    it.todo(
-      'handles vault with zero markdown files gracefully',
-      // Expected: indexVault() on an empty directory returns an IndexState
-      // with totalFiles === 0 and empty maps — no error thrown
-    )
+    let tmpDir: string
+    let tmpCounter = 0
 
-    it.todo(
-      'handles files with identical names in different subdirectories',
-      // Expected: both files appear in the files map under their full absolute paths,
-      // not overwriting each other
-    )
+    beforeEach(async () => {
+      tmpCounter++
+      tmpDir = join(__dirname, `.tmp-indexer-${tmpCounter}`)
+      await mkdir(tmpDir, { recursive: true })
+    })
+
+    afterEach(async () => {
+      await rm(tmpDir, { recursive: true, force: true })
+    })
+
+    it('handles vault with zero markdown files gracefully', async () => {
+      const result = await indexVault({ vaultPath: tmpDir })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.value.totalFiles).toBe(0)
+      expect(result.value.files.size).toBe(0)
+      expect(result.value.tags.size).toBe(0)
+      expect(result.value.links.size).toBe(0)
+    })
+
+    it('handles files with identical names in different subdirectories', async () => {
+      const subA = join(tmpDir, 'folder-a')
+      const subB = join(tmpDir, 'folder-b')
+      await mkdir(subA, { recursive: true })
+      await mkdir(subB, { recursive: true })
+      await writeFile(join(subA, 'note.md'), '# Note A\n\n#tag-a\n')
+      await writeFile(join(subB, 'note.md'), '# Note B\n\n#tag-b\n')
+
+      const result = await indexVault({ vaultPath: tmpDir })
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      expect(result.value.totalFiles).toBe(2)
+      expect(result.value.files.has(join(subA, 'note.md'))).toBe(true)
+      expect(result.value.files.has(join(subB, 'note.md'))).toBe(true)
+    })
 
     it('handles empty files without throwing', async () => {
       // basic-vault/empty.md is 0 bytes — indexVault must not throw
@@ -247,5 +275,256 @@ describe('indexVault', () => {
       expect(entry?.tags.size).toBe(0)
       expect(entry?.wikilinks.size).toBe(0)
     })
+
+    it('skips files that fail to parse and logs a warning', async () => {
+      // YAML undefined alias reference triggers YAMLException in js-yaml/gray-matter
+      await writeFile(join(tmpDir, 'bad.md'), '---\nfoo: *undefined_anchor\n---\n# body\n')
+      await writeFile(join(tmpDir, 'good.md'), '# Good\n\n#tag-ok\n')
+
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+      const result = await indexVault({ vaultPath: tmpDir })
+      warnSpy.mockRestore()
+
+      expect(result.ok).toBe(true)
+      if (!result.ok) return
+      // good.md indexed, bad.md skipped
+      expect(result.value.files.has(join(tmpDir, 'good.md'))).toBe(true)
+      expect(result.value.files.has(join(tmpDir, 'bad.md'))).toBe(false)
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Error paths
+  // ---------------------------------------------------------------------------
+  describe('error paths', () => {
+    it('returns VAULT_NOT_FOUND when vault path does not exist', async () => {
+      const result = await indexVault({ vaultPath: '/no/such/vault/path/oxori-test' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error.code).toBe('VAULT_NOT_FOUND')
+      expect(result.error.message).toContain('Vault directory not found')
+    })
+
+    it('returns VAULT_NOT_FOUND with different message when readdir fails with non-ENOENT', async () => {
+      // Passing a regular file as vaultPath causes readdir to throw ENOTDIR (not ENOENT)
+      const result = await indexVault({ vaultPath: '/etc/hosts' })
+      expect(result.ok).toBe(false)
+      if (result.ok) return
+      expect(result.error.code).toBe('VAULT_NOT_FOUND')
+      expect(result.error.message).toContain('Failed to read vault directory')
+    })
+  })
+})
+
+// ─── createEmptyState ────────────────────────────────────────────────────────
+
+describe('createEmptyState', () => {
+  it('returns a state with empty Maps and zero counters', () => {
+    const state = createEmptyState()
+    expect(state.files.size).toBe(0)
+    expect(state.tags.size).toBe(0)
+    expect(state.links.size).toBe(0)
+    expect(state.totalFiles).toBe(0)
+    expect(state.lastIndexed).toBe(0)
+  })
+
+  it('returns a fresh instance on every call', () => {
+    const a = createEmptyState()
+    const b = createEmptyState()
+    expect(a).not.toBe(b)
+    expect(a.files).not.toBe(b.files)
+  })
+})
+
+// ─── indexFile ───────────────────────────────────────────────────────────────
+
+describe('indexFile', () => {
+  let tmpDir: string
+  let tmpCounter = 0
+
+  beforeEach(async () => {
+    tmpCounter++
+    tmpDir = join(__dirname, `.tmp-indexfile-${tmpCounter}`)
+    await mkdir(tmpDir, { recursive: true })
+  })
+
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('indexes a new file into an empty state', async () => {
+    const filePath = join(tmpDir, 'alpha.md')
+    await writeFile(filePath, '---\ntitle: Alpha\ntags:\n  - project/alpha\n---\n\nSee [[beta]] for more.\n')
+    const state = createEmptyState()
+
+    const result = await indexFile(filePath, state)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(result.value.files.has(filePath)).toBe(true)
+    expect(result.value.totalFiles).toBe(1)
+    expect(result.value.tags.has('project')).toBe(true)
+    expect(result.value.tags.has('project/alpha')).toBe(true)
+    expect(result.value.links.has('beta')).toBe(true)
+    const linkEntry = result.value.links.get('beta')
+    expect(linkEntry?.sources.has(filePath)).toBe(true)
+  })
+
+  it('re-indexes a file — removes stale entries and inserts fresh ones', async () => {
+    const filePath = join(tmpDir, 'changing.md')
+    await writeFile(filePath, '---\ntags:\n  - old-tag\n---\n\nSee [[old-link]].\n')
+    const state = createEmptyState()
+
+    await indexFile(filePath, state)
+    expect(state.tags.has('old-tag')).toBe(true)
+    expect(state.links.has('old-link')).toBe(true)
+
+    // Update file content
+    await writeFile(filePath, '---\ntags:\n  - new-tag\n---\n\nSee [[new-link]].\n')
+    const result = await indexFile(filePath, state)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+
+    expect(state.tags.has('old-tag')).toBe(false)
+    expect(state.links.has('old-link')).toBe(false)
+    expect(state.tags.has('new-tag')).toBe(true)
+    expect(state.links.has('new-link')).toBe(true)
+    expect(state.totalFiles).toBe(1)
+  })
+
+  it('returns err with FILE_NOT_FOUND when file does not exist', async () => {
+    const state = createEmptyState()
+    const missing = join(tmpDir, 'does-not-exist.md')
+
+    const result = await indexFile(missing, state)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.code).toBe('FILE_NOT_FOUND')
+    expect(result.error.message).toContain('File not found')
+    expect(result.error.filepath).toBe(resolve(missing))
+  })
+
+  it('returns err with PARSE_ERROR when stat fails with non-ENOENT error', async () => {
+    // Passing a path inside a regular file triggers ENOTDIR (not ENOENT) from stat
+    const state = createEmptyState()
+    const result = await indexFile('/etc/hosts/fake.md', state)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.code).toBe('PARSE_ERROR')
+    expect(result.error.message).toContain('Failed to stat file')
+  })
+
+  it('returns the same state reference on success', async () => {
+    const filePath = join(tmpDir, 'ref.md')
+    await writeFile(filePath, '# ref\n')
+    const state = createEmptyState()
+
+    const result = await indexFile(filePath, state)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value).toBe(state)
+  })
+
+  it('returns parse error when file content is invalid YAML', async () => {
+    const filePath = join(tmpDir, 'bad-yaml.md')
+    // YAML undefined alias reference triggers YAMLException in gray-matter/js-yaml
+    await writeFile(filePath, '---\nfoo: *undefined_anchor\n---\nbody\n')
+    const state = createEmptyState()
+
+    const result = await indexFile(filePath, state)
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error.code).toBe('PARSE_ERROR')
+    expect(result.error.filepath).toBe(resolve(filePath))
+  })
+})
+
+// ─── removeFile ──────────────────────────────────────────────────────────────
+
+describe('removeFile', () => {
+  let tmpDir: string
+  let tmpCounter = 0
+
+  beforeEach(async () => {
+    tmpCounter++
+    tmpDir = join(__dirname, `.tmp-removefile-${tmpCounter}`)
+    await mkdir(tmpDir, { recursive: true })
+  })
+
+  afterEach(async () => {
+    await rm(tmpDir, { recursive: true, force: true })
+  })
+
+  it('removes file, its tags, and its links from state', async () => {
+    const filePath = join(tmpDir, 'remove-me.md')
+    await writeFile(filePath, '---\ntags:\n  - to-remove\n---\n\nSee [[target]].\n')
+    const state = createEmptyState()
+    await indexFile(filePath, state)
+
+    expect(state.files.has(resolve(filePath))).toBe(true)
+    expect(state.tags.has('to-remove')).toBe(true)
+    expect(state.links.has('target')).toBe(true)
+
+    removeFile(filePath, state)
+
+    expect(state.files.has(resolve(filePath))).toBe(false)
+    expect(state.tags.has('to-remove')).toBe(false)
+    expect(state.links.has('target')).toBe(false)
+    expect(state.totalFiles).toBe(0)
+  })
+
+  it('is a no-op when the file is not in the state', () => {
+    const state = createEmptyState()
+    const notPresent = join(tmpDir, 'ghost.md')
+
+    // Should not throw and state remains empty
+    const returned = removeFile(notPresent, state)
+    expect(returned).toBe(state)
+    expect(state.files.size).toBe(0)
+  })
+
+  it('preserves shared tag entries when only one of two files is removed', async () => {
+    const fileA = join(tmpDir, 'a.md')
+    const fileB = join(tmpDir, 'b.md')
+    await writeFile(fileA, '---\ntags:\n  - shared-tag\n---\n')
+    await writeFile(fileB, '---\ntags:\n  - shared-tag\n---\n')
+
+    const state = createEmptyState()
+    await indexFile(fileA, state)
+    await indexFile(fileB, state)
+    expect(state.tags.get('shared-tag')?.files.size).toBe(2)
+
+    removeFile(fileA, state)
+
+    // Tag entry should still exist because fileB still carries it
+    expect(state.tags.has('shared-tag')).toBe(true)
+    expect(state.tags.get('shared-tag')?.files.size).toBe(1)
+    expect(state.tags.get('shared-tag')?.files.has(resolve(fileB))).toBe(true)
+  })
+
+  it('preserves shared link entries when only one of two files is removed', async () => {
+    const fileA = join(tmpDir, 'c.md')
+    const fileB = join(tmpDir, 'd.md')
+    await writeFile(fileA, '# A\n\nSee [[shared-target]].\n')
+    await writeFile(fileB, '# B\n\nSee [[shared-target]].\n')
+
+    const state = createEmptyState()
+    await indexFile(fileA, state)
+    await indexFile(fileB, state)
+
+    removeFile(fileA, state)
+
+    expect(state.links.has('shared-target')).toBe(true)
+    expect(state.links.get('shared-target')?.sources.has(resolve(fileB))).toBe(true)
+  })
+
+  it('returns the same state reference', async () => {
+    const filePath = join(tmpDir, 'same-ref.md')
+    await writeFile(filePath, '# x\n')
+    const state = createEmptyState()
+    await indexFile(filePath, state)
+
+    const returned = removeFile(filePath, state)
+    expect(returned).toBe(state)
   })
 })
