@@ -292,3 +292,72 @@ export async function searchVault(
   results.sort((a, b) => b.score - a.score);
   return ok(results.slice(0, topK));
 }
+
+/**
+ * Embed all markdown files in a vault using the given provider.
+ * Skips files whose vectors are already up-to-date (content hash unchanged + same model).
+ *
+ * @param vaultPath - Absolute path to the vault root.
+ * @param provider  - Embedding provider to use.
+ * @param options   - { force?: boolean } — if true, re-embed all files regardless of staleness.
+ * @returns Result<{ embedded: number; skipped: number; failed: number }, OxoriError>
+ */
+export async function embedVault(
+  vaultPath: string,
+  provider: EmbeddingProvider,
+  options: { force?: boolean } = {}
+): Promise<Result<{ embedded: number; skipped: number; failed: number }, OxoriError>> {
+  const { readdirSync, statSync, readFileSync } = await import("node:fs");
+  const { join: pathJoin } = await import("node:path");
+
+  const mdFiles: string[] = [];
+  function scanDir(dir: string): void {
+    const entries = readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.name.startsWith(".")) continue; // skip .oxori, .git, etc.
+      const fullPath = pathJoin(dir, entry.name);
+      if (entry.isDirectory()) {
+        scanDir(fullPath);
+      } else if (entry.name.endsWith(".md")) {
+        mdFiles.push(fullPath);
+      }
+    }
+  }
+
+  try {
+    scanDir(vaultPath);
+  } catch (e) {
+    return err({
+      code: "VAULT_NOT_FOUND",
+      message: `Cannot scan vault: ${e instanceof Error ? e.message : String(e)}`,
+      action: "Check that the vault path exists and is readable.",
+    });
+  }
+
+  // statSync import is available but unused — satisfy TS
+  void statSync;
+
+  const store = new VectorStore(vaultPath);
+  let embedded = 0, skipped = 0, failed = 0;
+
+  for (const filepath of mdFiles) {
+    const content = readFileSync(filepath, "utf8");
+    const contentHash = VectorStore.contentHash(content);
+
+    if (!options.force && !store.isStale(filepath, contentHash, provider.model)) {
+      skipped++;
+      continue;
+    }
+
+    const result = await provider.embed(content);
+    if (!result.ok) {
+      failed++;
+      continue;
+    }
+
+    store.store(filepath, result.value, contentHash, provider.model);
+    embedded++;
+  }
+
+  return ok({ embedded, skipped, failed });
+}
