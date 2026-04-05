@@ -424,3 +424,13 @@
 - Commit `55e9484` — "docs(phase4): write semantic search architecture and type contract design doc" with closes #50
 
 **Status:** ✅ Complete. Phase 4 Wave 0 type contract ready for Wave 1 implementation. All type signatures, CLI flags, SDK methods, error codes, and performance characteristics are specified and locked.
+
+---
+
+## 2026-04-05T21:34:00Z: Wave 0 Complete — Cross-Team Updates
+
+**Wave 0 deliverables all closed.** Orchestration logs written. Decisions merged.
+
+**From Flynn (#26):** Phase 4 kickoff ADR approved. Semantic search architecture and type contracts approved. All Wave 0 issues closed. No Wave 1 work starts until this point.
+
+**From Tron (#45):** GovernanceRule discriminated union shipped. 13 governance tests passing. DI-based pattern confirmed for EmbeddingProvider.

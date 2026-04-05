@@ -418,3 +418,13 @@ Increase indexer.ts coverage from ~47% to 95%+ and parser.ts from ~80% to 95%+. 
    - `parser.ts` line 218: The `"Unknown YAML parse error"` fallback for when a thrown value has no `message` property. Gray-matter (backed by js-yaml) always throws `YAMLException` which is a proper `Error` subclass with `message`. Documented as dead code.
 
 4. **Temp dir naming**: Used `.tmp-indexer-{N}`, `.tmp-indexfile-{N}`, `.tmp-removefile-{N}` patterns with `beforeEach`/`afterEach` for reliable cleanup. Avoids `/tmp` per project constraints.
+
+---
+
+## 2026-04-05T21:34:00Z: Wave 0 Complete — Cross-Team Updates
+
+**Wave 0 deliverables all closed.** Orchestration logs written. Decisions merged.
+
+**From Flynn (#26):** Phase 4 kickoff ADR approved. GovernanceRule discriminated union is ready. Wave 0 is the gate before Wave 1. Dumont's type contracts are locked and approved — Wave 1 implementation must match exactly.
+
+**From Tron (#45):** GovernanceRule discriminated union shipped. 13 governance tests passing. `tsc --noEmit` clean. All conditions met for Wave 1 type work.

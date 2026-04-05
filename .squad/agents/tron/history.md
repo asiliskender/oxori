@@ -391,3 +391,23 @@ Added comprehensive Doxygen/TSDoc documentation to all 9 source files.
 
 - `pnpm build` ✅ zero errors after all doc changes
 - Commit: `docs: add Doxygen-compatible TSDoc docstrings to all source files`
+
+## Learnings
+
+### Issue #45 — GovernanceRule discriminated union (2025-01-31)
+
+- **Pattern used**: Replaced the flat `GovernanceRule` object type with a `PathRule | TagRule | LinkRule` discriminated union keyed on `ruleType`. TypeScript's exhaustiveness guard (`never` default branch) is in place so future additions to the union produce compile errors.
+- **IndexState shape awareness**: `FileEntry.tags` is `ReadonlySet<string>` (expanded to all ancestor levels). `FileEntry.wikilinks` is `ReadonlySet<string>` containing outbound link stems — `.size` gives outbound link count.
+- **Backward compat**: `description` changed from required `string` to optional `string?` on all three rule types because the `TagRule`/`LinkRule` branches auto-generate a message. Existing tests all still pass.
+- **Test approach**: Helper functions `denyRule()` / `allowRule()` in the test file were the only two places needing `ruleType: "path"` — no inline rule literals existed.
+- **First-match-wins**: The `break` after each `switch` case maintains the existing first-match-wins loop invariant — all three rule types terminate further rule evaluation for the current file once matched.
+
+---
+
+## 2026-04-05T21:34:00Z: Wave 0 Complete — Cross-Team Updates
+
+**Wave 0 deliverables all closed.** Orchestration logs written. Decisions merged.
+
+**From Flynn (#26):** Phase 4 kickoff ADR approved. GovernanceRule discriminated union is architecturally correct pending implementation conditions. Wave 0 is the gate before any Wave 1 implementation. EmbeddingProvider interface must use DI (injected at call time, no singleton). Semantic search must be lazy-loaded, never imported unconditionally. Tron finalizes types in Wave 1.
+
+**From Yori (#46, #47):** Coverage baselines set. indexer.ts 96.02%, parser.ts 99.23% — both exceed ≥95% threshold. Ready to write test skeletons in Wave 1 (after types locked). Stub provider pattern confirmed for deterministic offshore testing.

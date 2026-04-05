@@ -3057,3 +3057,160 @@ Backlog migrated from .squad/backlog.md to GitHub Projects #4 "Oxori Backlog".
 **D8 — .md file review:** All team members must review .md files, update missing notes, and ensure lessons learned and retro items are properly captured before Sprint 4.
 
 **Why:** User request — all captured for team memory and Sprint 4 kickoff.
+**Why:** User request — all captured for team memory and Phase 4 kickoff.
+
+---
+
+### 2026-04-05: Issues #3–#25 linked to commits
+
+All Phase 1–3 GitHub Issues updated with commit links and agent names.  
+Done via GitHub REST API using PAT.
+
+---
+
+### 2026-04-05T20:30Z: User directive — commit-to-backlog linking
+
+**By:** Onur (via Copilot)  
+**What:** Every closed backlog ticket MUST have its relevant commit(s) linked. No ticket closes without a traceable commit reference.  
+**Why:** User request — traceability between code changes and backlog items is mandatory going forward.
+
+---
+
+## Phase 4 ADRs — Flynn
+
+### 2026-04-05: Phase 4 Kickoff — Five Decisions
+
+**Date:** 2026-04-05  
+**By:** Flynn (Lead & Architect)  
+**refs:** #26 (Phase 4 gate), #45, #46, #47, #50  
+**Branch:** `feature/phase-4-semantic-search`
+
+Phase 4 (Semantic Search) is now in progress. Three key pieces of technical debt from Phase 3 must be resolved in Wave 0:
+1. **GovernanceRule type gap** — flat shape cannot express required-tag, no-orphan, or max-links rules
+2. **indexer.ts coverage at 47.15%** — below ≥95% target
+3. **parser.ts coverage at 80.76%** — below ≥95% target
+
+#### Decision 1: GovernanceRule Discriminated Union — APPROVED
+
+Replacing flat `GovernanceRule` with `PathRule | TagRule | LinkRule` discriminated union keyed on `ruleType`.
+
+**Approved conditions:**
+- Update `GovernanceViolation` and `GovernanceResult` shape-dependent references
+- Exhaustive `switch` on `ruleType` in `governance.ts`
+- `tsc --noEmit` clean after merge
+- All existing tests pass with no regressions
+- `appliesTo: "agents" | "humans" | "all"` — breaking change approved (governance not yet enforced in production)
+
+#### Decision 2: Semantic Search Optionality Principle — CONFIRMED
+
+Semantic search MUST be entirely opt-in. `oxori init`, `oxori index`, `oxori query`, `oxori walk`, `oxori graph`, `oxori check` must work without embedding configuration, API key, or network access.
+
+**Constraint:** `src/semantic.ts` must use lazy loading. Never import at top of `src/index.ts` unconditionally.
+
+#### Decision 3: EmbeddingProvider — Dependency Injection
+
+`EmbeddingProvider` is an interface, always injected at call time. No global singleton pattern.
+
+```typescript
+interface EmbeddingProvider {
+  embed(text: string): Promise<number[]>;
+  readonly dimensions: number;
+  readonly model: string;
+}
+```
+
+#### Decision 4: Wave Structure for Phase 4
+
+```
+Wave 0 (parallel, issues #45-#50) → Wave 1 (types) → Wave 2 (impl+tests) → Wave 3 (integration) → Wave 4 (docs+release) → Gate
+```
+
+**Wave 0 gate:** Flynn approves #45 and #50; Yori numerically verifies #46 and #47.
+
+#### Decision 5: Ticket-First Rule — Reminder
+
+Every commit in Phase 4 MUST reference a GitHub issue (refs or closes). No exceptions.
+
+#### Coverage Thresholds for Phase 4 Gate
+
+| Module | Threshold |
+|--------|-----------|
+| semantic.ts | ≥ 90% |
+| vectors.ts | ≥ 90% |
+| parser.ts | ≥ 95% |
+| indexer.ts | ≥ 95% |
+| governance.ts | ≥ 95% |
+| Global | ≥ 80% |
+
+---
+
+### 2026-04-05: GovernanceRule Discriminated Union — Tron
+
+**Author:** Tron (Core Dev)  
+**Issue:** #45 (closed)  
+**Status:** Implemented
+
+Replaced flat `GovernanceRule` with `PathRule | TagRule | LinkRule` discriminated union.
+
+**Shape:**
+- `PathRule`: `ruleType: "path"`, `effect`, `pattern`, `appliesTo`
+- `TagRule`: `ruleType: "tag"`, `requiredTag`, `pattern`, `appliesTo` (new)
+- `LinkRule`: `ruleType: "link"`, `minLinks?`, `maxLinks?`, `pattern`, `appliesTo` (new)
+
+**Key notes:**
+- `description` optional on all (was required) — enables concise programmatic rules
+- `appliesTo: "agents" | "humans" | "all"` — added `"humans"` (breaking, approved)
+- Exhaustiveness guard: `switch` default branch has `never` type
+
+---
+
+### 2026-04-05: Semantic Search Architecture — Dumont
+
+**Author:** Dumont (DevRel)  
+**Issue:** #50 (closed)  
+**Status:** APPROVED
+
+Defined Phase 4 wave 0 type contract. Type contracts locked.
+
+**Six key design decisions:**
+1. Optional semantic search layer (opt-in via `oxori embed`)
+2. Binary vector storage (`.oxori/vectors/*.vec`, 4–5× compact vs JSON)
+3. `EmbeddingProvider` interface (pluggable, DI-based)
+4. Staleness detection via SHA-256 content hash (not mtime)
+5. Cosine similarity scoring [0, 1] (normalized vectors)
+6. Stub provider for testing (deterministic, offline)
+
+**Type contracts locked** in `docs/semantic-search.md`:
+```typescript
+interface EmbeddingProvider {
+  embed(text: string): Promise<Result<Embedding, OxoriError>>;
+  readonly dimensions: number;
+  readonly model: string;
+}
+
+function createOpenAIProvider(config: OpenAIProviderConfig): EmbeddingProvider;
+function createStubProvider(dimensions?: number): EmbeddingProvider;
+```
+
+**CLI locked:** `oxori embed` and `oxori search` with specified flags  
+**SDK locked:** `vault.search(query, options?: SearchOptions)` method  
+**Error codes locked:** 6 new codes for semantic layer
+
+Wave 1 implementation must match exactly — no breaking changes without new ADR.
+
+---
+
+### 2026-04-05: Coverage Baselines — Yori
+
+**Author:** Yori (Tester / QA)  
+**Issues:** #46 (indexer, closed), #47 (parser, closed)
+
+**Coverage improvements:**
+- **indexer.ts:** 47.15% → **96.02%** statements, 100% functions
+- **parser.ts:** 80.76% → **99.23%** statements, 100% functions
+
+Both files exceed ≥95% Phase 4 threshold. Remaining gaps (1.5% and 0.8%) are race conditions and unreachable code — documented as dead code.
+
+---
+
+**Archive last updated:** 2026-04-05T21:34:00Z

@@ -379,3 +379,11 @@ Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
 
 ---
 
+## 2026-04-05T21:34:00Z: Wave 0 Complete — Cross-Team Updates
+
+**Wave 0 deliverables all closed.** Orchestration logs written. Decisions merged.
+
+**From Dumont (#50):** Type contracts locked in `docs/semantic-search.md`. Wave 1 implementation must match exactly — no breaking changes without ADR. Flynn has approved architecture; Tron will finalize type signatures in Wave 1.
+
+**From Yori (#46, #47):** Coverage baselines set. indexer.ts 96.02%, parser.ts 99.23% — both exceed ≥95% threshold. Ready to write test skeletons in Wave 1 (after types locked). Stub provider pattern confirmed for deterministic offline testing.
+
