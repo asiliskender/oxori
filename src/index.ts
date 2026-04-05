@@ -108,4 +108,5 @@ export {
   readVecFile,
   VectorStore,
   searchVault,
+  embedVault,
 } from "./search.js";
