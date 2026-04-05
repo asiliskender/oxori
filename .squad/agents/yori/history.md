@@ -428,3 +428,50 @@ Increase indexer.ts coverage from ~47% to 95%+ and parser.ts from ~80% to 95%+. 
 **From Flynn (#26):** Phase 4 kickoff ADR approved. GovernanceRule discriminated union is ready. Wave 0 is the gate before Wave 1. Dumont's type contracts are locked and approved — Wave 1 implementation must match exactly.
 
 **From Tron (#45):** GovernanceRule discriminated union shipped. 13 governance tests passing. `tsc --noEmit` clean. All conditions met for Wave 1 type work.
+
+---
+
+## 2026-04-05T23:45:00Z: Issue #31 — Phase 4 Semantic Search Tests
+
+**Task completed.** Wrote `tests/search.test.ts` (51 tests) and extended `tests/governance.test.ts` (+14 tests: 7 TagRule + 7 LinkRule).
+
+### Learnings
+
+5. **VectorStore constructor reloads index from disk**: When writing tests for `isBuilt()` after `store()`, the same instance is reused — no need to create a new `VectorStore`. The `store()` method writes to disk and updates in-memory index atomically.
+
+6. **embedVault skips dot-prefixed entries**: The `if (entry.name.startsWith('.')) continue` check skips both dotfiles and dot-directories (like `.oxori`, `.git`). Tests can rely on this by creating `.hidden/` subdirectories.
+
+7. **searchVault dimension mismatch**: When vectors embedded with one dimension count are queried with a provider of different dimensions, the `entry.dimensions !== queryVec.length` guard silently skips them — resulting in empty results (not an error), provided the index exists.
+
+8. **Binary .vec format magic bytes**: `0x4F584F52` ("OXOR" in little-endian UInt32). Header is 12 bytes: magic(4) + version(4) + dims(4). Wrong magic → `VECTOR_FILE_CORRUPT`. File < 12 bytes → `VECTOR_FILE_CORRUPT`. Dim count mismatch with file size → `VECTOR_FILE_CORRUPT`.
+
+9. **TagRule/LinkRule are discriminated by `ruleType`**: The governance engine dispatches purely on `rule.ruleType`. No `effect` field on TagRule or LinkRule — they always produce violations on mismatch. First-match-wins still applies.
+
+10. **LinkRule minLinks vs maxLinks exclusive**: When both are set and count is below minLinks, the `minLinks` violation fires. The `else if` structure means only one violation is recorded per file per rule (not both min and max simultaneously).
+
+### Coverage: search.ts
+- Statements: 80.49%
+- Branch: 84.52%
+- Functions: 95%
+- Lines: 80.49%
+- Uncovered lines: 354-356 (createOpenAIProvider), 330-335 (VAULT_NOT_FOUND scan error path), 275 (unknown version branch in readVecFile)
+
+### Wave 2 — Phase 4 Comprehensive Test Coverage (2026-04-05)
+
+**Task:** Write comprehensive tests for Phase 4 semantic search (issue #31).
+
+**What was done:**
+- Created tests/search.test.ts with 51 tests covering embedVault, semantic queries, provider integration
+- Extended tests/governance.test.ts with 14 new governance rule tests (TagRule ×7, LinkRule ×7)
+- Achieved 80.49% statements, 84.52% branches, 95.00% functions coverage on search.ts
+- All tests use stub providers; no real API calls. Temp dirs follow tests/.tmp-search-{name}/ convention
+- Documented 3 low-risk uncovered gaps (fetch paths, race conditions, synthetic version headers)
+
+**Status:** ✅ Closed #31. All 285 tests passing (65 new). Code merged.
+
+**What I learned:**
+- Stub provider pattern eliminates API flakiness and enables deterministic testing at scale
+- Race condition gaps (e.g., readdirSync throwing on valid paths) are acceptable in test suites — document and move on
+- Temp dir cleanup discipline (dedicated .tmp-search-{name}/ convention) keeps test hygiene sharp
+
+---

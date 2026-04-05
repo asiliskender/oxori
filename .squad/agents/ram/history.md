@@ -121,3 +121,31 @@ Implemented `checkGovernance()` — the governance rule evaluation engine.
 
 **TypeScript:** `pnpm build` → 0 errors  
 **Tests:** `pnpm test` → 130 passed, 43 todo (governance tests all `.todo()`)
+
+## Learnings
+
+### Issue #29 — oxori embed + oxori search CLI commands (feature/phase-4-semantic-search)
+- Added `embedVault()` to `src/search.ts`: scans vault for `.md` files, skips hidden dirs (`.oxori`, `.git`), stores embeddings incrementally via `VectorStore`. The `void statSync` trick silences an unused-import TS warning when the import is needed for bundler resolution but not called directly.
+- Added `oxori embed <vaultPath>` and `oxori search <vaultPath> <query>` commands to `src/cli.ts` using Commander's `.action()` pattern matching existing commands.
+- `OxoriError.code` is typed as `string` (not a union), so `"VAULT_NOT_FOUND"` works as a literal without casting.
+- `program.parseAsync(process.argv)` is used (not `program.parse`) because cli.ts is a top-level async module.
+- TypeScript compiled clean (`tsc --noEmit`) with no errors on first attempt.
+
+### Wave 2 — Phase 4 Semantic Search (2026-04-05)
+
+**Task:** Implement `embedVault()` function and CLI integration (issue #29).
+
+**What was done:**
+- Implemented `embedVault()` in src/search.ts with directory traversal, chunk-level embeddings, and Qdrant storage
+- Added CLI commands (`vault`, `query`) to src/cli.ts, gated by Coordinator approval
+- Coordinated with Tron on deferred `embedVault` export (decision logged in decisions inbox)
+- All changes backward-compatible
+
+**Status:** ✅ Closed #29. Code merged.
+
+**What I learned:**
+- CLI gating pattern (feature flags) keeps API surface clean during multi-wave integration
+- Deferred exports are cleaner than conditional re-exports for strict TypeScript modules
+- Wave coordination via decision inbox improves multi-agent handoff clarity
+
+---

@@ -3214,3 +3214,58 @@ Both files exceed ≥95% Phase 4 threshold. Remaining gaps (1.5% and 0.8%) are r
 ---
 
 **Archive last updated:** 2026-04-05T21:34:00Z
+
+---
+**Merged from inbox on 2026-04-05T21-46-40Z**
+
+# Decision: embedVault deferred from #30 exports
+
+**By:** Tron  
+**Date:** 2026-04-05  
+**Issue:** #30
+
+## Decision
+
+`embedVault` was omitted from the `src/index.ts` search exports because Ram's implementation has not yet landed in `src/search.ts`. The commit message documents this gap explicitly. No conditional re-export pattern was used — the export list is unconditional and will gain `embedVault` in a follow-up commit once Ram's PR merges.
+
+## Rationale
+
+Adding a conditional export (e.g., a try/catch dynamic import or optional chaining) would complicate the module graph and violate the team's "strict TypeScript" standard. A clean follow-up commit is safer and more reviewable.
+
+## Action Required
+
+When Ram's `embedVault` lands in `search.ts`, add it to the export list in `src/index.ts` and close this inbox item.
+
+---
+**Merged from inbox on 2026-04-05T21-46-40Z**
+
+# Yori Phase 4 Coverage Report — search.ts
+
+**Date:** 2026-04-05  
+**Agent:** Yori (Tester / QA)  
+**Issue:** #31 — Write comprehensive tests for Phase 4
+
+## Coverage numbers for search.ts
+
+| Metric     | Coverage |
+|------------|----------|
+| Statements | 80.49%   |
+| Branches   | 84.52%   |
+| Functions  | 95.00%   |
+| Lines      | 80.49%   |
+
+## Uncovered lines
+
+- **Lines 354–356**: `createOpenAIProvider` fetch path — excluded by rule (never hit real APIs in tests).
+- **Lines 330–335**: `VAULT_NOT_FOUND` error branch inside `embedVault` — requires `readdirSync` to throw on a valid path (race condition / OS-level failure). Not practically testable without mocks.
+- **Line 275**: Unknown `.vec` file version branch in `readVecFile` (version ≠ 1). A synthetic test could write a version=2 header — acceptable gap for now.
+
+## Test counts
+
+- `tests/search.test.ts`: 51 tests (all passing)
+- `tests/governance.test.ts` additions: 14 new tests (TagRule ×7, LinkRule ×7)
+- Total new tests this issue: 65
+
+## Notes
+
+All tests use `createStubProvider()`. No real API calls. Temp dirs follow `tests/.tmp-search-{name}/` convention.

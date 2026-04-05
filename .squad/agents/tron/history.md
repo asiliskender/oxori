@@ -419,3 +419,29 @@ Added comprehensive Doxygen/TSDoc documentation to all 9 source files.
 - **OxoriErrorCode note**: No `OxoriErrorCode` union exists in types.ts — `OxoriError.code` is typed `string`. The task asked to add codes to an "existing OxoriErrorCode type"; since it doesn't exist, I introduced `EmbeddingErrorCode` as a new named union for the 5 Phase 4 error codes. This is additive, doesn't narrow the existing `code: string` field, and is exported for callers who want exhaustiveness checking.
 - **Pre-existing errors in search.ts**: 9 TypeScript errors remain in Ram's `src/search.ts` (array index access on `number[]` under `noUncheckedIndexedAccess`). These are NOT my types — my additions actually fixed the 7 prior import errors that existed before this commit.
 - **Section header style**: Used `// ── Phase 4: Semantic Search ─────` dashes to match task spec (deviates from existing `// === X ===` sections in the file — explicit spec overrides house style).
+
+### Issue #30 — SDK Search Exports (2026-04-05)
+
+- **embedVault absent**: Ram's `embedVault` function is not yet in `search.ts`. Exported only what exists; commit message documents the gap. Will add in a follow-up once Ram's PR lands.
+- **JSDoc optionality contract**: Added a prominent comment block in `index.ts` above the search exports explaining the three-step opt-in (provider → embedVault → searchVault) and the `VECTORS_NOT_BUILT` error shape. This is the canonical contract location for SDK consumers.
+- **Zero regressions**: All 197 tests pass. TypeScript compiles clean with `--noEmit`. No new types needed — types were all already exported in Wave 1.
+- **Export surface pattern**: Search exports follow the same flat re-export pattern as parser, indexer, query, graph, governance, watcher — no namespace object, just named re-exports from `./search.js`.
+
+### Wave 2 — Phase 4 SDK Search Integration (2026-04-05)
+
+**Task:** Implement SDK-level search integration in src/index.ts (issue #30).
+
+**What was done:**
+- Added `SemanticSearchClient`, `SearchOptions`, and search-related exports to src/index.ts
+- Documented deferred `embedVault` export (contingent on Ram's #29 landing)
+- Coordinated decision: no conditional re-exports. Clean follow-up commit planned.
+- Rejected try/catch dynamic imports and optional chaining for module purity
+
+**Status:** ✅ Closed #30. Code merged. `embedVault` export pending Ram's merge.
+
+**What I learned:**
+- Strict TypeScript enforcement (no any, pure module graph) prevents architectural debt
+- Deferred exports in decisions log provide clear handoff checkpoints between agents
+- Multi-agent coordination via written decisions is more reliable than implicit assumptions
+
+---
