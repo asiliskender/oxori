@@ -376,3 +376,45 @@ Fill all `it.todo()` stubs in `tests/watcher.test.ts` (10 stubs) and `tests/gove
 - governance.ts coverage: **100% statements / 100% branches / 100% functions**
 - watcher.ts coverage: **97.4% statements / 92.9% branches / 100% functions**
   - Remaining uncovered: line 28 (`type = "change"`) — macOS never emits `fs.watch` `"change"` eventType; Linux-only path
+
+---
+
+## 2026-04-XX — Issues #46 + #47: indexer.ts and parser.ts coverage uplift
+
+### Task
+Increase indexer.ts coverage from ~47% to 95%+ and parser.ts from ~80% to 95%+. Both had been deferred across multiple sprints.
+
+### Baseline (before this session)
+- indexer.ts: 47.15% statements / 80% branch / 57.14% functions
+- parser.ts:  80.76% statements / 74.07% branch / 100% functions
+
+### What was built
+
+**`tests/indexer.test.ts`** — added tests for all previously untested public APIs:
+- `createEmptyState` — verifies empty Maps, zero counters, fresh instance each call
+- `indexFile` — new file, re-index (stale removal), FILE_NOT_FOUND, PARSE_ERROR (bad YAML), non-ENOENT stat failure (ENOTDIR via `/etc/hosts/fake.md`), same-reference return
+- `removeFile` — removes file/tags/links, no-op when not present, preserves shared tags/links with 2-file scenarios, returns same reference
+- `indexVault` edge cases — empty vault (zero .md files), duplicate filenames in subdirs, YAML parse error skip + console.warn, VAULT_NOT_FOUND (ENOENT), VAULT_NOT_FOUND (non-ENOENT / ENOTDIR via `/etc/hosts` as vaultPath)
+
+**`tests/parser.test.ts`** — added unit tests for all helper functions + error paths:
+- `expandTagHierarchy` — 1-level, 2-level, 3-level tags
+- `extractWikilinks` — aliased form `[[file|display]]`, `.md` stripping, lowercase, multi-link, empty string, trimming spaces
+- `extractTags` — inline body tags, frontmatter array, single-string frontmatter, non-string array items silently skipped, `tags: null`, empty result, ancestor deduplication
+- `extractTypedRelations` — string values, array values, values without wikilinks (ignored), non-string array items, empty frontmatter
+- `parseFile` error paths — FILE_NOT_FOUND (ENOENT), filepath in error, PARSE_ERROR (ENOTDIR/non-ENOENT), PARSE_ERROR for malformed YAML (undefined alias `*undefined_anchor`)
+
+### Final coverage
+- indexer.ts: **96.02% statements / 95.74% branch / 100% functions** ✅
+- parser.ts:  **99.23% statements / 86.11% branch / 100% functions** ✅
+
+### Key learnings
+
+1. **Gray-matter YAML throw trigger**: Tab characters do NOT cause gray-matter 4.x to throw — it silently absorbs them. The reliable trigger is an undefined YAML alias reference: `foo: *undefined_anchor`. This causes js-yaml to throw `YAMLException: unidentified alias "undefined_anchor"`.
+
+2. **ENOTDIR for non-ENOENT paths**: Passing a regular file as a "directory" (e.g., `/etc/hosts`) to `readdir`, or a path inside a file (e.g., `/etc/hosts/fake.md`) to `stat` or `readFile`, triggers `ENOTDIR` — a real, non-ENOENT I/O error that exercises the "other error" branches without mocking.
+
+3. **Remaining unreachable lines**:
+   - `indexer.ts` lines 308-314: The stat-failure catch block inside the `indexVault` loop. Requires a file to exist in `readdir` output but become un-stat-able before `stat` is called — a race condition only testable with mocks. Documented as dead code in normal operation.
+   - `parser.ts` line 218: The `"Unknown YAML parse error"` fallback for when a thrown value has no `message` property. Gray-matter (backed by js-yaml) always throws `YAMLException` which is a proper `Error` subclass with `message`. Documented as dead code.
+
+4. **Temp dir naming**: Used `.tmp-indexer-{N}`, `.tmp-indexfile-{N}`, `.tmp-removefile-{N}` patterns with `beforeEach`/`afterEach` for reliable cleanup. Avoids `/tmp` per project constraints.
