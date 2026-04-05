@@ -31,10 +31,14 @@ import type {
 // ─── State Factories ─────────────────────────────────────────────────────────
 
 /**
+ * @brief Returns a fresh, empty `IndexState` with zeroed counters and empty maps.
+ *
  * Returns a fresh, empty `IndexState` with zeroed counters and empty maps.
  * Use this as the starting point before calling `indexVault` or `indexFile`.
  *
  * @returns A new empty `IndexState`.
+ *
+ * @since 0.1.0
  */
 export function createEmptyState(): IndexState {
   return {
@@ -144,6 +148,8 @@ function removeFileFromState(filepath: string, state: IndexState): void {
 // ─── Exported API ────────────────────────────────────────────────────────────
 
 /**
+ * @brief Incrementally indexes (or re-indexes) a single file into an existing `IndexState`.
+ *
  * Incrementally indexes (or re-indexes) a single file into an existing
  * `IndexState`. If the file was previously indexed, its stale entries are
  * removed before the fresh parse result is applied.
@@ -156,6 +162,8 @@ function removeFileFromState(filepath: string, state: IndexState): void {
  * @example
  * const result = await indexFile("./vault/auth.md", state);
  * if (!result.ok) console.error(result.error.message);
+ *
+ * @since 0.1.0
  */
 export async function indexFile(
   filePath: string,
@@ -199,6 +207,8 @@ export async function indexFile(
 }
 
 /**
+ * @brief Removes a single file from the index with no I/O.
+ *
  * Removes a single file from the index. Pure in terms of I/O (no disk access);
  * mutates and returns the provided `state` for chaining convenience.
  *
@@ -209,6 +219,8 @@ export async function indexFile(
  * @example
  * const updated = removeFile("./vault/old-note.md", state);
  * // updated === state (same reference, mutated in place)
+ *
+ * @since 0.1.0
  */
 export function removeFile(filePath: string, state: IndexState): IndexState {
   const filepath = resolve(filePath);
@@ -218,6 +230,8 @@ export function removeFile(filePath: string, state: IndexState): IndexState {
 }
 
 /**
+ * @brief Performs a full vault scan and returns a fully-populated `IndexState`.
+ *
  * Performs a full vault scan: walks `config.vaultPath` recursively, parses
  * every `.md` file not matched by `config.excludePatterns`, and returns a
  * fully-populated `IndexState`.
@@ -237,6 +251,8 @@ export function removeFile(filePath: string, state: IndexState): IndexState {
  *   return;
  * }
  * const { files, tags, links } = result.value;
+ *
+ * @since 0.1.0
  */
 export async function indexVault(
   config: VaultConfig

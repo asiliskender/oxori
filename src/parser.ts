@@ -23,7 +23,7 @@ const TAG_REGEX = /#+([a-zA-Z0-9/_-]+)/g;
 const WIKILINK_REGEX = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
 
 /**
- * Expands a single tag string into all ancestor levels.
+ * @brief Expands a single tag string into all ancestor levels.
  *
  * @example
  * expandTagHierarchy("project/auth/oauth")
@@ -31,6 +31,8 @@ const WIKILINK_REGEX = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g;
  *
  * @param tag - A normalized (lowercase, no `#`) tag string.
  * @returns An array of all ancestor and self levels.
+ *
+ * @since 0.1.0
  */
 export function expandTagHierarchy(tag: string): string[] {
   const segments = tag.split("/");
@@ -42,12 +44,15 @@ export function expandTagHierarchy(tag: string): string[] {
 }
 
 /**
- * Extracts all wikilink targets from a text string.
+ * @brief Extracts all wikilink targets from a text string.
+ *
  * Handles both plain `[[Target]]` and aliased `[[Target|alias]]` forms.
  * Returns lowercase, trimmed filename stems with no extension.
  *
  * @param text - Any string that may contain `[[...]]` patterns.
  * @returns An array of normalized wikilink targets.
+ *
+ * @since 0.1.0
  */
 export function extractWikilinks(text: string): string[] {
   const targets: string[] = [];
@@ -66,7 +71,7 @@ export function extractWikilinks(text: string): string[] {
 }
 
 /**
- * Extracts and expands all tags from the markdown body and frontmatter.
+ * @brief Extracts and expands all tags from the markdown body and frontmatter.
  *
  * Scans the body for inline `#tag` patterns and reads `frontmatter.tags`
  * (which may be a `string[]` or a single `string`). All tags are normalized
@@ -75,6 +80,8 @@ export function extractWikilinks(text: string): string[] {
  * @param body - Raw markdown body with frontmatter stripped.
  * @param frontmatter - Parsed frontmatter key-value map.
  * @returns A `Set` of all normalized, expanded tag strings.
+ *
+ * @since 0.1.0
  */
 export function extractTags(
   body: string,
@@ -117,7 +124,7 @@ export function extractTags(
 }
 
 /**
- * Extracts typed relations from frontmatter.
+ * @brief Extracts typed relations from frontmatter.
  *
  * Iterates all frontmatter keys. If a key's value is a string that contains
  * one or more `[[wikilink]]` patterns, the key is treated as a relation type
@@ -125,6 +132,8 @@ export function extractTags(
  *
  * @param frontmatter - Parsed frontmatter key-value map.
  * @returns A `Map` of frontmatter key → array of normalized wikilink targets.
+ *
+ * @since 0.1.0
  */
 export function extractTypedRelations(
   frontmatter: Record<string, unknown>
@@ -153,7 +162,7 @@ export function extractTypedRelations(
 }
 
 /**
- * Reads and parses a single markdown file from disk.
+ * @brief Reads and parses a single markdown file from disk.
  *
  * Extracts frontmatter, tags (inline + frontmatter array), wikilinks,
  * typed relations, and the raw stripped body. Always returns a `Result` —
@@ -171,6 +180,8 @@ export function extractTypedRelations(
  *   return;
  * }
  * const { tags, wikilinks } = result.value;
+ *
+ * @since 0.1.0
  */
 export async function parseFile(
   filePath: string
