@@ -483,3 +483,48 @@
 - Closes #32
 
 **Status:** ✅ Complete. Phase 4 release documentation ready for publication.
+
+---
+
+## Phase 4 Wave 3 — v0.4.0 Release Documentation (2026-04-05)
+
+**Issue:** #32  
+**Status:** ✅ COMPLETE — Gate Verified
+
+### What
+Finalized v0.4.0 release documentation across three files:
+1. RELEASE-NOTES.md (v0.4.0 section)
+2. docs/architecture.md (Phase 4 section at line 194+)
+3. README.md (semantic search usage section)
+
+### Deliverables
+
+**RELEASE-NOTES.md:**
+- New exports: EmbeddingProvider, VectorStore, embedVault, searchVault
+- New CLI: oxori embed, oxori search (with documented flags: --api-key, --model, --force, --similarity-threshold, --batch-size)
+- Breaking change: GovernanceRule is now PathRule | TagRule | LinkRule discriminated union
+- Migration step: Call embedVault() before searchVault() to build vectors
+
+**docs/architecture.md:**
+- Phase 4 section added (line 194+)
+- Semantic search layer documented
+- EmbeddingProvider interface explained
+- VectorStore binary format (OXOR magic, version, dimensions, float32 LE)
+- Discriminated union governance pattern explained
+
+**README.md:**
+- Semantic search usage section
+- Code example: embedVault() → searchVault() workflow
+- Link to detailed docs/semantic-search.md
+- Emphasis on optionality: core Oxori unchanged, embeddings optional
+
+### Standards Applied
+- Release format consistent with Phase 1 & 3 patterns
+- Architecture section mirrors existing style (same depth, examples)
+- README balances brevity with completeness — reinforces optionality
+
+### Gate Verdict
+✅ #32 CLOSED — All Phase 4 documentation requirements satisfied
+
+### Lesson
+Documentation-first delivery ensures consistency across release notes, architecture, and user-facing examples. Writing these in parallel (not after code freeze) caught inconsistencies early.

@@ -212,3 +212,41 @@
 
 **Key Insight:** Transitive dependencies from plugin installations must be committed to pnpm-lock.yaml even if they don't appear in the direct dependency tree. This is why `micromatch` (added by semantic-release plugins) caused build failures until explicitly added to dependencies — esbuild's bundler demands explicit production imports be resolvable.
 
+
+---
+
+## Phase 4 Wave 3 — Semantic-Release & Clean Clone Validation (2026-04-05)
+
+**Issues:** #48, #49  
+**Status:** ✅ COMPLETE — Gate Verified
+
+### What
+Executed final Phase 4 gate verification:
+1. Semantic-release dry-run validation (#48)
+2. Clean clone verification (#49)
+
+### Discovery
+Found 5 missing semantic-release plugins (@semantic-release/changelog, git, github, npm, release-notes-generator) and missing micromatch dependency. Package.json declared plugins but devDependencies was incomplete.
+
+### Fix Applied
+- Installed all 5 missing plugins: `pnpm add -D @semantic-release/{changelog,git,github,npm,release-notes-generator}`
+- Added micromatch: `pnpm add micromatch`
+- Regenerated pnpm-lock.yaml
+
+### Verification Results
+**Dry-run (Post-Fix):**
+- ✅ All 7 plugins loaded successfully
+- ✅ Config validation passed
+- ✅ Expected behavior on feature branch (no publish)
+
+**Clean Clone:**
+- ✅ Fresh clone + checkout: successful
+- ✅ pnpm install (1.7s)
+- ✅ pnpm build (4 builds successful)
+- ✅ pnpm test (262 passed, 23 todo, 4.66s)
+
+### Gate Verdict
+✅ #48 and #49 CLOSED — Release pipeline ready for v0.4.0
+
+### Lesson
+Plugin installation checks must happen at phase kickoff, not at gate. Create a checklist item: verify all declared semantic-release plugins are in devDependencies before implementation starts.
