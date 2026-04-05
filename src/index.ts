@@ -86,3 +86,26 @@ export { checkGovernance } from "./governance.js";
 
 // Watcher
 export { watch } from "./watcher.js";
+
+/**
+ * Semantic Search (Phase 4 — optional)
+ *
+ * Core Oxori (index, query, walk, governance) works without any setup.
+ * Semantic search requires:
+ *   1. An embedding provider (createOpenAIProvider or createStubProvider)
+ *   2. Running embedVault() or `oxori embed` to build .oxori/vectors/
+ *   3. Calling searchVault() to query by semantic similarity
+ *
+ * If vectors haven't been built, searchVault() returns:
+ *   err({ code: "VECTORS_NOT_BUILT", action: "Run 'oxori embed' first." })
+ */
+// Search (Phase 4)
+export {
+  createOpenAIProvider,
+  createStubProvider,
+  cosineSimilarity,
+  writeVecFile,
+  readVecFile,
+  VectorStore,
+  searchVault,
+} from "./search.js";
