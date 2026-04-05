@@ -8,7 +8,7 @@ Make your markdown vault queryable, traversable, and semantically searchable —
 
 Your markdown files stay readable, editable, yours. Oxori makes them queryable. Tags and links become a graph you can walk. Frontmatter becomes indexed metadata you can filter. Content becomes semantically searchable via embeddings. Humans write the rules, agents record the decisions.
 
-## Features (v0.3.0 — Phase 1, 2, & 3)
+## Features
 
 - ✅ **Parse markdown files** — extract frontmatter (YAML), tags, wikilinks, typed relations
 - ✅ **Build in-memory index** — scan a vault and create `.oxori/index/` markdown files
@@ -18,8 +18,6 @@ Your markdown files stay readable, editable, yours. Oxori makes them queryable. 
 - ✅ **CLI commands** — `oxori query`, `oxori walk`, `oxori graph`
 - ✅ **File watching** — real-time vault change events (add/change/unlink)
 - ✅ **Governance** — policy rules via glob patterns with deny/allow effects
-- 🔜 **Semantic search** (Phase 4) — find files by meaning, not keywords, with cached embeddings
-- 🔜 **MCP server** (Phase 5) — AI agents (Claude, Cursor) can use Oxori as a tool
 
 ## Installation
 
@@ -199,8 +197,7 @@ my-vault/
 │   │   ├── files.md
 │   │   ├── tags.md
 │   │   └── links.md
-│   ├── vectors/                   # Embeddings cache (Phase 4)
-│   └── governance.md              # Rules file (Phase 3)
+│   └── governance.md              # Rules file
 ├── decisions/
 │   └── api-choice.md
 ├── tasks/
@@ -302,7 +299,9 @@ See [docs/architecture.md](docs/architecture.md) for the complete system design,
 
 Oxori's parser reads markdown files and extracts frontmatter, tags, and wikilinks. The indexer builds three in-memory data structures (files, tags, links) and persists them as markdown files under `.oxori/index/`. These index files are human-readable, Git-friendly, and regenerable at any time.
 
-Phase 2 adds query engine, graph traversal, and CLI commands for searching and exploring your vault. Phase 3 adds a file watcher for real-time index updates and a governance layer to enforce policy rules. Phases 4-5 will add semantic search and an MCP server — but Phase 1-3 gives you a solid foundation: parse any vault, understand its structure, query it effectively, watch for changes, and enforce governance rules.
+The query engine filters files by tag, type, path, and frontmatter. Graph traversal walks the wikilink graph and typed relationships. File watching tracks vault changes in real-time. Governance rules control agent write access.
+
+See [docs/architecture.md](docs/architecture.md) for complete system design.
 
 ## Contributing
 

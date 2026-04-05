@@ -1,6 +1,6 @@
 # Contributing to Oxori
 
-Oxori is built by a team of specialists working in phases. Each phase is a complete, shippable npm release with tests, docs, and architectural review before merge.
+Oxori is an open-source project developed in short-lived feature branches integrated back to main frequently. Each contribution is tested, documented, and reviewed before merge.
 
 ## Getting Started
 
@@ -218,17 +218,18 @@ describe('parseFile', () => {
 
 ## Creating a Pull Request
 
-1. **Create a branch** — use kebab-case: `feat/semantic-search`, `fix/parser-edge-case`
-2. **Link to an issue** — every PR should reference a GitHub issue (e.g. `Closes #42`)
-3. **Run checks locally** — before pushing:
+1. **Create a branch** — use kebab-case from `main`: `feature/semantic-search`, `fix/parser-edge-case`
+2. **Keep it short-lived** — branch should exist for days, not weeks. Integrate to main frequently.
+3. **Link to an issue** — every PR should reference a GitHub issue (e.g. `Closes #42`)
+4. **Run checks locally** — before pushing:
    ```bash
    pnpm lint
    pnpm typecheck
    pnpm test -- --coverage
    ```
-4. **Write a clear PR description** — include context, what changed, and why
-5. **Keep commits atomic** — one logical change per commit
-6. **Wait for review** — Flynn (architecture) reviews all Phase PRs before merge
+5. **Write a clear PR description** — include context, what changed, and why
+6. **Keep commits atomic** — one logical change per commit
+7. **Wait for review** — maintainers review all PRs before merge
 
 ### PR Checklist
 
@@ -240,37 +241,28 @@ describe('parseFile', () => {
 - [ ] No console.logs or debugging code
 - [ ] Linked to a GitHub issue
 
-## Phases and Releases
+## Releases and Versioning
 
-Oxori is built in 5 phases, each a separate npm release:
+Oxori uses **Semantic Versioning** (major.minor.patch) and **Conventional Commits** for automatic version bumping and changelog generation.
 
-| Phase | Scope | Release | Status |
-|-------|-------|---------|--------|
-| 1 | Parser + Markdown Index | v0.1.0 | Current |
-| 2 | Query + Graph Walk | v0.2.0 | Planned |
-| 3 | Write API + Governance | v0.3.0 | Planned |
-| 4 | Semantic Search | v0.4.0 | Planned |
-| 5 | MCP + Watcher | v0.5.0 | Planned |
+### Version Bumping
 
-### Phase Process
+Commit types automatically trigger version bumps:
+- `feat:` — minor version bump (e.g., v0.2.0 → v0.3.0)
+- `fix:` — patch version bump (e.g., v0.2.1 → v0.2.2)
+- Breaking changes (with `!` or `BREAKING CHANGE:` footer) — major version bump
+- `docs:`, `test:`, `refactor:` — no version bump
 
-1. **Create issue** for the phase (e.g. "Phase 2: Query and Graph Traversal")
-2. **Break into tasks** — open sub-issues for each module
-3. **Developers create PRs** — link to the phase issue
-4. **Flynn reviews** — architecture + design approval
-5. **Merge to main** — all tests pass, 80%+ coverage
-6. **Tag release** — create Git tag `v0.X.0`
-7. **Publish npm** — automated via GitHub Actions
-8. **Dumont writes release notes** — features, breaking changes, migration steps
+### Release Process
 
-### Phase Gates
-
-Each phase is gated by:
-- All tests passing (80%+ coverage, 95%+ for parser/indexer/governance)
-- All issues closed and PRs merged
-- Architecture reviewed and approved by Flynn
-- Documentation complete (JSDoc, architecture.md updated)
-- Release notes written
+When PRs are merged to `main`:
+1. CI runs tests, lint, and coverage checks
+2. semantic-release reads commit history
+3. Version bump is determined automatically
+4. Git tag is created (e.g., `v0.3.1`)
+5. Changelog is generated
+6. Package is published to npm
+7. Release notes are created on GitHub
 
 ## Documentation
 
@@ -329,7 +321,7 @@ Every push and PR triggers:
 
 Coverage must stay at 80%+ or CI fails.
 
-### Release Pipeline
+### Automatic Releases
 
 Merges to `main` trigger:
 
