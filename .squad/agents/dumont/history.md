@@ -434,3 +434,52 @@
 **From Flynn (#26):** Phase 4 kickoff ADR approved. Semantic search architecture and type contracts approved. All Wave 0 issues closed. No Wave 1 work starts until this point.
 
 **From Tron (#45):** GovernanceRule discriminated union shipped. 13 governance tests passing. DI-based pattern confirmed for EmbeddingProvider.
+
+---
+
+## 2026-04-XX: Phase 4 Release Notes and Documentation (Issue #32)
+
+**Task:** Write Phase 4 release notes (v0.4.0), update architecture doc with Phase 4 Additions, update README with semantic search quick start.
+
+**Deliverables:**
+
+1. **RELEASE-NOTES.md (v0.4.0 section, 96 lines)**
+   - Semantic Search (Optional) — Providers, vector storage, API, CLI commands
+   - Governance Rules Extended — Discriminated union (PathRule, TagRule, LinkRule)
+   - Coverage Improvements — indexer 47%→96%, parser 80%→99%
+   - New Exports — 9 types + 8 functions
+   - Breaking Changes — GovernanceRule requires `ruleType` discriminator with migration example
+   - Kept v0.3.0 section below for history
+
+2. **docs/architecture.md (Phase 4 Additions section, 112 lines)**
+   - Semantic Search Module — Provider abstraction, vector storage format (.vec binary), incremental embedding, API
+   - CLI Commands — oxori embed and oxori search with all flags documented
+   - GovernanceRule Discriminated Union — PathRule, TagRule, LinkRule with TypeScript signatures and dispatch logic
+   - Follows existing architecture style (What it does, Key decisions, API)
+
+3. **README.md (Semantic Search section, 29 lines)**
+   - Semantic Search SDK code example (createOpenAIProvider, embedVault, searchVault)
+   - Key points: optional, stored in .oxori/vectors/, stub provider for testing
+   - Link to docs/semantic-search.md for full API reference
+   - Updated Features list to include semantic search (9th item)
+
+**Standards Applied:**
+
+- Release notes: Per-phase format (detailed features, breaking changes, migration steps, new exports)
+- Architecture: Mirrored Phase 3 additions section pattern — consistent style and depth
+- README: Balanced — high-level code example, reinforces optionality, links to detailed docs
+- All changes scoped to documentation only — no code changes
+
+**Key Content Decisions:**
+
+- Emphasized semantic search optionality in all three docs — core Oxori unchanged
+- Breaking change clearly explained with before/after code example
+- Binary format documented (magic, version, dims, float32 LE) — human-inspectable with xxd
+- Governance discriminated union dispatch pattern explained — exhaustive handling
+- CLI flag names and defaults documented (--api-key, OXORI_API_KEY env var, --model, --force, etc.)
+
+**Commit:** `8cbb854` — "docs(phase4): v0.4.0 release notes, architecture update, README semantic search"
+- Branch: feature/phase-4-semantic-search
+- Closes #32
+
+**Status:** ✅ Complete. Phase 4 release documentation ready for publication.
