@@ -23,11 +23,11 @@ export type {
   Result,
   WatchEvent,
   GovernanceRule,
-  // Phase 3 — Watcher and Governance
+  // Sprint 3 — Watcher and Governance
   VaultWatcher,
   GovernanceViolation,
   GovernanceResult,
-  // Phase 2 — Query Engine
+  // Sprint 2 — Query Engine
   Token,
   TokenKind,
   QueryAST,
@@ -37,7 +37,7 @@ export type {
   GroupNode,
   QueryResult,
   FilterField,
-  // Phase 2 — Graph Traversal
+  // Sprint 2 — Graph Traversal
   Edge,
   WalkOptions,
   WalkResult,

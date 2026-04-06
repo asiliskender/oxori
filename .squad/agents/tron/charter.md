@@ -15,7 +15,7 @@
 - src/indexer.ts — scan vault, build in-memory Maps/Sets cache, write .oxori/index/*.md
 - src/query.ts — tokenizer, AST parser, evaluator against in-memory cache
 - src/types.ts — shared type definitions (ParsedFile, FileEntry, TagEntry, LinkEntry, etc.)
-- Phase 1 and Phase 2 core implementations
+- Sprint 1 and Sprint 2 core implementations
 
 ## How I Work
 
@@ -29,7 +29,7 @@
 
 ## Boundaries
 
-**I handle:** parser.ts, indexer.ts, query.ts, types.ts. All Phase 1 and Phase 2 core logic.
+**I handle:** parser.ts, indexer.ts, query.ts, types.ts. All Sprint 1 and Sprint 2 core logic.
 
 **I don't handle:** graph traversal (Ram), write operations (Ram), file watching (Ram), MCP server (Ram/Quorra), CLI wiring (Clu helps), tests (Yori writes them with my guidance).
 

@@ -45,7 +45,7 @@ realistic variety to indexer scanning tests.
 ## `linked-vault/`
 
 **Purpose:** Graph traversal tests — cycle detection, hub nodes, leaf nodes, multiple
-typed relation targets. Used by `buildIndex()` and (Phase 2) the graph walker.
+typed relation targets. Used by `buildIndex()` and (Sprint 2) the graph walker.
 
 ### Graph structure
 
@@ -82,7 +82,7 @@ node-g ──→ node-d
 
 ## `governance-vault/`
 
-**Purpose:** Phase 3 governance rule parsing and enforcement. Kept minimal — it is
+**Purpose:** Sprint 3 governance rule parsing and enforcement. Kept minimal — it is
 the governance layer's fixture, not a general-purpose vault.
 
 ### Structure
@@ -106,7 +106,7 @@ governance-vault/
 
 ### Key test scenarios covered
 
-- Governance rule parsing from markdown (Phase 3)
+- Governance rule parsing from markdown (Sprint 3)
 - `secrets/**` pattern denies agent writes
 - Files outside protected paths remain accessible
 - Rule evaluation order (first match wins — deny before allow)

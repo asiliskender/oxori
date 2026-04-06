@@ -15,9 +15,9 @@
 - src/search.ts — vector embeddings interface, binary vector storage, cosine similarity
 - src/watcher.ts — chokidar-based filesystem monitoring for incremental index updates
 - src/writer.ts — file creation and append with convention-compliant frontmatter
-- src/governance.ts — governance rule parser and enforcer (Phase 3)
+- src/governance.ts — governance rule parser and enforcer (Sprint 3)
 - src/mcp.ts — MCP server (Quorra designs the interaction patterns, Ram implements)
-- Phase 3 (Write API + Governance), Phase 4 (Semantic Search), Phase 5 (MCP + Watcher)
+- Sprint 3 (Write API + Governance), Sprint 4 (Semantic Search), Sprint 5 (MCP + Watcher)
 
 ## How I Work
 

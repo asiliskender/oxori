@@ -273,7 +273,7 @@ describe('oxori graph', () => {
 })
 
 // -----------------------------------------------------------------------------
-// oxori watch (Phase 3)
+// oxori watch (Sprint 3)
 // -----------------------------------------------------------------------------
 describe('oxori watch', () => {
   it.todo('starts watching a vault directory for changes')
@@ -285,7 +285,7 @@ describe('oxori watch', () => {
 })
 
 // -----------------------------------------------------------------------------
-// oxori check (Phase 3)
+// oxori check (Sprint 3)
 // -----------------------------------------------------------------------------
 describe('oxori check', () => {
   it.todo('runs governance checks on all files in vault')

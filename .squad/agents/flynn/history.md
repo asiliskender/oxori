@@ -30,18 +30,18 @@
 - Strict TypeScript — no any, use unknown and narrow
 - Functions over classes (except Vault and MCP server)
 
-**Build phases:**
-- Phase 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
-- Phase 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
-- Phase 3: Write API + Governance (writer, governance, SDK public API)
-- Phase 4: Semantic Search (embeddings, vector storage, cosine similarity)
-- Phase 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
+**Build sprints:**
+- Sprint 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
+- Sprint 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
+- Sprint 3: Write API + Governance (writer, governance, SDK public API)
+- Sprint 4: Semantic Search (embeddings, vector storage, cosine similarity)
+- Sprint 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
 
 **Conventions:**
 - Conventional commits (feat/fix/docs/test/refactor)
 - Atomic commits — one logical change per commit
-- No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
-- Each phase = a separate npm release with detailed release notes
+- No sprint merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
+- Each sprint = a separate npm release with detailed release notes
 
 ## Learnings
 
@@ -57,9 +57,9 @@ Reviewed `src/types.ts` submitted by Tron.
 
 **Revision assigned to Ram** (per protocol: different agent than original author Tron).
 
-### 2026-04-03: Phase 1 Gate Review — APPROVED
+### 2026-04-03: Sprint 1 Gate Review — APPROVED
 
-Ran the full Phase 1 verification suite. All 14 acceptance criteria passed:
+Ran the full Sprint 1 verification suite. All 14 acceptance criteria passed:
 - `tsc --noEmit`: zero errors
 - `eslint src/ tests/`: zero errors
 - `npx vitest run`: 31 passed, 22 todo, 11 CLI tests skipped (expected — CLI tests are integration-level)
@@ -71,23 +71,23 @@ Ran the full Phase 1 verification suite. All 14 acceptance criteria passed:
 
 **Lesson:** Vitest's "todo" and "skipped" counts are not failures — they're intentional placeholders for future work. The gate criterion is "all non-todo tests pass", which is satisfied. Distinguish between `todo` (intentional, future), `skip` (intentional, integration/e2e), and actual failures when assessing test results.
 
-**Gate decision:** `.squad/decisions/inbox/flynn-phase1-gate.md` — APPROVED. Phase 1 status updated to ✅ Complete in team.md. Ready for Phase 2.
+**Gate decision:** `.squad/decisions/inbox/flynn-phase1-gate.md` — APPROVED. Sprint 1 status updated to ✅ Complete in team.md. Ready for Sprint 2.
 
-### 2026-04-03: Phase 2 Gate Checklist Written
+### 2026-04-03: Sprint 2 Gate Checklist Written
 
 **Delivered:** `.squad/decisions/inbox/flynn-phase2-gate-checklist.md`
 
-Wrote the complete Phase 2 gate checklist at kickoff (addressing Action Item A6 from Phase 1 retro: "write gate checklist at kickoff, not at review time"). 
+Wrote the complete Sprint 2 gate checklist at kickoff (addressing Action Item A6 from Sprint 1 retro: "write gate checklist at kickoff, not at review time"). 
 
-Checklist is based on Phase 1's 14 criteria (TypeScript, ESLint, tests, build, shebang, no-any, JSDoc, README) plus 17 Phase 2-specific criteria covering: Query types and module exports, Graph types and walk API, public API re-exports, tokenizer/parser/evaluator implementation details, CLI command functionality, documentation (query-language.md, architecture.md updates), Phase 1 CLI tests now filled in, and performance thresholds (query < 100ms, walk < 200ms on linked-vault).
+Checklist is based on Sprint 1's 14 criteria (TypeScript, ESLint, tests, build, shebang, no-any, JSDoc, README) plus 17 Sprint 2-specific criteria covering: Query types and module exports, Graph types and walk API, public API re-exports, tokenizer/parser/evaluator implementation details, CLI command functionality, documentation (query-language.md, architecture.md updates), Sprint 1 CLI tests now filled in, and performance thresholds (query < 100ms, walk < 200ms on linked-vault).
 
-Checklist is binary-verifiable (run commands, check output, review code). Ready for Phase 2 team to execute against.
+Checklist is binary-verifiable (run commands, check output, review code). Ready for Sprint 2 team to execute against.
 
 ---
 
-### 2026-04-03: Phase 1 Retrospective facilitated
+### 2026-04-03: Sprint 1 Retrospective facilitated
 
-**Facilitated** the Phase 1 retrospective for all contributors (Tron, Yori, Clu, Dumont, Castor).
+**Facilitated** the Sprint 1 retrospective for all contributors (Tron, Yori, Clu, Dumont, Castor).
 
 **Key findings documented in `.squad/decisions/inbox/flynn-phase1-retro.md`:**
 
@@ -101,19 +101,19 @@ Checklist is binary-verifiable (run commands, check output, review code). Ready 
 5. All 11 CLI tests remain `it.todo()` — CLI is shipped but untested by automated tests.
 6. `src/index.ts` was a late addition, not planned in early backlog issues.
 
-**9 action items assigned** for Phase 2 — highest priority: lock index.ts as first deliverable (A1), Yori writes skeletons only after contracts are merged (A2), fill in CLI todos (A3).
+**9 action items assigned** for Sprint 2 — highest priority: lock index.ts as first deliverable (A1), Yori writes skeletons only after contracts are merged (A2), fill in CLI todos (A3).
 
-**Phase 2 readiness:** ✅ Cleared. Primary concern for Phase 2: query AST/tokenizer types must be reviewed and locked before Yori writes test skeletons — do not repeat the Phase 1 API mismatch pattern.
+**Sprint 2 readiness:** ✅ Cleared. Primary concern for Sprint 2: query AST/tokenizer types must be reviewed and locked before Yori writes test skeletons — do not repeat the Sprint 1 API mismatch pattern.
 
-### 2025-07-13: Phase 2 Type Contracts Review — APPROVED
+### 2025-07-13: Sprint 2 Type Contracts Review — APPROVED
 
-Reviewed `src/types.ts` Phase 2 sections (lines 381–682) submitted by Tron, covering the Query Engine and Graph Traversal type contracts.
+Reviewed `src/types.ts` Sprint 2 sections (lines 381–682) submitted by Tron, covering the Query Engine and Graph Traversal type contracts.
 
 **All 5 verification criteria passed:**
 - Zero `any` types — confirmed by scan
 - All exported types use `type` keyword; `FILTER_FIELDS` correctly uses `const` for runtime availability
 - Named exports only, no defaults
-- Every Phase 2 type has `@description`, `@remarks`, and `@example` JSDoc — field-level inline docs present on non-obvious fields
+- Every Sprint 2 type has `@description`, `@remarks`, and `@example` JSDoc — field-level inline docs present on non-obvious fields
 - Types are complete for `query.ts` and `graph.ts` needs
 
 **Answered Tron's 4 open questions:**
@@ -123,15 +123,15 @@ Reviewed `src/types.ts` Phase 2 sections (lines 381–682) submitted by Tron, co
 4. **`WalkResult.edges` as `ReadonlySet<Edge>`:** Confirmed correct — deduplication semantics are right for edges; `visitOrder` already covers ordered node traversal.
 
 **Actions taken:**
-- Updated `src/index.ts` to re-export all 15 Phase 2 types plus `FILTER_FIELDS`
+- Updated `src/index.ts` to re-export all 15 Sprint 2 types plus `FILTER_FIELDS`
 - Ran `npx tsc --noEmit` — zero errors
 - Wrote verdict to `.squad/decisions/inbox/flynn-phase2-types-review.md`
 
 **Cleared:** Yori may begin writing test skeletons against these locked contracts immediately.
 
-### 2026-04-03: Phase 2 Gate Review — ❌ BLOCKED
+### 2026-04-03: Sprint 2 Gate Review — ❌ BLOCKED
 
-Ran full Phase 2 gate verification against all 17 criteria.
+Ran full Sprint 2 gate verification against all 17 criteria.
 
 **Commands run:**
 - `npx tsc --noEmit` — exit 0 ✅
@@ -142,10 +142,10 @@ Ran full Phase 2 gate verification against all 17 criteria.
 
 **12 PASS / 5 FAIL:**
 
-PASS: TypeScript, ESLint, Tests (87/87 non-todo), Build, Shebang, No-any, JSDoc, Type exports (9), Query module, Graph module, Phase 1 CLI tests filled in, Performance thresholds.
+PASS: TypeScript, ESLint, Tests (87/87 non-todo), Build, Shebang, No-any, JSDoc, Type exports (9), Query module, Graph module, Sprint 1 CLI tests filled in, Performance thresholds.
 
 FAIL:
-1. **Criterion 8** — README still shows Phase 2 as "��" future features. No oxori query/walk/graph command examples.
+1. **Criterion 8** — README still shows Sprint 2 as "��" future features. No oxori query/walk/graph command examples.
 2. **Criterion 10** — src/index.ts missing `tokenize`, `parse`, `evaluate` (from query.ts) and `walk` (from graph.ts) function exports. Types are all present; the functions themselves are not re-exported. Confirmed via runtime dist check.
 3. **Criterion 13** — Coverage: 68.52% overall (need 80%); query.ts 64.63% (need 90%); graph.ts 87.84% (need 90%). evaluate() body largely uncovered (lines 466–624). indexer.ts at 47.15% drags overall average.
 4. **Criterion 14** — cli.test.ts has zero tests for oxori query, oxori walk, oxori graph. Only init and index are tested.
@@ -154,18 +154,18 @@ FAIL:
 **Fix assignments issued:**
 - Tron: add function re-exports to src/index.ts (#10)
 - Yori: evaluate() tests, graph.ts edge case coverage, CLI integration tests for query/walk/graph (#13, #14)
-- Dumont: README Phase 2 section with command examples (#8, #15)
+- Dumont: README Sprint 2 section with command examples (#8, #15)
 
 **Gate verdict written to:** `.squad/decisions.md`
 
-**Lesson:** The index.ts was correctly updated for type re-exports (Phase 2 types all present) but the implementors forgot to add function re-exports (`tokenize`, `parse`, `evaluate`, `walk`). Future checklist: always verify the runtime export list, not just the TypeScript source, to catch type-vs-value export mismatches.
+**Lesson:** The index.ts was correctly updated for type re-exports (Sprint 2 types all present) but the implementors forgot to add function re-exports (`tokenize`, `parse`, `evaluate`, `walk`). Future checklist: always verify the runtime export list, not just the TypeScript source, to catch type-vs-value export mismatches.
 
-### 2026-04-03: Phase 2 Gate Re-check — ❌ BLOCKED (16/17)
+### 2026-04-03: Sprint 2 Gate Re-check — ❌ BLOCKED (16/17)
 
-Re-ran full Phase 2 gate verification following 5 claimed fixes.
+Re-ran full Sprint 2 gate verification following 5 claimed fixes.
 
 **Progress confirmed:**
-- Criterion 8 (README Phase 2 features): ✅ Fixed — oxori query/walk/graph command examples present
+- Criterion 8 (README Sprint 2 features): ✅ Fixed — oxori query/walk/graph command examples present
 - Criterion 10 (function re-exports): ✅ Fixed — tokenize, parse, evaluate, walk confirmed in dist/index.js at runtime; 16 total exports
 - Criterion 14 (CLI integration tests): ✅ Fixed — describe blocks for oxori query, oxori walk, oxori graph in cli.test.ts; 120 tests total (was 87); 0 it.todo (was 11)
 - Criterion 15 (README, docs): ✅ Fixed — npm badge, semantic-release exec plugin configured, docs complete
@@ -178,9 +178,9 @@ Re-ran full Phase 2 gate verification following 5 claimed fixes.
 
 **Lesson:** When verifying "all X issues are fixed", always run the exact numeric checks rather than trusting the summary. The user's fix summary said "Coverage: overall 80.04%, query.ts 93.29%" — which was accurate, but omitted graph.ts. That silence was the signal.
 
-### 2026-04-03: Phase 2 Gate — ✅ APPROVED (17/17)
+### 2026-04-03: Sprint 2 Gate — ✅ APPROVED (17/17)
 
-Re-ran final Phase 2 gate verification following graph.ts coverage fix.
+Re-ran final Sprint 2 gate verification following graph.ts coverage fix.
 
 **Command run:**
 ```
@@ -198,29 +198,29 @@ npx vitest run --coverage 2>&1 | grep -E "graph|Tests |ERROR|lines|statements"
 Previous blockers (from re-check): graph.ts at 87.84% branch coverage — now 94.73%. Threshold ≥ 90% satisfied.
 
 **Gate verdict: ✅ APPROVED — v0.2.0**
-Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
+Stamp written to `.squad/decisions.md`. `now.md` updated to Sprint 2 complete.
 
-**Next:** Conventional commit + Phase 2 retro + push + GitVersion tag v0.2.0.
+**Next:** Conventional commit + Sprint 2 retro + push + GitVersion tag v0.2.0.
 
 **Lesson:** Coverage fixes should be verified numerically (not by description) before re-submitting for gate review. Yori delivered exactly what was needed this time — no ambiguity in the output.
 
-### 2026-04-03: Phase 2 Retrospective facilitated
+### 2026-04-03: Sprint 2 Retrospective facilitated
 
-**Facilitated** the Phase 2 retrospective for all contributors (Tron, Ram, Yori, Clu, Dumont, Castor).
+**Facilitated** the Sprint 2 retrospective for all contributors (Tron, Ram, Yori, Clu, Dumont, Castor).
 
 **Gate summary:** ✅ APPROVED — v0.2.0 (after 3 gate runs: initial block with 5 failures, second block with 1 remaining failure, final approval)
 
-**Key findings documented in `.squad/decisions.md` under `## Phase 2 Retrospective`:**
+**Key findings documented in `.squad/decisions.md` under `## Sprint 2 Retrospective`:**
 
 **Wins (8 items):**
-1. Types-first discipline held — Phase 1 retro A2 (test skeletons after locked contracts) was respected, no API mismatch this phase
+1. Types-first discipline held — Sprint 1 retro A2 (test skeletons after locked contracts) was respected, no API mismatch this sprint
 2. Wave parallelism delivered: Tron + Ram in parallel across both waves, Yori filling tests concurrently
 3. Ram's first contribution (graph.ts BFS) was solid — all WalkDirection/WalkVia modes, cycle prevention, maxNodes truncation, fail-soft for unknown start paths
-4. Phase 1 CLI debt (11 it.todo()) cleared at Phase 2 kickoff before any new CLI work (A3 delivered)
+4. Sprint 1 CLI debt (11 it.todo()) cleared at Sprint 2 kickoff before any new CLI work (A3 delivered)
 5. Dumont's query-language.md is 9200+ words of production-grade reference before gate review
 6. Clu proactively fixed CI/release pipeline (pnpm conflict, Node 24, release.yml, semantic-release exec plugin)
 7. evaluate() query engine handles all structural cases correctly — FilterNode (6 fields × 3 operators), OperatorNode, GroupNode, null root, empty state
-8. Conventional commit discipline held throughout the phase
+8. Conventional commit discipline held throughout the sprint
 
 **Friction points (5 items):**
 1. Gate blocked twice — 5 failures on first run (README, function exports, query.ts coverage, graph.ts coverage, CLI tests)
@@ -236,41 +236,41 @@ Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
 4. New agent alignment: src/types.ts is the authoritative spec, not backlog ACs
 5. Docs and CLI tests are delivery items, not follow-on cleanup
 6. The gate checklist (written at kickoff) worked — failures were process failures, not checklist failures
-7. Semantic-release pipeline needs end-to-end dry-run validation before first Phase 3 release
+7. Semantic-release pipeline needs end-to-end dry-run validation before first Sprint 3 release
 
-**8 action items assigned** for Phase 3 — highest priority: runtime export check in checklist (A1), value-vs-type exports in index.ts (A2), it.todo() for stubs not throwError (A3), full coverage table in fix submissions (A4).
+**8 action items assigned** for Sprint 3 — highest priority: runtime export check in checklist (A1), value-vs-type exports in index.ts (A2), it.todo() for stubs not throwError (A3), full coverage table in fix submissions (A4).
 
-**Phase 3 primary risk:** Governance enforcement logic has complex conditional branches — coverage gaps are likely. Yori should enumerate every guard clause explicitly.
+**Sprint 3 primary risk:** Governance enforcement logic has complex conditional branches — coverage gaps are likely. Yori should enumerate every guard clause explicitly.
 
-**Phase 3 readiness:** ✅ Cleared. Primary debt: indexer.ts at 47.15% coverage (below 95% target) — should be addressed in Phase 3, not carried further.
+**Sprint 3 readiness:** ✅ Cleared. Primary debt: indexer.ts at 47.15% coverage (below 95% target) — should be addressed in Sprint 3, not carried further.
 
 ---
 
-### 2026-04-04: Phase 3 Gate Checklist Written — Wave 0 Complete
+### 2026-04-04: Sprint 3 Gate Checklist Written — Wave 0 Complete
 
 **By:** Flynn (Tech Lead)
 
-**What:** Phase 3 gate checklist (.squad/decisions/inbox/flynn-phase3-gate.md) written at kickoff, applying all 8 Phase 2 retro action items (A1-A8) as mandatory criteria.
+**What:** Sprint 3 gate checklist (.squad/decisions/inbox/flynn-phase3-gate.md) written at kickoff, applying all 8 Sprint 2 retro action items (A1-A8) as mandatory criteria.
 
-**Why:** Gate checklists written at kickoff prevent downstream failures. Phase 2 gate was written during review (AFTER failures), creating reactive fixes. Phase 3 checklist is written before any implementation.
+**Why:** Gate checklists written at kickoff prevent downstream failures. Sprint 2 gate was written during review (AFTER failures), creating reactive fixes. Sprint 3 checklist is written before any implementation.
 
 **Checklist structure:**
 - 22 gate criteria covering: types-first, runtime exports, test skeletons, coverage, CLI tests, docs, writer, governance, Vault SDK, release
-- All criteria directly traced to Phase 2 retro action items
+- All criteria directly traced to Sprint 2 retro action items
 - Wave-by-wave gate validation (Wave 0→1→2→3→4)
 - Clear blocking dependencies (types lock blocks implementation, implementation blocks tests)
 
-**Key criteria (with Phase 2 retro tracing):**
+**Key criteria (with Sprint 2 retro tracing):**
 1. **Criterion #2:** Runtime export check (Retro A1) — binary gate: all new exports must appear in dist/index.js
 2. **Criterion #3:** Types-first approval (Retro A2) — all types merged before implementation begins
-3. **Criterion #5:** Test skeletons after types locked (Retro A3) — prevents API mismatch from Phase 1
+3. **Criterion #5:** Test skeletons after types locked (Retro A3) — prevents API mismatch from Sprint 1
 4. **Criterion #6 + #20:** Full per-file coverage table (Retro A4) — no omissions, all modules reported
 5. **Criterion #4:** Function signatures in backlog ACs (Retro A5 + A8) — exact parameters, no spec drift
 6. **Criterion #7:** CLI tests for write/append/check (Retro A7) — governance scenarios verified
 7. **Criterion #8 + #9:** README + docs updated (Retro A8) — features documented before release
 
 **Risks mitigated:**
-- Runtime export check prevents dist/index.js mismatch (Phase 1 hidden bug pattern)
+- Runtime export check prevents dist/index.js mismatch (Sprint 1 hidden bug pattern)
 - Types-first gate blocks "design-by-test" anti-pattern
 - Full coverage table requirement prevents "coverage omission" fix submissions
 - Wave gates prevent implementation-before-types
@@ -281,7 +281,7 @@ Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
 - governance.ts ≥ 95% (complex rule logic — highest bar)
 - index.ts ≥ 90%
 - Global ≥ 80%
-- Inherited from Phase 2: parser ≥ 95%, query/graph ≥ 90%
+- Inherited from Sprint 2: parser ≥ 95%, query/graph ≥ 90%
 
 **Team alignment:**
 - Tron: Types-first discipline (Wave 1)
@@ -297,9 +297,9 @@ Stamp written to `.squad/decisions.md`. `now.md` updated to Phase 2 complete.
 
 ---
 
-### 2025-07-14: Phase 3 Gate Review — ✅ APPROVED (12/12)
+### 2025-07-14: Sprint 3 Gate Review — ✅ APPROVED (12/12)
 
-Ran full Phase 3 gate verification against all 12 mandatory criteria. **First gate to pass on the first attempt.**
+Ran full Sprint 3 gate verification against all 12 mandatory criteria. **First gate to pass on the first attempt.**
 
 **Commands run:**
 - `pnpm build` — exit 0, all dist outputs built ✅
@@ -318,20 +318,20 @@ Ran full Phase 3 gate verification against all 12 mandatory criteria. **First ga
 - Carried debt: indexer.ts 47.15%, parser.ts 80.76%
 
 **4 governance it.todo() stubs — decided as ACCEPTABLE (not a gate blocker):**
-- required-tag, no-orphan, max-links, severity:warning rule types are extensions beyond the current glob-based path pattern architecture. Tests correctly use `it.todo()` per Retro A3. Phase 4 backlog item needed.
+- required-tag, no-orphan, max-links, severity:warning rule types are extensions beyond the current glob-based path pattern architecture. Tests correctly use `it.todo()` per Retro A3. Sprint 4 backlog item needed.
 
-**Phase 2 retro action items compliance:** 7/8 verified (A7 semantic-release dry-run not verified — Clu responsibility pre-publish).
+**Sprint 2 retro action items compliance:** 7/8 verified (A7 semantic-release dry-run not verified — Clu responsibility pre-publish).
 
 **Gate verdict: ✅ APPROVED — v0.3.0 ready for release.**
 Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
 
-**Lesson:** Writing the gate checklist at kickoff (Retro A6) and mandating the runtime export check (Retro A1) directly prevented the class of failures that blocked Phase 2 twice. First-attempt gate pass validates the retro action item discipline.
+**Lesson:** Writing the gate checklist at kickoff (Retro A6) and mandating the runtime export check (Retro A1) directly prevented the class of failures that blocked Sprint 2 twice. First-attempt gate pass validates the retro action item discipline.
 
 ---
 
-### 2026-04-04: Phase 3 Retrospective facilitated
+### 2026-04-04: Sprint 3 Retrospective facilitated
 
-**Facilitated** the Phase 3 retrospective for all contributors (Tron, Ram, Yori, Clu, Dumont, Castor).
+**Facilitated** the Sprint 3 retrospective for all contributors (Tron, Ram, Yori, Clu, Dumont, Castor).
 
 **Gate summary:** ✅ APPROVED — v0.3.0 (first clean gate pass: 12/12 on attempt #1)
 
@@ -339,23 +339,23 @@ Written to `.squad/decisions/inbox/flynn-phase3-verdict.md`.
 
 **Wins (8 items):**
 1. First clean gate in project history — 12/12 criteria on attempt #1
-2. Phase 2 retro A1–A8: 7/8 applied and verified at gate (A7 deferred again)
+2. Sprint 2 retro A1–A8: 7/8 applied and verified at gate (A7 deferred again)
 3. governance.ts at 100% coverage, watcher.ts at 97.43% — both exceeded thresholds
 4. Wave structure and parallel fan-out (Tron + Ram in Wave 1) worked without blocking dependencies
-5. Types-first discipline held for third consecutive phase — zero API mismatches
+5. Types-first discipline held for third consecutive sprint — zero API mismatches
 6. Yori's test triage: 10/10 watcher stubs filled, 4 governance stubs correctly left as it.todo()
 7. Dumont's docs accurate on first submission (used correct field names from source)
 8. Conventional commits maintained throughout
 
 **Friction points (4 items):**
-1. GovernanceRule type gap — only supports pattern+effect; required-tag, no-orphan, max-links, severity:warning not expressible in current type shape. Needs discriminated union in Phase 4.
+1. GovernanceRule type gap — only supports pattern+effect; required-tag, no-orphan, max-links, severity:warning not expressible in current type shape. Needs discriminated union in Sprint 4.
 2. WatchEvent field name discrepancy in test stub descriptions — "create/modify/delete" vs actual "add/change/unlink", "path" vs "filepath". Corrected during fill, but reveals stub descriptions should use exact type vocabulary.
-3. pnpm-lock.yaml missing at Phase 3 start — CI would fail on clean clone. Fixed at commit 336864b.
+3. pnpm-lock.yaml missing at Sprint 3 start — CI would fail on clean clone. Fixed at commit 336864b.
 4. Scope pivot from Write API (22 criteria) to Watcher + Governance (12 criteria) without formal gate checklist amendment.
 
-**8 action items assigned** for Phase 4 — highest priority: GovernanceRule discriminated union (A1), carry deferred gate criteria formally (A3), indexer.ts coverage debt (A4), semantic-release dry-run mandatory (A6).
+**8 action items assigned** for Sprint 4 — highest priority: GovernanceRule discriminated union (A1), carry deferred gate criteria formally (A3), indexer.ts coverage debt (A4), semantic-release dry-run mandatory (A6).
 
-**Phase 4 readiness:** ✅ Cleared. Primary concerns: GovernanceRule type extension, indexer.ts at 47.15% (carried 2 phases), semantic-release never validated (deferred 3×).
+**Sprint 4 readiness:** ✅ Cleared. Primary concerns: GovernanceRule type extension, indexer.ts at 47.15% (carried 2 sprints), semantic-release never validated (deferred 3×).
 
 ---
 

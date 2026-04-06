@@ -1,6 +1,6 @@
 /**
  * @file graph.test.ts
- * @description Test suite for `graph.walk()` — Phase 2 Wave 1 skeletons.
+ * @description Test suite for `graph.walk()` — Sprint 2 Wave 1 skeletons.
  *
  * Most tests are `it.todo()` because the `walk()` implementation is pending.
  * Tests that can run purely from types or with an empty/unknown seed are

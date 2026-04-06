@@ -23,7 +23,7 @@
 - Design MCP tools with agent ergonomics first: names should be intuitive for LLMs
 - Every MCP tool needs: clear name, description, typed input schema, typed output
 - Resources expose vault state; tools expose operations
-- Test agent workflows end-to-end via MCP (Phase 5 integration tests)
+- Test agent workflows end-to-end via MCP (Sprint 5 integration tests)
 - Governance enforcement: agents MUST be constrained; humans MUST be able to bypass by design
 - Consider: what happens when an agent queries its own memory stored in markdown?
 

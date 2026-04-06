@@ -7,7 +7,7 @@
  * path), tags (by tag string), and links (by lowercase filename stem).
  *
  * Designed for both full vault scans (`indexVault`) and incremental updates
- * (`indexFile`, `removeFile`) driven by the Phase 5 watcher.
+ * (`indexFile`, `removeFile`) driven by the Sprint 5 watcher.
  *
  * All operations return `Result<T, OxoriError>` — this module never throws.
  */

@@ -23,7 +23,7 @@
 - Write orchestration log entries per agent (one file per agent per session)
 - Merge ALL inbox files to decisions.md — deduplicate, preserve chronological order
 - Session log = brief, human-readable summary of what happened
-- Cross-agent updates: if Flynn approved a phase gate, append note to affected agents' history
+- Cross-agent updates: if Flynn approved a sprint gate, append note to affected agents' history
 - If decisions.md >20KB, archive entries older than 30 days to decisions-archive.md
 - Git commit message: chore: update squad session log [skip ci]
 

@@ -1,6 +1,6 @@
 /**
  * @file governance.test.ts
- * @description Unit + integration tests for the checkGovernance() function — Phase 3.
+ * @description Unit + integration tests for the checkGovernance() function — Sprint 3.
  *
  * Tests are written to validate the governance engine implementation in src/governance.ts.
  * Governance rules use glob `pattern` + `effect: "allow" | "deny"` with first-match-wins

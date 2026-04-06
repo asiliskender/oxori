@@ -30,31 +30,31 @@
 - Strict TypeScript — no any, use unknown and narrow
 - Functions over classes (except Vault and MCP server)
 
-**Build phases:**
-- Phase 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
-- Phase 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
-- Phase 3: Write API + Governance (writer, governance, SDK public API)
-- Phase 4: Semantic Search (embeddings, vector storage, cosine similarity)
-- Phase 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
+**Build sprints:**
+- Sprint 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
+- Sprint 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
+- Sprint 3: Write API + Governance (writer, governance, SDK public API)
+- Sprint 4: Semantic Search (embeddings, vector storage, cosine similarity)
+- Sprint 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
 
 **Conventions:**
 - Conventional commits (feat/fix/docs/test/refactor)
 - Atomic commits — one logical change per commit
-- No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
-- Each phase = a separate npm release with detailed release notes
+- No sprint merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
+- Each sprint = a separate npm release with detailed release notes
 
 ## Work Completed
 
-### Phase 1 Documentation (2026-04-03)
+### Sprint 1 Documentation (2026-04-03)
 
 **Delivered:**
-1. **docs/architecture.md** — Comprehensive 1000+ line architecture document covering all 9 layers, 7 core principles, data flow, type system, error handling, build phases, 7 ADRs, performance considerations, and "what NOT to do" section.
+1. **docs/architecture.md** — Comprehensive 1000+ line architecture document covering all 9 layers, 7 core principles, data flow, type system, error handling, build sprints, 7 ADRs, performance considerations, and "what NOT to do" section.
 
-2. **README.md** — Updated with Phase 1 features, quick-start guide, SDK usage, vault structure, index file explanations, and roadmap. Kept high-level; detailed docs in `docs/` folder.
+2. **README.md** — Updated with Sprint 1 features, quick-start guide, SDK usage, vault structure, index file explanations, and roadmap. Kept high-level; detailed docs in `docs/` folder.
 
-3. **CONTRIBUTING.md** — Complete contributor guide with dev setup, running commands, code conventions (TypeScript, functions, comments, JSDoc), commit conventions (Conventional Commits with examples), testing guidelines (80%+ coverage), PR process, phase gates, CI/CD pipeline, and getting help.
+3. **CONTRIBUTING.md** — Complete contributor guide with dev setup, running commands, code conventions (TypeScript, functions, comments, JSDoc), commit conventions (Conventional Commits with examples), testing guidelines (80%+ coverage), PR process, sprint gates, CI/CD pipeline, and getting help.
 
-4. **RELEASES.md** — Detailed v0.1.0 release notes covering Parser module, Markdown Index, CLI commands, Type System, installation, quick start, SDK usage, architecture reference, breaking changes (none), known limitations, migration guide (N/A), Phase 2 preview, and testing/CI details.
+4. **RELEASES.md** — Detailed v0.1.0 release notes covering Parser module, Markdown Index, CLI commands, Type System, installation, quick start, SDK usage, architecture reference, breaking changes (none), known limitations, migration guide (N/A), Sprint 2 preview, and testing/CI details.
 
 **Key Content:**
 - Parser: YAML frontmatter, tags (with hierarchy), wikilinks (case-insensitive), typed relations, body content
@@ -62,14 +62,14 @@
 - CLI: `oxori init`, `oxori index` commands
 - Type system: ParsedFile, FileEntry, TagEntry, LinkEntry, TypedRelation, IndexState, Result<T,E>, OxoriError
 - Error handling: Result<T,E> for recoverable errors, throw for programmer errors, structured OxoriError with codes and actions
-- Build phases: Table showing all 5 phases with focus, key modules, release versions
+- Build sprints: Table showing all 5 sprints with focus, key modules, release versions
 - Architecture decisions: 7 ADRs (No Database, Wikilinks Without Extension, Schemaless Frontmatter, Governance for Agents Only, Git Handles Concurrency, Typed Relations, Optional Semantic Search)
 
 **Standards Applied:**
 - Markdown-first: all examples are real or clearly marked pseudo-code
 - Clear for future maintainers: detailed "why" behind each design choice
-- Phase gates: documented what "done" means for Phase 1
-- Release notes: comprehensive, including breaking changes (none), migration steps, and Phase 2 preview
+- Sprint gates: documented what "done" means for Sprint 1
+- Release notes: comprehensive, including breaking changes (none), migration steps, and Sprint 2 preview
 
 ## Learnings
 
@@ -86,9 +86,9 @@
 - Kept to ~20 lines + code block (concise, focused)
 - Insert location: Line 234, between type system intro and ParsedFile
 
-**Result:** Phase 1 audit closed. `FrontmatterEntry` now clearly documented with consumer patterns for future developers.
+**Result:** Sprint 1 audit closed. `FrontmatterEntry` now clearly documented with consumer patterns for future developers.
 
-### Phase 2 Query Language Documentation (2026-04-04)
+### Sprint 2 Query Language Documentation (2026-04-04)
 
 **Task:** Write `docs/query-language.md` — comprehensive reference for the Oxori query language based on actual implementation in `src/query.ts`.
 
@@ -137,9 +137,9 @@
 
 **Status:** ✅ Complete and written to `/Users/onurasiliskender/Git/github-personal/oxori/docs/query-language.md`
 
-### Phase 2 README Update (2026-04-04)
+### Sprint 2 README Update (2026-04-04)
 
-**Task:** Update `README.md` to reflect Phase 2 completion — replace future-tense "🔜 Phase 2" placeholders with actual completed features.
+**Task:** Update `README.md` to reflect Sprint 2 completion — replace future-tense "🔜 Sprint 2" placeholders with actual completed features.
 
 **Changes made:**
 
@@ -148,17 +148,17 @@
    - ✅ Graph traversal — BFS walk with cycle detection, direction, and typed relations
    - ✅ CLI commands — oxori query, oxori walk, oxori graph
 
-2. **Quick Start section** — Removed "(Phase 1)" header, added three new subsections after "Index your vault":
+2. **Quick Start section** — Removed "(Sprint 1)" header, added three new subsections after "Index your vault":
    - **Query your vault** — Three CLI examples (`oxori query` with various filters and flags)
    - **Walk the graph** — Three CLI examples (`oxori walk` with direction, via, depth options)
    - **View full graph** — Two CLI examples (`oxori graph` with and without --json)
 
-3. **SDK Usage section** — Extended with Phase 2 API examples:
+3. **SDK Usage section** — Extended with Sprint 2 API examples:
    - Query API: `tokenize`, `parse`, `evaluate` with full example
    - Walk API: `walk()` with direction, via, depth options
    - Shows accessing `queryResult.totalMatched` and `walkResult.visitOrder`
 
-4. **Architecture section** — Removed future-tense Phase 2 language, updated to acknowledge Phase 2 as complete and ready for use.
+4. **Architecture section** — Removed future-tense Sprint 2 language, updated to acknowledge Sprint 2 as complete and ready for use.
 
 **Standards applied:**
 - Exact flag names from `src/cli.ts` (e.g., `--direction forward/backward`, `--via links`)
@@ -166,11 +166,11 @@
 - Kept concise, developer-friendly tone matching existing README
 - Maintained markdown formatting and hierarchy
 
-**Status:** ✅ Complete. README.md updated with Phase 2 content.
+**Status:** ✅ Complete. README.md updated with Sprint 2 content.
 
-### Phase 3 Documentation Updates (2026-04-04)
+### Sprint 3 Documentation Updates (2026-04-04)
 
-**Task:** Update README.md, docs/architecture.md, and RELEASES.md to document Phase 3 additions (Watcher and Governance).
+**Task:** Update README.md, docs/architecture.md, and RELEASES.md to document Sprint 3 additions (Watcher and Governance).
 
 **Changes made:**
 
@@ -182,10 +182,10 @@
      - Query and Walk (reorganized from existing content)
      - **File Watcher** (new) — Complete code example showing `watch()` API with `on('change')` listener, event handling (type, filepath, timestamp), error handling, and `stop()` cleanup
      - **Governance** (new) — Complete code example showing `checkGovernance()` API with rule definition (id/description/pattern/effect/appliesTo), result checking, and violation iteration
-   - Updated Architecture section description to reflect Phase 3 completeness ("Phase 1-3 gives you a solid foundation... enforce governance rules")
+   - Updated Architecture section description to reflect Sprint 3 completeness ("Sprint 1-3 gives you a solid foundation... enforce governance rules")
 
 2. **docs/architecture.md**
-   - Added new "## Phase 3 Additions" section (after System Layers, before Data Flow)
+   - Added new "## Sprint 3 Additions" section (after System Layers, before Data Flow)
    - Summarizes Watcher layer:
      - EventEmitter-based, wraps Node.js fs.watch
      - Emits WatchEvent with type (add/change/unlink), filepath (absolute), timestamp (ms)
@@ -197,13 +197,13 @@
      - Violations include ruleId, message, filePath, severity
      - **Crucial:** Humans never subject to governance — only agent writes checked
      - API: `checkGovernance(rules, state); if (!result.passed) { result.violations... }`
-   - Emphasizes both are pure functions with no I/O or mutation, ready for Phase 5 MCP integration
+   - Emphasizes both are pure functions with no I/O or mutation, ready for Sprint 5 MCP integration
 
 3. **RELEASES.md**
    - Added **[Unreleased] — v0.3.0** section at top
    - Sections:
      - **Added** — New APIs (`watch()`, `checkGovernance()`), new types (VaultWatcher, WatchEvent, GovernanceRule, GovernanceViolation, GovernanceResult), SDK exports
-     - **Changed** — README.md updates (features list, SDK Usage sections) and docs/architecture.md updates (Phase 3 Additions section)
+     - **Changed** — README.md updates (features list, SDK Usage sections) and docs/architecture.md updates (Sprint 3 Additions section)
      - **Documentation** — Key points on WatchEvent fields, governance enforcement scope, pure function design
    - Preserved all existing v0.1.0 content below
 
@@ -218,35 +218,35 @@
 - Architecture section clearly explains layer design decisions and integration points
 - Release notes follow existing format with Added/Changed/Documentation sections
 - All examples are derived from actual API signatures, not pseudo-code
-- Maintained consistency with Phase 1 and 2 documentation tone and structure
+- Maintained consistency with Sprint 1 and 2 documentation tone and structure
 
 **Files created/updated:**
 - `.squad/decisions/inbox/dumont-phase3-docs.md` — Decision note explaining context and choices
 - README.md — Updated version, features, capabilities, SDK Usage
-- docs/architecture.md — Added Phase 3 Additions section
+- docs/architecture.md — Added Sprint 3 Additions section
 - RELEASES.md — Added v0.3.0 [Unreleased] entry at top
 
-**Status:** ✅ Complete. Phase 3 documentation is ready for release and user consumption.
+**Status:** ✅ Complete. Sprint 3 documentation is ready for release and user consumption.
 
-### README and Docs Cleanup — Removal of Phases, Roadmap, and Team References (2026-04-05)
+### README and Docs Cleanup — Removal of Sprints, Roadmap, and Team References (2026-04-05)
 
-**Task:** Clean up README.md, docs/architecture.md, and CONTRIBUTING.md to remove all future-tense language, phase references, roadmap mentions, and internal team/squad references. Documentation should reflect current state only.
+**Task:** Clean up README.md, docs/architecture.md, and CONTRIBUTING.md to remove all future-tense language, sprint references, roadmap mentions, and internal team/squad references. Documentation should reflect current state only.
 
 **User directive:**
 - README should ONLY explain what the project is, how to install it, how to use it
-- No future plans, phases, roadmap, squad/team references
+- No future plans, sprints, roadmap, squad/team references
 - All code and docs in English
 - This is a TypeScript library + CLI named "oxori"
 
 **Changes made:**
 
 1. **README.md**
-   - Removed "Features (v0.3.0 — Phase 1, 2, & 3)" header, changed to just "## Features"
-   - Removed 🔜 "Semantic search" (Phase 4) and "MCP server" (Phase 5) lines — keep only completed features
-   - Removed "vectors/" reference and "(Phase 4)" comment from vault structure diagram
-   - Removed "(Phase 3)" comment from governance.md reference
+   - Removed "Features (v0.3.0 — Sprint 1, 2, & 3)" header, changed to just "## Features"
+   - Removed 🔜 "Semantic search" (Sprint 4) and "MCP server" (Sprint 5) lines — keep only completed features
+   - Removed "vectors/" reference and "(Sprint 4)" comment from vault structure diagram
+   - Removed "(Sprint 3)" comment from governance.md reference
    - Rewrote Architecture section overview paragraph:
-     - Removed all phase references ("Phase 2 adds...", "Phase 3 adds...", "Phases 4-5 will...")
+     - Removed all sprint references ("Sprint 2 adds...", "Sprint 3 adds...", "Sprints 4-5 will...")
      - Condensed to current-state description of query engine, graph traversal, watcher, governance
      - Added clear reference to docs/architecture.md for complete design
    - Maintained version badge (v0.3.0), installation instructions, CLI usage examples, SDK examples
@@ -254,33 +254,33 @@
 
 2. **docs/architecture.md**
    - Updated Overview section:
-     - Removed "Oxori is built in five distinct phases..." and "By Phase 5, the system provides..."
+     - Removed "Oxori is built in five distinct sprints..." and "By Sprint 5, the system provides..."
      - Replaced with current-state description: "Oxori provides a layered architecture: parsing and indexing form the foundation, followed by query filtering, graph traversal, semantic search, governance rules, write operations, and real-time file watching."
-   - Renamed and rewrote "## Phase 3 Additions" section to "## Key Capabilities"
-     - Removed "Phase 3 introduces two critical capabilities that complete the core Oxori platform"
+   - Renamed and rewrote "## Sprint 3 Additions" section to "## Key Capabilities"
+     - Removed "Sprint 3 introduces two critical capabilities that complete the core Oxori platform"
      - Changed intro to "Oxori provides the following key capabilities"
-     - Removed "and are ready for Phase 5's MCP server and agent orchestration" from watcher/governance summary
+     - Removed "and are ready for Sprint 5's MCP server and agent orchestration" from watcher/governance summary
    - Updated data flow section headers:
-     - Changed "### Indexing (Phase 1)" → "### Indexing"
-     - Changed "### Querying (Phase 2)" → "### Querying"
-     - Changed "### Graph Traversal (Phase 2)" → "### Graph Traversal"
-     - Changed "### Writing (Phase 3)" → "### Writing"
-     - Changed "### Semantic Search (Phase 4)" → "### Semantic Search"
-     - Changed "### MCP Server (Phase 5)" → "### MCP Server"
+     - Changed "### Indexing (Sprint 1)" → "### Indexing"
+     - Changed "### Querying (Sprint 2)" → "### Querying"
+     - Changed "### Graph Traversal (Sprint 2)" → "### Graph Traversal"
+     - Changed "### Writing (Sprint 3)" → "### Writing"
+     - Changed "### Semantic Search (Sprint 4)" → "### Semantic Search"
+     - Changed "### MCP Server (Sprint 5)" → "### MCP Server"
    - Kept all technical content, design decisions, and implementation details
 
 3. **CONTRIBUTING.md**
    - Updated opening paragraph:
-     - Removed "Oxori is built by a team of specialists working in phases. Each phase is a complete, shippable npm release..."
+     - Removed "Oxori is built by a team of specialists working in sprints. Each sprint is a complete, shippable npm release..."
      - Replaced with "Oxori is an open-source project developed in short-lived feature branches integrated back to main frequently. Each contribution is tested, documented, and reviewed before merge."
    - Updated "## Creating a Pull Request" section:
      - Removed "create a branch... use kebab-case:" → added "use kebab-case from `main`:"
      - Added new item: "**Keep it short-lived** — branch should exist for days, not weeks. Integrate to main frequently."
-     - Changed review line from "Wait for review — Flynn (architecture) reviews all Phase PRs before merge" to "Wait for review — maintainers review all PRs before merge"
-   - Replaced entire "## Phases and Releases" section with "## Releases and Versioning"
-     - Removed Phase table (1-5 with scope/release/status)
-     - Removed "Phase Process" (7 step workflow tied to phases)
-     - Removed "Phase Gates" (tests/coverage/architecture review tied to phases)
+     - Changed review line from "Wait for review — Flynn (architecture) reviews all Sprint PRs before merge" to "Wait for review — maintainers review all PRs before merge"
+   - Replaced entire "## Sprints and Releases" section with "## Releases and Versioning"
+     - Removed Sprint table (1-5 with scope/release/status)
+     - Removed "Sprint Process" (7 step workflow tied to sprints)
+     - Removed "Sprint Gates" (tests/coverage/architecture review tied to sprints)
      - Replaced with cleaner structure:
        - **Version Bumping** — How commit types trigger version bumps (feat/fix/breaking changes)
        - **Release Process** — What happens when PRs merge to main (automated via semantic-release)
@@ -288,15 +288,15 @@
    - Kept all development setup, code conventions, commit types, testing guidelines, and technical standards
 
 **Inconsistencies found and fixed:**
-- architecture.md still referenced Phase 3 capabilities in section header (fixed)
-- README referenced Phase numbers for future features (removed)
-- CONTRIBUTING.md listed 5 phases as "planned" when only Phase 1-3 are complete (removed entire phase table)
+- architecture.md still referenced Sprint 3 capabilities in section header (fixed)
+- README referenced Sprint numbers for future features (removed)
+- CONTRIBUTING.md listed 5 sprints as "planned" when only Sprint 1-3 are complete (removed entire sprint table)
 - Internal team name "Flynn" appeared in review process (generalized to "maintainers")
 
 **Files modified:**
-- README.md — 11 lines changed (removed future features, phase references, simplified architecture overview)
-- docs/architecture.md — 22 lines changed (removed phase language, updated section headers, current-state descriptions)
-- CONTRIBUTING.md — 60 lines changed (removed phase workflow, added trunk-based branch guidance, generalized review process)
+- README.md — 11 lines changed (removed future features, sprint references, simplified architecture overview)
+- docs/architecture.md — 22 lines changed (removed sprint language, updated section headers, current-state descriptions)
+- CONTRIBUTING.md — 60 lines changed (removed sprint workflow, added trunk-based branch guidance, generalized review process)
 
 **Standards applied:**
 - All removed content was future-tense or internal process (no functional code affected)

@@ -30,18 +30,18 @@
 - Strict TypeScript — no any, use unknown and narrow
 - Functions over classes (except Vault and MCP server)
 
-**Build phases:**
-- Phase 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
-- Phase 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
-- Phase 3: Write API + Governance (writer, governance, SDK public API)
-- Phase 4: Semantic Search (embeddings, vector storage, cosine similarity)
-- Phase 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
+**Build sprints:**
+- Sprint 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
+- Sprint 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
+- Sprint 3: Write API + Governance (writer, governance, SDK public API)
+- Sprint 4: Semantic Search (embeddings, vector storage, cosine similarity)
+- Sprint 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
 
 **Conventions:**
 - Conventional commits (feat/fix/docs/test/refactor)
 - Atomic commits — one logical change per commit
-- No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
-- Each phase = a separate npm release with detailed release notes
+- No sprint merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
+- Each sprint = a separate npm release with detailed release notes
 
 ## Learnings
 
@@ -111,7 +111,7 @@
 - `Result<T, E>` tagged union (discriminated on `ok: boolean`) for structured, recoverable error handling. Avoids mixing throw semantics with return-value semantics across the codebase. Helper functions `ok()` and `err()` keep call sites concise.
 - `ParsedFile.tags` stores ALL ancestor levels of hierarchical tags (not just the leaf). `#project/auth/oauth` → `["project", "project/auth", "project/auth/oauth"]`. This pre-expansion makes query-time prefix matching O(1) via Set lookup.
 - `TypedRelation.source` tracks the full filepath (not just filename stem) to enable graph traversal by absolute path — the graph layer resolves `FileEntry` objects by path key, making a stem-only source require an extra lookup on every edge hop.
-- `WatchEvent` and `GovernanceRule` defined in Phase 1 to avoid type churn when Phases 3 and 5 land. Better to define stable shapes early.
+- `WatchEvent` and `GovernanceRule` defined in Sprint 1 to avoid type churn when Sprints 3 and 5 land. Better to define stable shapes early.
 - `IndexState` map keys are consistent: absolute paths for `files`, raw tag strings for `tags`, lowercase stems for `links`. Avoids mixed-convention lookups.
 
 **Gotchas / edge cases:**
@@ -122,7 +122,7 @@
 
 ---
 
-## Phase 2 — CLI Commands: query / walk / graph (O-2-04, O-2-05, O-2-06)
+## Sprint 2 — CLI Commands: query / walk / graph (O-2-04, O-2-05, O-2-06)
 
 **Date:** 2025-07-13  
 **Task:** Add `oxori query`, `oxori walk`, and `oxori graph` subcommands to `src/cli.ts`  
@@ -180,7 +180,7 @@ Edited `src/cli.ts` to add three new commander subcommands. Existing `init` and 
 
 ---
 
-## Phase 2 — Type Contract Design (Wave 1, Critical Path)
+## Sprint 2 — Type Contract Design (Wave 1, Critical Path)
 
 **Date:** 2025-07-13  
 **Task:** Add Query Engine and Graph Traversal types to `src/types.ts`  
@@ -190,7 +190,7 @@ Edited `src/cli.ts` to add three new commander subcommands. Existing `init` and 
 
 Added two new sections to `src/types.ts`:
 
-**`// === Query Engine (Phase 2) ===`**
+**`// === Query Engine (Sprint 2) ===`**
 - `TokenKind` — union of token categories emitted by the tokenizer
 - `Token` — `{ kind, value, position }` with zero-based source offset
 - `FilterNode` — leaf AST node for `field op value` atoms
@@ -202,7 +202,7 @@ Added two new sections to `src/types.ts`:
 - `FILTER_FIELDS` — `as const` tuple for runtime field validation
 - `FilterField` — derived union type from `FILTER_FIELDS`
 
-**`// === Graph Traversal (Phase 2) ===`**
+**`// === Graph Traversal (Sprint 2) ===`**
 - `Edge` — `{ source, target, kind, relationType? }` directed graph edge
 - `WalkDirection` — `"incoming" | "outgoing" | "both"`
 - `WalkVia` — `"links" | "tags" | "both" | \`relation:${string}\`` (template literal for open-ended named relations)
@@ -237,7 +237,7 @@ Filed at `.squad/decisions/inbox/tron-phase2-type-contracts.md` with open questi
 
 ---
 
-## Phase 2 — Query Engine: Tokenizer + Parser (Wave 1)
+## Sprint 2 — Query Engine: Tokenizer + Parser (Wave 1)
 
 **Date:** 2025-07-13  
 **Task:** Implement `src/query.ts` — tokenizer and recursive-descent parser (backlog O-2-01)  
@@ -287,7 +287,7 @@ Wrote `src/query.ts` with three exported symbols plus internal helpers:
 
 ---
 
-## Phase 2 — Query Engine: Evaluator (Wave 2)
+## Sprint 2 — Query Engine: Evaluator (Wave 2)
 
 **Date:** 2025-07-13  
 **Task:** Add `evaluate()` to `src/query.ts` (backlog O-2-03)  
@@ -333,7 +333,7 @@ Added three symbols to `src/query.ts`:
 
 ---
 
-## Phase 3 — Wave 1: Watcher Implementation
+## Sprint 3 — Wave 1: Watcher Implementation
 
 **Date:** 2026-04-03
 

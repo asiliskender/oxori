@@ -30,28 +30,28 @@
 - Strict TypeScript — no any, use unknown and narrow
 - Functions over classes (except Vault and MCP server)
 
-**Build phases:**
-- Phase 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
-- Phase 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
-- Phase 3: Write API + Governance (writer, governance, SDK public API)
-- Phase 4: Semantic Search (embeddings, vector storage, cosine similarity)
-- Phase 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
+**Build sprints:**
+- Sprint 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
+- Sprint 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
+- Sprint 3: Write API + Governance (writer, governance, SDK public API)
+- Sprint 4: Semantic Search (embeddings, vector storage, cosine similarity)
+- Sprint 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
 
 **Conventions:**
 - Conventional commits (feat/fix/docs/test/refactor)
 - Atomic commits — one logical change per commit
-- No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
-- Each phase = a separate npm release with detailed release notes
+- No sprint merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
+- Each sprint = a separate npm release with detailed release notes
 
 ## Learnings
 
-## Phase 2 — Graph Traversal Implementation
+## Sprint 2 — Graph Traversal Implementation
 
 **Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 ### Completed: O-2-02 — `src/graph.ts`
 
-Replaced the Phase 2 Wave 1 stub with a full BFS implementation.
+Replaced the Sprint 2 Wave 1 stub with a full BFS implementation.
 
 **What was done:**
 - Implemented `walk(start, state, options?)` using a BFS queue `[path, depth][]`
@@ -76,7 +76,7 @@ Replaced the Phase 2 Wave 1 stub with a full BFS implementation.
 
 **TypeScript:** `npx tsc --noEmit` → 0 errors
 
-## Phase 3 — Governance Implementation
+## Sprint 3 — Governance Implementation
 
 **Date:** 2025-01-29
 
@@ -87,7 +87,7 @@ Implemented `checkGovernance()` — the governance rule evaluation engine.
 **What was done:**
 - Created `src/governance.ts` with `checkGovernance(rules, state)` as the sole export
 - Used `micromatch.isMatch()` for glob-based filepath pattern matching (transitive dep, already typed)
-- Implemented first-match-wins semantics per Tron Phase 3 spec (per-file rule evaluation stops at first matching pattern)
+- Implemented first-match-wins semantics per Tron Sprint 3 spec (per-file rule evaluation stops at first matching pattern)
 - `deny` matches → `GovernanceViolation` with `severity: "error"`; `allow` matches → silently accepted
 - Violations sorted by `filePath` for deterministic output
 - `passed` is `true` only if no `"error"`-severity violations exist
