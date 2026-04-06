@@ -391,3 +391,57 @@ Added comprehensive Doxygen/TSDoc documentation to all 9 source files.
 
 - `pnpm build` ✅ zero errors after all doc changes
 - Commit: `docs: add Doxygen-compatible TSDoc docstrings to all source files`
+
+## Learnings
+
+### Issue #45 — GovernanceRule discriminated union (2025-01-31)
+
+- **Pattern used**: Replaced the flat `GovernanceRule` object type with a `PathRule | TagRule | LinkRule` discriminated union keyed on `ruleType`. TypeScript's exhaustiveness guard (`never` default branch) is in place so future additions to the union produce compile errors.
+- **IndexState shape awareness**: `FileEntry.tags` is `ReadonlySet<string>` (expanded to all ancestor levels). `FileEntry.wikilinks` is `ReadonlySet<string>` containing outbound link stems — `.size` gives outbound link count.
+- **Backward compat**: `description` changed from required `string` to optional `string?` on all three rule types because the `TagRule`/`LinkRule` branches auto-generate a message. Existing tests all still pass.
+- **Test approach**: Helper functions `denyRule()` / `allowRule()` in the test file were the only two places needing `ruleType: "path"` — no inline rule literals existed.
+- **First-match-wins**: The `break` after each `switch` case maintains the existing first-match-wins loop invariant — all three rule types terminate further rule evaluation for the current file once matched.
+
+---
+
+## 2026-04-05T21:34:00Z: Wave 0 Complete — Cross-Team Updates
+
+**Wave 0 deliverables all closed.** Orchestration logs written. Decisions merged.
+
+**From Flynn (#26):** Phase 4 kickoff ADR approved. GovernanceRule discriminated union is architecturally correct pending implementation conditions. Wave 0 is the gate before any Wave 1 implementation. EmbeddingProvider interface must use DI (injected at call time, no singleton). Semantic search must be lazy-loaded, never imported unconditionally. Tron finalizes types in Wave 1.
+
+**From Yori (#46, #47):** Coverage baselines set. indexer.ts 96.02%, parser.ts 99.23% — both exceed ≥95% threshold. Ready to write test skeletons in Wave 1 (after types locked). Stub provider pattern confirmed for deterministic offshore testing.
+
+### Issue #27 — Phase 4 Semantic Search Types (2026-04-05)
+
+- **What was already there**: A previous partial run had added a `// === Semantic Search (Phase 4) ===` section with types using plain `type` aliases and sparse JSDoc. Also missing `@since 0.4.0` tags and detailed inline comments.
+- **What I replaced it with**: The exact spec from `docs/semantic-search.md` — `interface` forms for `EmbeddingProvider`, `OpenAIProviderConfig`, `SearchResult`, `SearchOptions`, `VectorEntry`, `VectorIndex`; `type Embedding = number[]`; and a new `EmbeddingErrorCode` union.
+- **OxoriErrorCode note**: No `OxoriErrorCode` union exists in types.ts — `OxoriError.code` is typed `string`. The task asked to add codes to an "existing OxoriErrorCode type"; since it doesn't exist, I introduced `EmbeddingErrorCode` as a new named union for the 5 Phase 4 error codes. This is additive, doesn't narrow the existing `code: string` field, and is exported for callers who want exhaustiveness checking.
+- **Pre-existing errors in search.ts**: 9 TypeScript errors remain in Ram's `src/search.ts` (array index access on `number[]` under `noUncheckedIndexedAccess`). These are NOT my types — my additions actually fixed the 7 prior import errors that existed before this commit.
+- **Section header style**: Used `// ── Phase 4: Semantic Search ─────` dashes to match task spec (deviates from existing `// === X ===` sections in the file — explicit spec overrides house style).
+
+### Issue #30 — SDK Search Exports (2026-04-05)
+
+- **embedVault absent**: Ram's `embedVault` function is not yet in `search.ts`. Exported only what exists; commit message documents the gap. Will add in a follow-up once Ram's PR lands.
+- **JSDoc optionality contract**: Added a prominent comment block in `index.ts` above the search exports explaining the three-step opt-in (provider → embedVault → searchVault) and the `VECTORS_NOT_BUILT` error shape. This is the canonical contract location for SDK consumers.
+- **Zero regressions**: All 197 tests pass. TypeScript compiles clean with `--noEmit`. No new types needed — types were all already exported in Wave 1.
+- **Export surface pattern**: Search exports follow the same flat re-export pattern as parser, indexer, query, graph, governance, watcher — no namespace object, just named re-exports from `./search.js`.
+
+### Wave 2 — Phase 4 SDK Search Integration (2026-04-05)
+
+**Task:** Implement SDK-level search integration in src/index.ts (issue #30).
+
+**What was done:**
+- Added `SemanticSearchClient`, `SearchOptions`, and search-related exports to src/index.ts
+- Documented deferred `embedVault` export (contingent on Ram's #29 landing)
+- Coordinated decision: no conditional re-exports. Clean follow-up commit planned.
+- Rejected try/catch dynamic imports and optional chaining for module purity
+
+**Status:** ✅ Closed #30. Code merged. `embedVault` export pending Ram's merge.
+
+**What I learned:**
+- Strict TypeScript enforcement (no any, pure module graph) prevents architectural debt
+- Deferred exports in decisions log provide clear handoff checkpoints between agents
+- Multi-agent coordination via written decisions is more reliable than implicit assumptions
+
+---

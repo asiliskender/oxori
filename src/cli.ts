@@ -281,4 +281,86 @@ program
     }
   });
 
+program
+  .command("embed <vaultPath>")
+  .description("Generate embeddings for all markdown files in the vault")
+  .option("--api-key <key>", "OpenAI API key (or set OXORI_API_KEY env var)")
+  .option("--model <model>", "Embedding model", "text-embedding-3-small")
+  .option("--force", "Re-embed all files even if vectors are current", false)
+  .action(async (vaultPath: string, options: { apiKey?: string; model: string; force: boolean }) => {
+    const absPath = resolve(vaultPath);
+    const apiKey = options.apiKey ?? process.env["OXORI_API_KEY"];
+
+    if (!apiKey) {
+      console.error("✗ API key required. Use --api-key or set OXORI_API_KEY env var.");
+      process.exit(1);
+    }
+
+    const { createOpenAIProvider, embedVault } = await import("./search.js");
+    const provider = createOpenAIProvider({ apiKey, model: options.model });
+
+    console.log(`Embedding vault at ${absPath}...`);
+    const start = Date.now();
+    const result = await embedVault(absPath, provider, { force: options.force });
+
+    if (!result.ok) {
+      console.error(`✗ ${result.error.message}`);
+      process.exit(1);
+    }
+
+    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+    const { embedded, skipped, failed } = result.value;
+    console.log(`✓ Done in ${elapsed}s — embedded: ${embedded}, skipped: ${skipped}, failed: ${failed}`);
+    if (failed > 0) process.exit(1);
+  });
+
+program
+  .command("search <vaultPath> <query>")
+  .description("Search the vault using semantic similarity")
+  .option("--api-key <key>", "OpenAI API key (or set OXORI_API_KEY env var)")
+  .option("--model <model>", "Embedding model", "text-embedding-3-small")
+  .option("--top-k <n>", "Number of results", "10")
+  .option("--min-score <n>", "Minimum similarity score [0-1]", "0")
+  .option("--json", "Output as JSON", false)
+  .action(async (vaultPath: string, query: string, options: { apiKey?: string; model: string; topK: string; minScore: string; json: boolean }) => {
+    const absPath = resolve(vaultPath);
+    const apiKey = options.apiKey ?? process.env["OXORI_API_KEY"];
+
+    if (!apiKey) {
+      console.error("✗ API key required. Use --api-key or set OXORI_API_KEY env var.");
+      process.exit(1);
+    }
+
+    const { createOpenAIProvider, searchVault } = await import("./search.js");
+    const provider = createOpenAIProvider({ apiKey, model: options.model });
+
+    const result = await searchVault(absPath, query, provider, {
+      topK: parseInt(options.topK, 10),
+      minScore: parseFloat(options.minScore),
+    });
+
+    if (!result.ok) {
+      console.error(`✗ ${result.error.message}`);
+      if (result.error.action) console.error(`  → ${result.error.action}`);
+      process.exit(1);
+    }
+
+    const results = result.value;
+    if (options.json) {
+      console.log(JSON.stringify(results, null, 2));
+      return;
+    }
+
+    if (results.length === 0) {
+      console.log("No results found.");
+      return;
+    }
+
+    for (const r of results) {
+      const rel = relative(absPath, r.filepath);
+      const score = r.score.toFixed(3);
+      console.log(`${score}  ${rel}`);
+    }
+  });
+
 await program.parseAsync(process.argv);

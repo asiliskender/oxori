@@ -191,6 +191,118 @@ Rules are evaluated in declaration order; the first matching rule wins. This ena
 
 Both layers are pure functions with no I/O or mutation — they integrate seamlessly with existing layers.
 
+## Phase 4 Additions
+
+Phase 4 introduces **semantic search** as an optional layer and extends **governance rules** with a discriminated union.
+
+### Semantic Search Module (`src/search.ts`)
+
+Semantic search is optional — core Oxori (index, query, walk, governance) works perfectly without embeddings. When enabled, semantic search adds content-based similarity search via embeddings.
+
+**Provider Abstraction**
+
+The embedding provider is pluggable via the `EmbeddingProvider` interface:
+```typescript
+interface EmbeddingProvider {
+  model: string;
+  dimensions: number;
+  embed(text: string): Promise<Result<Embedding, OxoriError>>;
+}
+```
+
+Two built-in providers are available:
+- **`createOpenAIProvider(config)`** — Calls OpenAI's embeddings API. Uses native `fetch` (no heavy SDK dependencies). Supports `text-embedding-3-small` (1536 dims) and `text-embedding-3-large` (3072 dims).
+- **`createStubProvider(dimensions?)`** — Deterministic offline provider for testing. Same text always produces the same vector.
+
+**Vector Storage Format**
+
+Embeddings are stored as binary `.vec` files under `.oxori/vectors/`. The format is:
+- **4 bytes:** Magic number `0x4f584f52` (ASCII: "OXOR")
+- **4 bytes:** Version (u32 LE, currently 1)
+- **4 bytes:** Dimensions (u32 LE)
+- **N×4 bytes:** Float32 little-endian values
+
+An `index.json` file maps filepaths to `.vec` files and tracks content hashes for incremental updates.
+
+**Incremental Embedding**
+
+`embedVault()` skips files whose:
+- Content hash (SHA-256) hasn't changed, AND
+- Embedding model hasn't changed
+
+Use `--force` to re-embed all files. This enables fast re-runs on large vaults.
+
+**API**
+
+- **`embedVault(vaultPath, provider, options?)`** — Batch-embed all markdown files. Returns `{ embedded, skipped, failed }`.
+- **`searchVault(vaultPath, query, provider, options?)`** — Find semantically similar files by computing cosine similarity between query embedding and cached file embeddings. Returns `SearchResult[]` ranked by relevance. Options: `topK` (default 10), `minScore` (default 0).
+- **`cosineSimilarity(vecA, vecB)`** — Compute cosine similarity between two embeddings.
+- **`VectorStore`** — Class managing `.oxori/vectors/` index. Handles storage, retrieval, and staleness detection.
+
+**CLI Commands**
+
+- **`oxori embed <vaultPath>`** — Embed all files using OpenAI (default).
+  - `--api-key` or `OXORI_API_KEY` env var
+  - `--model` — OpenAI model (default: `text-embedding-3-small`)
+  - `--force` — Re-embed all files
+  - `--base-url` — Custom API endpoint
+
+- **`oxori search <vaultPath> <query>`** — Search semantically similar files.
+  - `--api-key` or `OXORI_API_KEY` env var
+  - `--top-k` — Return top-K results (default 10)
+  - `--min-score` — Minimum cosine similarity threshold (default 0)
+  - `--json` — Output as JSON
+
+### GovernanceRule Extended as Discriminated Union
+
+`GovernanceRule` is now a discriminated union with three variants, enabling richer policy definitions.
+
+**`PathRule`** — Pattern-based allow/deny (original behavior).
+```typescript
+type PathRule = {
+  ruleType: "path";
+  id: string;
+  pattern: string;  // glob pattern on filepath
+  effect: "allow" | "deny";
+  appliesTo: "agents";
+  description?: string;
+};
+```
+
+**`TagRule`** — Require files matching a glob to have a specific tag.
+```typescript
+type TagRule = {
+  ruleType: "tag";
+  id: string;
+  pattern: string;  // glob pattern on filepath
+  requiredTag: string;  // files matching pattern must have this tag
+  description?: string;
+};
+```
+
+**`LinkRule`** — Enforce outbound link count constraints.
+```typescript
+type LinkRule = {
+  ruleType: "link";
+  id: string;
+  pattern: string;  // glob pattern on filepath
+  minLinks?: number;  // minimum outbound wikilinks
+  maxLinks?: number;  // maximum outbound wikilinks
+  description?: string;
+};
+```
+
+The `checkGovernance()` function dispatches on `ruleType` using a switch/case, ensuring exhaustive handling:
+```typescript
+switch (rule.ruleType) {
+  case "path": /* check pattern and effect */
+  case "tag": /* check file has required tag */
+  case "link": /* check outbound link count */
+}
+```
+
+Rules are evaluated in declaration order; the first matching rule wins. This enables hierarchical structures (e.g., "allow all except sensitive files").
+
 ## Data Flow
 
 ### Indexing

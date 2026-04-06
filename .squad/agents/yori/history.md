@@ -376,3 +376,102 @@ Fill all `it.todo()` stubs in `tests/watcher.test.ts` (10 stubs) and `tests/gove
 - governance.ts coverage: **100% statements / 100% branches / 100% functions**
 - watcher.ts coverage: **97.4% statements / 92.9% branches / 100% functions**
   - Remaining uncovered: line 28 (`type = "change"`) — macOS never emits `fs.watch` `"change"` eventType; Linux-only path
+
+---
+
+## 2026-04-XX — Issues #46 + #47: indexer.ts and parser.ts coverage uplift
+
+### Task
+Increase indexer.ts coverage from ~47% to 95%+ and parser.ts from ~80% to 95%+. Both had been deferred across multiple sprints.
+
+### Baseline (before this session)
+- indexer.ts: 47.15% statements / 80% branch / 57.14% functions
+- parser.ts:  80.76% statements / 74.07% branch / 100% functions
+
+### What was built
+
+**`tests/indexer.test.ts`** — added tests for all previously untested public APIs:
+- `createEmptyState` — verifies empty Maps, zero counters, fresh instance each call
+- `indexFile` — new file, re-index (stale removal), FILE_NOT_FOUND, PARSE_ERROR (bad YAML), non-ENOENT stat failure (ENOTDIR via `/etc/hosts/fake.md`), same-reference return
+- `removeFile` — removes file/tags/links, no-op when not present, preserves shared tags/links with 2-file scenarios, returns same reference
+- `indexVault` edge cases — empty vault (zero .md files), duplicate filenames in subdirs, YAML parse error skip + console.warn, VAULT_NOT_FOUND (ENOENT), VAULT_NOT_FOUND (non-ENOENT / ENOTDIR via `/etc/hosts` as vaultPath)
+
+**`tests/parser.test.ts`** — added unit tests for all helper functions + error paths:
+- `expandTagHierarchy` — 1-level, 2-level, 3-level tags
+- `extractWikilinks` — aliased form `[[file|display]]`, `.md` stripping, lowercase, multi-link, empty string, trimming spaces
+- `extractTags` — inline body tags, frontmatter array, single-string frontmatter, non-string array items silently skipped, `tags: null`, empty result, ancestor deduplication
+- `extractTypedRelations` — string values, array values, values without wikilinks (ignored), non-string array items, empty frontmatter
+- `parseFile` error paths — FILE_NOT_FOUND (ENOENT), filepath in error, PARSE_ERROR (ENOTDIR/non-ENOENT), PARSE_ERROR for malformed YAML (undefined alias `*undefined_anchor`)
+
+### Final coverage
+- indexer.ts: **96.02% statements / 95.74% branch / 100% functions** ✅
+- parser.ts:  **99.23% statements / 86.11% branch / 100% functions** ✅
+
+### Key learnings
+
+1. **Gray-matter YAML throw trigger**: Tab characters do NOT cause gray-matter 4.x to throw — it silently absorbs them. The reliable trigger is an undefined YAML alias reference: `foo: *undefined_anchor`. This causes js-yaml to throw `YAMLException: unidentified alias "undefined_anchor"`.
+
+2. **ENOTDIR for non-ENOENT paths**: Passing a regular file as a "directory" (e.g., `/etc/hosts`) to `readdir`, or a path inside a file (e.g., `/etc/hosts/fake.md`) to `stat` or `readFile`, triggers `ENOTDIR` — a real, non-ENOENT I/O error that exercises the "other error" branches without mocking.
+
+3. **Remaining unreachable lines**:
+   - `indexer.ts` lines 308-314: The stat-failure catch block inside the `indexVault` loop. Requires a file to exist in `readdir` output but become un-stat-able before `stat` is called — a race condition only testable with mocks. Documented as dead code in normal operation.
+   - `parser.ts` line 218: The `"Unknown YAML parse error"` fallback for when a thrown value has no `message` property. Gray-matter (backed by js-yaml) always throws `YAMLException` which is a proper `Error` subclass with `message`. Documented as dead code.
+
+4. **Temp dir naming**: Used `.tmp-indexer-{N}`, `.tmp-indexfile-{N}`, `.tmp-removefile-{N}` patterns with `beforeEach`/`afterEach` for reliable cleanup. Avoids `/tmp` per project constraints.
+
+---
+
+## 2026-04-05T21:34:00Z: Wave 0 Complete — Cross-Team Updates
+
+**Wave 0 deliverables all closed.** Orchestration logs written. Decisions merged.
+
+**From Flynn (#26):** Phase 4 kickoff ADR approved. GovernanceRule discriminated union is ready. Wave 0 is the gate before Wave 1. Dumont's type contracts are locked and approved — Wave 1 implementation must match exactly.
+
+**From Tron (#45):** GovernanceRule discriminated union shipped. 13 governance tests passing. `tsc --noEmit` clean. All conditions met for Wave 1 type work.
+
+---
+
+## 2026-04-05T23:45:00Z: Issue #31 — Phase 4 Semantic Search Tests
+
+**Task completed.** Wrote `tests/search.test.ts` (51 tests) and extended `tests/governance.test.ts` (+14 tests: 7 TagRule + 7 LinkRule).
+
+### Learnings
+
+5. **VectorStore constructor reloads index from disk**: When writing tests for `isBuilt()` after `store()`, the same instance is reused — no need to create a new `VectorStore`. The `store()` method writes to disk and updates in-memory index atomically.
+
+6. **embedVault skips dot-prefixed entries**: The `if (entry.name.startsWith('.')) continue` check skips both dotfiles and dot-directories (like `.oxori`, `.git`). Tests can rely on this by creating `.hidden/` subdirectories.
+
+7. **searchVault dimension mismatch**: When vectors embedded with one dimension count are queried with a provider of different dimensions, the `entry.dimensions !== queryVec.length` guard silently skips them — resulting in empty results (not an error), provided the index exists.
+
+8. **Binary .vec format magic bytes**: `0x4F584F52` ("OXOR" in little-endian UInt32). Header is 12 bytes: magic(4) + version(4) + dims(4). Wrong magic → `VECTOR_FILE_CORRUPT`. File < 12 bytes → `VECTOR_FILE_CORRUPT`. Dim count mismatch with file size → `VECTOR_FILE_CORRUPT`.
+
+9. **TagRule/LinkRule are discriminated by `ruleType`**: The governance engine dispatches purely on `rule.ruleType`. No `effect` field on TagRule or LinkRule — they always produce violations on mismatch. First-match-wins still applies.
+
+10. **LinkRule minLinks vs maxLinks exclusive**: When both are set and count is below minLinks, the `minLinks` violation fires. The `else if` structure means only one violation is recorded per file per rule (not both min and max simultaneously).
+
+### Coverage: search.ts
+- Statements: 80.49%
+- Branch: 84.52%
+- Functions: 95%
+- Lines: 80.49%
+- Uncovered lines: 354-356 (createOpenAIProvider), 330-335 (VAULT_NOT_FOUND scan error path), 275 (unknown version branch in readVecFile)
+
+### Wave 2 — Phase 4 Comprehensive Test Coverage (2026-04-05)
+
+**Task:** Write comprehensive tests for Phase 4 semantic search (issue #31).
+
+**What was done:**
+- Created tests/search.test.ts with 51 tests covering embedVault, semantic queries, provider integration
+- Extended tests/governance.test.ts with 14 new governance rule tests (TagRule ×7, LinkRule ×7)
+- Achieved 80.49% statements, 84.52% branches, 95.00% functions coverage on search.ts
+- All tests use stub providers; no real API calls. Temp dirs follow tests/.tmp-search-{name}/ convention
+- Documented 3 low-risk uncovered gaps (fetch paths, race conditions, synthetic version headers)
+
+**Status:** ✅ Closed #31. All 285 tests passing (65 new). Code merged.
+
+**What I learned:**
+- Stub provider pattern eliminates API flakiness and enables deterministic testing at scale
+- Race condition gaps (e.g., readdirSync throwing on valid paths) are acceptable in test suites — document and move on
+- Temp dir cleanup discipline (dedicated .tmp-search-{name}/ convention) keeps test hygiene sharp
+
+---

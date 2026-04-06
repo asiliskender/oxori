@@ -807,28 +807,27 @@ export type WalkResult = {
   truncated: boolean;
 };
 
-// === Governance (Sprint 3) ===
+// === Governance (Sprint 3 / Sprint 4 discriminated union) ===
 
 /**
- * @brief A single governance rule parsed from `.oxori/governance.md`.
+ * @brief A path-based governance rule. Controls whether writes to matching files are allowed or denied.
  *
- * A single governance rule parsed from `.oxori/governance.md`.
+ * This is the original GovernanceRule shape, extended with a `ruleType` discriminator
+ * so TypeScript can narrow the union at rule-evaluation time.
  * Defined in Sprint 1 to avoid type churn when governance lands in Sprint 3.
  *
  * @remarks
- * `pattern` is a glob or regex string matched against the filepath or content
- * of a proposed agent write. The `effect` determines whether the matched write
- * is permitted (`"allow"`) or blocked (`"deny"`).
+ * `pattern` is a glob string matched against the target filepath.
+ * `effect` determines whether a matching write is permitted (`"allow"`) or blocked (`"deny"`).
  *
- * `appliesTo` scopes the rule: `"agents"` means it only applies to writes
- * originating from the MCP server / agent API — human writes (Obsidian, direct
- * file edits) are never subject to governance by design. `"all"` is reserved for
- * future use but defined now for forward compatibility.
+ * `appliesTo` scopes the rule: `"agents"` applies only to MCP/agent writes;
+ * `"humans"` applies only to direct human edits; `"all"` applies to both.
  *
  * Rules are evaluated in declaration order. The first matching rule wins.
  *
  * @example
- * const rule: GovernanceRule = {
+ * const rule: PathRule = {
+ *   ruleType: "path",
  *   id: "no-agent-writes-to-archive",
  *   description: "Agents must not modify archived files",
  *   pattern: "archive/**",
@@ -836,20 +835,95 @@ export type WalkResult = {
  *   appliesTo: "agents"
  * };
  *
- * @since 0.3.0
+ * @since 0.4.0 (ruleType added; previously the single flat GovernanceRule shape)
  */
-export type GovernanceRule = {
+export type PathRule = {
+  ruleType: "path";
   /** Unique identifier for this rule. Used in error messages and audit logs. */
   id: string;
   /** Human-readable explanation of what this rule enforces. */
-  description: string;
-  /** Glob or regex string matched against the target filepath or content. */
+  description?: string;
+  /** Glob pattern matched against the target filepath. */
   pattern: string;
   /** Whether a matching write is permitted or blocked. */
   effect: "allow" | "deny";
-  /** Scope: `"agents"` for MCP/agent writes only; `"all"` for future use. */
-  appliesTo: "agents" | "all";
+  /** Scope: `"agents"` for MCP/agent writes; `"humans"` for direct edits; `"all"` for both. */
+  appliesTo: "agents" | "humans" | "all";
 };
+
+/**
+ * @brief A tag-based governance rule. Files matching `pattern` must have `requiredTag`.
+ *
+ * @remarks
+ * If a file matches the glob `pattern` but its `FileEntry.tags` set does not contain
+ * `requiredTag`, a `GovernanceViolation` with `severity: "error"` is recorded.
+ *
+ * @since 0.4.0
+ */
+export type TagRule = {
+  ruleType: "tag";
+  /** Unique identifier for this rule. Used in error messages and audit logs. */
+  id: string;
+  /** Human-readable explanation of what this rule enforces. */
+  description?: string;
+  /** Glob pattern matched against the target filepath. */
+  pattern: string;
+  /** Tag that must be present on every file matching `pattern`. */
+  requiredTag: string;
+  /** Scope: `"agents"` for MCP/agent writes; `"humans"` for direct edits; `"all"` for both. */
+  appliesTo: "agents" | "humans" | "all";
+};
+
+/**
+ * @brief A link-based governance rule. Files matching `pattern` must have link counts within bounds.
+ *
+ * @remarks
+ * Outbound link count is derived from `FileEntry.wikilinks.size`.
+ * If `minLinks` is set and the file's outbound link count is below it, a violation is recorded.
+ * If `maxLinks` is set and the count exceeds it, a violation is recorded.
+ *
+ * @since 0.4.0
+ */
+export type LinkRule = {
+  ruleType: "link";
+  /** Unique identifier for this rule. Used in error messages and audit logs. */
+  id: string;
+  /** Human-readable explanation of what this rule enforces. */
+  description?: string;
+  /** Glob pattern matched against the target filepath. */
+  pattern: string;
+  /** Minimum required outbound wikilinks. Violation if file has fewer. */
+  minLinks?: number;
+  /** Maximum allowed outbound wikilinks. Violation if file exceeds this. */
+  maxLinks?: number;
+  /** Scope: `"agents"` for MCP/agent writes; `"humans"` for direct edits; `"all"` for both. */
+  appliesTo: "agents" | "humans" | "all";
+};
+
+/**
+ * @brief A governance rule. One of: PathRule (allow/deny writes), TagRule (require tags), LinkRule (enforce link counts).
+ *
+ * A single governance rule parsed from `.oxori/governance.md`.
+ * Defined in Phase 1 to avoid type churn when governance lands in Phase 3.
+ *
+ * @remarks
+ * Rules are evaluated in declaration order. The first matching rule wins.
+ * TypeScript narrows the union via the `ruleType` discriminant — use a
+ * `switch (rule.ruleType)` in evaluation code to get exhaustive checking.
+ *
+ * @example
+ * const rule: GovernanceRule = {
+ *   ruleType: "path",
+ *   id: "no-agent-writes-to-archive",
+ *   description: "Agents must not modify archived files",
+ *   pattern: "archive/**",
+ *   effect: "deny",
+ *   appliesTo: "agents"
+ * };
+ *
+ * @since 0.3.0 (original flat shape); 0.4.0 (discriminated union)
+ */
+export type GovernanceRule = PathRule | TagRule | LinkRule;
 
 /**
  * @brief A single governance rule violation detected during evaluation.
@@ -960,3 +1034,121 @@ export interface VaultWatcher {
    */
   stop(): void;
 };
+
+// ── Phase 4: Semantic Search ──────────────────────────────────────────────────
+
+/**
+ * A dense vector of float32 values representing a text embedding.
+ * Produced by an EmbeddingProvider and stored in .oxori/vectors/.
+ * @since 0.4.0
+ */
+export type Embedding = number[];
+
+/**
+ * An embedding provider. Abstracts over OpenAI, Anthropic, local ONNX, or
+ * any HTTP-compatible embeddings API.
+ *
+ * Implementations must be injected — no global singleton is permitted.
+ * The provider is stateless: multiple concurrent calls to embed() are safe.
+ *
+ * @since 0.4.0
+ */
+export interface EmbeddingProvider {
+  /**
+   * Embed a single piece of text. Returns a float32 vector on success,
+   * or an OxoriError on failure (network error, API error, etc.).
+   */
+  embed(text: string): Promise<Result<Embedding, OxoriError>>;
+  /** Number of dimensions in the output vector. e.g. 1536 for text-embedding-3-small. */
+  readonly dimensions: number;
+  /** Model identifier. e.g. "text-embedding-3-small". */
+  readonly model: string;
+}
+
+/**
+ * Configuration for the built-in OpenAI embedding provider.
+ * @since 0.4.0
+ */
+export interface OpenAIProviderConfig {
+  /** OpenAI API key. Can also be set via OXORI_API_KEY environment variable. */
+  apiKey: string;
+  /** Model to use. Defaults to "text-embedding-3-small". */
+  model?: string;
+  /** Base URL override. Defaults to "https://api.openai.com/v1". */
+  baseUrl?: string;
+}
+
+/**
+ * A single semantic search result.
+ * @since 0.4.0
+ */
+export interface SearchResult {
+  /** Absolute path to the matched file. */
+  filepath: string;
+  /** Cosine similarity score in [0, 1]. Higher = more similar. */
+  score: number;
+  /** Frontmatter title, if present. */
+  title?: string;
+  /** First 200 characters of the file body (frontmatter stripped). */
+  excerpt?: string;
+}
+
+/**
+ * Options for vault.search().
+ * @since 0.4.0
+ */
+export interface SearchOptions {
+  /** Maximum number of results to return. Defaults to 10. */
+  topK?: number;
+  /** Minimum similarity score to include in results. Defaults to 0. */
+  minScore?: number;
+}
+
+/**
+ * Metadata stored in .oxori/vectors/index.json for a single embedded file.
+ * @since 0.4.0
+ */
+export interface VectorEntry {
+  /** Absolute filepath of the source file. */
+  filepath: string;
+  /** SHA-256 hash of the source file content at embed time (for staleness detection). */
+  contentHash: string;
+  /** Model used to generate this embedding. */
+  model: string;
+  /** Embedding dimensions. */
+  dimensions: number;
+  /** ISO 8601 timestamp of when the embedding was generated. */
+  embeddedAt: string;
+  /** Filename of the binary .vec file (relative to .oxori/vectors/). */
+  vecFile: string;
+}
+
+/**
+ * The full .oxori/vectors/index.json structure.
+ * @since 0.4.0
+ */
+export interface VectorIndex {
+  /** Schema version for forward compatibility. */
+  version: number;
+  /** Map from absolute filepath to VectorEntry. */
+  entries: Record<string, VectorEntry>;
+}
+
+/**
+ * Phase 4 error codes for embedding and vector operations.
+ * Used as the `code` field of `OxoriError`.
+ *
+ * - `VECTORS_NOT_BUILT`         — No vector index found; run `oxori embed` first.
+ * - `EMBEDDING_API_ERROR`       — HTTP/network error calling the embedding API.
+ * - `EMBEDDING_PROVIDER_ERROR`  — Provider returned an unexpected response.
+ * - `VECTOR_FILE_CORRUPT`       — A .vec file failed magic/version validation.
+ * - `VECTOR_DIMENSIONS_MISMATCH`— Loaded vector dimensions differ from index metadata.
+ *
+ * @since 0.4.0
+ */
+export type EmbeddingErrorCode =
+  | "VECTORS_NOT_BUILT"
+  | "EMBEDDING_API_ERROR"
+  | "EMBEDDING_PROVIDER_ERROR"
+  | "VECTOR_FILE_CORRUPT"
+  | "VECTOR_DIMENSIONS_MISMATCH";

@@ -18,6 +18,7 @@ Your markdown files stay readable, editable, yours. Oxori makes them queryable. 
 - ✅ **CLI commands** — `oxori query`, `oxori walk`, `oxori graph`
 - ✅ **File watching** — real-time vault change events (add/change/unlink)
 - ✅ **Governance** — policy rules via glob patterns with deny/allow effects
+- ✅ **Semantic search** (optional) — embed files with OpenAI or custom providers, find by content similarity
 
 ## Installation
 
@@ -185,6 +186,34 @@ if (!result.passed) {
   });
 }
 ```
+
+#### Semantic Search
+
+Semantic search is optional — your vault works fine without embeddings. When enabled, search finds files by content similarity using embeddings.
+
+```typescript
+import { indexVault, embedVault, searchVault, createOpenAIProvider } from "oxori";
+
+// Create a provider (built-in OpenAI or custom)
+const provider = createOpenAIProvider({ apiKey: process.env.OPENAI_API_KEY });
+
+// Embed all markdown files once
+await embedVault("./my-vault", provider);
+
+// Search by semantic similarity
+const results = await searchVault("./my-vault", "find notes about TypeScript", provider);
+results.forEach(r => {
+  console.log(`${r.filepath}: ${(r.score * 100).toFixed(1)}% match`);
+});
+```
+
+**Key points:**
+- Embeddings are stored in `.oxori/vectors/` as binary files.
+- Semantic search is completely optional — core Oxori (index, query, walk, governance) works without any setup.
+- Use `createStubProvider()` for deterministic offline testing.
+- Incremental embedding skips files that haven't changed.
+
+See [docs/semantic-search.md](docs/semantic-search.md) for complete API reference and provider patterns.
 
 ## Vault Structure
 
