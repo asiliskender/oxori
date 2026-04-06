@@ -8,6 +8,7 @@ export default defineConfig([
     sourcemap: true,
     clean: true,
     target: "node20",
+    external: ["micromatch"],
   },
   {
     entry: { cli: "src/cli.ts" },
@@ -17,5 +18,6 @@ export default defineConfig([
     clean: false,
     target: "node20",
     banner: { js: "#!/usr/bin/env node" },
+    external: ["micromatch"],
   },
 ]);
