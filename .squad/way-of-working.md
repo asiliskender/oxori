@@ -12,7 +12,7 @@
 2. [How We Plan Work](#2-how-we-plan-work)
 3. [How We Branch & Commit](#3-how-we-branch--commit)
 4. [How We Maintain Quality](#4-how-we-maintain-quality)
-5. [How We Gate a Phase](#5-how-we-gate-a-phase)
+5. [How We Gate a Sprint](#5-how-we-gate-a-sprint)
 6. [How We Review Code](#6-how-we-review-code)
 7. [Contract-First Discipline](#7-contract-first-discipline)
 8. [How We Test](#8-how-we-test)
@@ -33,12 +33,12 @@ Every squad needs these capabilities. Names and headcount vary — the responsib
 
 | Role | Core Responsibility | Owns |
 |------|---------------------|------|
-| **Lead / Architect** | Phase gates, interface design, final approval | All merges to main, all architecture decisions |
+| **Lead / Architect** | Sprint gates, interface design, final approval | All merges to main, all architecture decisions |
 | **Implementer(s)** | Building what was designed | Their assigned modules / components |
 | **QA / Tester** | Quality assurance, test coverage | All test files, all fixtures, all coverage reports |
 | **Docs** | Developer experience, documentation | README, architecture log, release notes |
 | **DevOps** | Build pipeline, CI/CD, releases | CI workflows, build config, deployment automation |
-| **Product Owner** | Scope, priorities, backlog | Phase scope decisions, trade-off calls |
+| **Product Owner** | Scope, priorities, backlog | Sprint scope decisions, trade-off calls |
 
 Smaller teams merge roles. Larger teams split them. The responsibilities stay.
 
@@ -46,7 +46,7 @@ Smaller teams merge roles. Larger teams split them. The responsibilities stay.
 
 **The Lead does not implement.** The Lead designs, reviews, gates, and decides. When the Lead also implements, there is no one to review the Lead's work. **This is not allowed.** If the team is too small to avoid it, the Lead's code is subject to mandatory review by the most senior available non-Lead member before merge.
 
-**The Lead has a deputy.** The Lead nominates one team member as deputy at phase kickoff. If the Lead is unavailable (unreachable for more than half a working session), the deputy holds gate authority temporarily: they may review code and block merges, but may not approve a gate or merge to main without a quorum decision from at least two other role-holders. The deputy appointment is written in the phase scope document.
+**The Lead has a deputy.** The Lead nominates one team member as deputy at sprint kickoff. If the Lead is unavailable (unreachable for more than half a working session), the deputy holds gate authority temporarily: they may review code and block merges, but may not approve a gate or merge to main without a quorum decision from at least two other role-holders. The deputy appointment is written in the sprint scope document.
 
 **No one reviews their own work.** The author of a submission is never its reviewer.
 
@@ -65,10 +65,10 @@ Work is not done when it is implemented. Work is done when it has been signed of
 | Test suite | QA (coverage + correctness) |
 | Documentation | Docs (accuracy + completeness) |
 | Architecture decision (ADR) | Lead + relevant role-holders impacted by the decision |
-| Phase gate | Lead + QA + Docs + DevOps (all gate criteria met) |
+| Sprint gate | Lead + QA + Docs + DevOps (all gate criteria met) |
 | Release | Lead + DevOps (pipeline validated) |
 
-No phase merges without all required sign-offs. Partial sign-offs are not sign-offs.
+No sprint merges without all required sign-offs. Partial sign-offs are not sign-offs.
 
 ---
 
@@ -80,24 +80,24 @@ All work lives on feature branches. **Direct commits to `main` are not allowed.*
 
 ```
 main (protected)
-  └── feature/phase-N-<short-name>
-        ├── work by all team members for this phase
+  └── feature/sprint-N-<short-name>
+        ├── work by all team members for this sprint
         └── merged to main ONLY after the Lead's gate sign-off
 ```
 
-Every phase has exactly one feature branch. Every phase produces exactly one release. No partial phases. No partial merges.
+Every sprint has exactly one feature branch. Every sprint produces exactly one release. No partial sprints. No partial merges.
 
-### Phases
+### Sprints
 
-A phase is a bounded unit of work with:
+A sprint is a bounded unit of work with:
 - A named scope (what is in and what is explicitly out)
 - A feature branch
 - A gate checklist (written at kickoff, not at review time)
 - A release version on successful merge
 
-**Phases should be sized so the team can ship a working, tested, documented increment.** If a phase cannot ship something end-to-end functional, it is too small or too fragmented. Combine or re-scope.
+**Sprints should be sized so the team can ship a working, tested, documented increment.** If a sprint cannot ship something end-to-end functional, it is too small or too fragmented. Combine or re-scope.
 
-**Phase sizing heuristic:** A phase should represent work that can be completed and gated in one focused sprint of team effort — typically one to three weeks depending on team size and cadence. A phase contains all the work needed to ship a user-facing or integration-ready capability. If two features can be shipped and used independently, they belong in separate phases. If a feature requires two phases to be useful, the phase boundary should be at the first independently testable increment.
+**Sprint sizing heuristic:** A sprint should represent work that can be completed and gated in one focused sprint of team effort — typically one to three weeks depending on team size and cadence. A sprint contains all the work needed to ship a user-facing or integration-ready capability. If two features can be shipped and used independently, they belong in separate sprints. If a feature requires two sprints to be useful, the sprint boundary should be at the first independently testable increment.
 
 ### Backlog
 
@@ -115,33 +115,33 @@ Vague acceptance criteria produce implementation–test mismatches. When the tes
 
 ### Kickoff Checklist
 
-Before any phase begins:
+Before any sprint begins:
 
-- [ ] Phase scope is written down, agreed, and signed by the Product Owner (what is in, what is explicitly out)
+- [ ] Sprint scope is written down, agreed, and signed by the Product Owner (what is in, what is explicitly out)
 - [ ] Trade-off authority is clear: **the Product Owner owns scope and business priority; the Lead owns architecture and technical feasibility.** If they conflict, the Product Owner states the business constraint and the Lead states the technical constraint — the resolution is written down as a formal decision, not a verbal compromise.
 - [ ] Gate checklist is written (owned by the Lead)
 - [ ] Contracts / interfaces for new modules are **assigned for drafting** (not yet drafted, not yet approved — the drafting sequence follows in §7)
-- [ ] Debt items from the previous phase are reviewed and assigned or explicitly deferred
-- [ ] Each team member knows which modules they own for this phase
-- [ ] Lead deputy is nominated for this phase
+- [ ] Debt items from the previous sprint are reviewed and assigned or explicitly deferred
+- [ ] Each team member knows which modules they own for this sprint
+- [ ] Lead deputy is nominated for this sprint
 
 ### Feature Flags
 
-A feature flag is acceptable when an implementation spans multiple phases or when a capability must be deployed but not yet user-visible. Feature flags are not shortcuts around incomplete work.
+A feature flag is acceptable when an implementation spans multiple sprints or when a capability must be deployed but not yet user-visible. Feature flags are not shortcuts around incomplete work.
 
 A feature flag is valid only if:
 1. The disabled code path is fully tested (tests pass in both the enabled and disabled state)
-2. The flag is documented in the architecture log with the target phase for its removal
+2. The flag is documented in the architecture log with the target sprint for its removal
 3. The flag cannot surface to end users while disabled — only internal or CI-level access is permitted
 
-A feature flag that ships untested disabled code is technical debt, not a phase increment.
+A feature flag that ships untested disabled code is technical debt, not a sprint increment.
 
 ---
 
 ### Branch Names
 
 ```
-feature/phase-N-<short-name>    # phase branches
+feature/sprint-N-<short-name>    # sprint branches
 fix/<short-description>         # hotfixes on top of main
 docs/<short-description>        # documentation-only branches
 ```
@@ -185,7 +185,7 @@ An atomic commit can be reverted without breaking anything else. If reverting a 
 
 ### The Non-Negotiables
 
-These apply to every project, every phase, every language:
+These apply to every project, every sprint, every language:
 
 **1. Use your language's strictest type-checking mode.**  
 Types are the cheapest form of documentation and the cheapest form of testing. Turning off type strictness to "move faster" produces slower movement within a few iterations.
@@ -217,7 +217,7 @@ Return errors as values where practical. Unhandled exceptions that propagate sil
 
 Reviews check:
 - Correctness against the locked contract
-- No regressions against prior phases
+- No regressions against prior sprints
 - No half-exposed internals in the public interface
 - Inline docs are accurate — not just present
 - Tests cover the specification, not just the happy path
@@ -229,19 +229,19 @@ Reviews check:
 
 ---
 
-## 5. How We Gate a Phase
+## 5. How We Gate a Sprint
 
-The gate is the Lead's binary checklist. Every criterion passes or the phase does not merge.
+The gate is the Lead's binary checklist. Every criterion passes or the sprint does not merge.
 
 ### Gate Outcomes
 
 | Outcome | What It Means |
 |---------|--------------|
 | **APPROVED** | All criteria pass. Merge proceeds. |
-| **CONDITIONAL PASS** | One named exception, documented as phase debt with explicit owner and target. Merge allowed. |
+| **CONDITIONAL PASS** | One named exception, documented as sprint debt with explicit owner and target. Merge allowed. |
 | **BLOCKED** | One or more criteria fail. Specific failures listed. Specific owners assigned. |
 
-### Gate Checklist — Universal Criteria (Every Phase)
+### Gate Checklist — Universal Criteria (Every Sprint)
 
 | # | Criterion | How to Verify |
 |---|-----------|---------------|
@@ -252,19 +252,19 @@ The gate is the Lead's binary checklist. Every criterion passes or the phase doe
 | 5 | Public interface exports verified at runtime | Import or load the built artifact, enumerate exported names — all expected symbols present and callable |
 | 6 | No escape hatches in source | No unsafe type casts, no lint suppressions in source |
 | 7 | Inline docs complete | All public exports have summary, parameters, return, and error docs |
-| 8 | README updated | Phase capabilities documented with usage examples |
-| 9 | Architecture log updated | Design decisions from this phase recorded as ADRs |
+| 8 | README updated | Sprint capabilities documented with usage examples |
+| 9 | Architecture log updated | Design decisions from this sprint recorded as ADRs |
 | 10 | Release notes written | Changelog entry for this release complete |
 | 11 | Coverage thresholds met | Full per-file coverage table passes all project-defined thresholds |
 | 12 | Lockfile / dependency manifest committed | Reproducible install verified |
 | 13 | Clean install passes | Fresh checkout → install → build → test succeeds end-to-end |
 
-**Phase-specific criteria are written by the Lead at phase kickoff** — not discovered at review time. Anything the team did not know was required until gate day is a process failure, not a technical failure.
+**Sprint-specific criteria are written by the Lead at sprint kickoff** — not discovered at review time. Anything the team did not know was required until gate day is a process failure, not a technical failure.
 
 ### Gate Checklist Amendment Protocol
 
-When scope changes mid-phase, the Lead writes a formal amendment documenting:
-- Which criteria are deferred (with rationale and target phase)
+When scope changes mid-sprint, the Lead writes a formal amendment documenting:
+- Which criteria are deferred (with rationale and target sprint)
 - Which criteria are added
 - Which criteria are modified
 
@@ -279,11 +279,11 @@ The gate is not a solo exercise by the Lead. All sign-offs must be in place:
 - **Docs** — README accuracy, architecture log completeness, release notes
 - **DevOps** — clean install validated, build pipeline confirmed
 
-A phase does not merge until all four sign-offs are recorded.
+A sprint does not merge until all four sign-offs are recorded.
 
 ### Conditional Pass Stacking Limit
 
-A CONDITIONAL PASS carries exactly one named exception into the next phase. If that exception is deferred again — becoming a conditional exception in a second consecutive phase — it must be treated as a debt ledger item subject to the three-deferral rule (§14). A single exception deferred three phases in a row is automatically elevated to a gate blocker for the next phase. It cannot receive another CONDITIONAL PASS.
+A CONDITIONAL PASS carries exactly one named exception into the next sprint. If that exception is deferred again — becoming a conditional exception in a second consecutive sprint — it must be treated as a debt ledger item subject to the three-deferral rule (§14). A single exception deferred three sprints in a row is automatically elevated to a gate blocker for the next sprint. It cannot receive another CONDITIONAL PASS.
 
 ---
 
@@ -305,7 +305,7 @@ A different team member takes the revision. The author may not advise, co-author
 
 **Cascade:** If the revision is also rejected, the revision author is now also locked out. A third team member takes the next attempt.
 
-**Lockout escalation:** If all eligible team members have been locked out of an artifact, this is an escalation signal — not an implementation problem, but a design problem. The Product Owner is notified. The Lead reviews the artifact history and decides: (a) revert to an earlier approved design, (b) bring in external review, or (c) treat as a blocking debt item — design the artifact from scratch next phase with explicit Lead involvement from the start. Re-admitting a locked-out author is not an option without explicit Product Owner sign-off and a written rationale.
+**Lockout escalation:** If all eligible team members have been locked out of an artifact, this is an escalation signal — not an implementation problem, but a design problem. The Product Owner is notified. The Lead reviews the artifact history and decides: (a) revert to an earlier approved design, (b) bring in external review, or (c) treat as a blocking debt item — design the artifact from scratch next sprint with explicit Lead involvement from the start. Re-admitting a locked-out author is not an option without explicit Product Owner sign-off and a written rationale.
 
 ### What Rejection Lockout Is Not
 
@@ -419,10 +419,10 @@ Use your test framework's pending mechanism (`it.todo()`, `@pytest.mark.skip`, `
 - Tests that need stable implementation output to assert against
 - Tests that would couple to internal implementation details
 
-**Pending tests are not a permanent state.** Every pending test is a debt item. It has an owner and a target phase for completion.
+**Pending tests are not a permanent state.** Every pending test is a debt item. It has an owner and a target sprint for completion.
 
 **Tracking requirement:** Every pending test must have:
-1. A debt ledger entry (introduced phase, target phase, owner, closure condition)
+1. A debt ledger entry (introduced sprint, target sprint, owner, closure condition)
 2. An inline comment in the test file with the debt item ID
 3. The test framework's pending mechanism applied — do not leave empty assertions without marking pending
 
@@ -477,7 +477,7 @@ The Docs role finalises all documentation. Team members write **proposals** (inl
 
 | Document | Contents | Rule |
 |----------|----------|------|
-| **README** | What it is, how to install, how to use | Only these three. No roadmap, phases, future features, or team references. |
+| **README** | What it is, how to install, how to use | Only these three. No roadmap, sprints, future features, or team references. |
 | **Release Notes / Changelog** | What changed in this release | Accurate and complete. Covers every user-visible change. Migration steps for breaking changes. |
 | **Architecture Log** | ADRs — why decisions were made, what alternatives were considered | Permanent. ADRs are never deleted. They explain why the codebase looks the way it looks. |
 
@@ -514,27 +514,27 @@ Every exported interface, function, type, and error code requires inline documen
 
 ### Format
 
-Every phase retrospective follows this structure:
+Every sprint retrospective follows this structure:
 
 1. **What went well** — concrete, specific examples. Not "good teamwork." Name the thing that worked and why it worked.
 2. **What didn't go well** — honest, direct, no euphemisms. Name the failure mode, the root cause, and who was involved.
 3. **What we learned** — actionable insight derived from what happened. Not observations — lessons that change future behaviour.
-4. **Action items** — one owner per item, one target phase per item, one clear definition of done per item.
+4. **Action items** — one owner per item, one target sprint per item, one clear definition of done per item.
 
 ### Cadence
 
-- **Full retrospective** — after every phase completion, facilitated by the Lead
+- **Full retrospective** — after every sprint completion, facilitated by the Lead
 - **Abbreviated retrospective** — after any build failure, test failure, or reviewer rejection (see [§11 Ceremonies](#11-ceremonies))
 
 ### Action Item Discipline
 
-Action items are written to the decision log. They are reviewed at the next phase kickoff. They are verified in the gate checklist.
+Action items are written to the decision log. They are reviewed at the next sprint kickoff. They are verified in the gate checklist.
 
-**An action item that is deferred three phases in a row has an ownership problem, not a priority problem.** At that point, assign a single owner and make it a gate criterion for the next phase. It cannot slip again.
+**An action item that is deferred three sprints in a row has an ownership problem, not a priority problem.** At that point, assign a single owner and make it a gate criterion for the next sprint. It cannot slip again.
 
 ### The Compounding Value of Retros
 
-Retrospective action items have measurable compounding value when enforced. A checklist item added at Phase N's retro prevents the exact failure mode it was written for when applied in Phase N+1. The ROI is not visible in features delivered — it is visible in gate attempts avoided.
+Retrospective action items have measurable compounding value when enforced. A checklist item added at Sprint N's retro prevents the exact failure mode it was written for when applied in Sprint N+1. The ROI is not visible in features delivered — it is visible in gate attempts avoided.
 
 The retrospective is not a ceremony that produces documents nobody reads. The documents are the mechanism. If they are not read, the retrospective has zero value.
 
@@ -566,22 +566,22 @@ Ceremonies are structured alignment events that happen before or after work. The
 3. What changes — the single most important adjustment
 4. Action item — one owner, one target, one clear done condition
 
-This is a 15-minute exercise, not a full phase retrospective. Do not defer it. The value is in the immediacy — the failure mode is fresh.
+This is a 15-minute exercise, not a full sprint retrospective. Do not defer it. The value is in the immediacy — the failure mode is fresh.
 
-### Phase Kickoff
+### Sprint Kickoff
 
-**When:** Before every new phase begins.
+**When:** Before every new sprint begins.
 
 **Participants:** Lead, Product Owner, all role-holders.
 
 **Agenda:**
-1. **Product Owner confirms phase scope** — what is in, what is explicitly out, what is deferred and why
+1. **Product Owner confirms sprint scope** — what is in, what is explicitly out, what is deferred and why
 2. **Product Owner locks priorities** — if there is more work than time, the PO decides what ships and what slips; this decision is written down before work begins
-3. Review the debt ledger from the previous phase — business impact assessed by PO, technical assessment by Lead
+3. Review the debt ledger from the previous sprint — business impact assessed by PO, technical assessment by Lead
 4. Write the gate checklist (Lead)
 5. Assign contracts for drafting (not yet drafted — see §7 for the drafting sequence)
 6. Assign module ownership (Lead)
-7. Nominate Lead deputy for this phase
+7. Nominate Lead deputy for this sprint
 
 **Output:** Written scope signed by the Product Owner, written gate checklist, contracts assigned, ownership assigned, deputy named. Work does not start without these.
 
@@ -605,7 +605,7 @@ Fill this in for your project. The role labels on the left are universal.
 
 | Work Type | Route To |
 |-----------|----------|
-| Architecture decisions, phase gates, API design | Lead / Architect |
+| Architecture decisions, sprint gates, API design | Lead / Architect |
 | Core domain implementation | Core Implementer(s) |
 | Integration, platform, infrastructure | Platform Implementer(s) |
 | Tests, fixtures, coverage | QA / Tester |
@@ -626,7 +626,7 @@ The Lead is the triage point. All unlabelled squad work passes through the Lead 
 
 ## 13. Anti-Patterns (Retro-Derived)
 
-These are failure modes that have recurred across phases. Every new team member reads this section.
+These are failure modes that have recurred across sprints. Every new team member reads this section.
 
 ---
 
@@ -642,11 +642,11 @@ These are failure modes that have recurred across phases. Every new team member 
 
 ### Anti-Pattern: Gate Criteria Discovered at Review Time
 
-**What happens:** At gate review, the Lead identifies a criterion that was never communicated during the phase ("the public API must include X", "the clean install must succeed from scratch"). Teams scramble to fix things that were actually done correctly — just not to the unstated expectation.
+**What happens:** At gate review, the Lead identifies a criterion that was never communicated during the sprint ("the public API must include X", "the clean install must succeed from scratch"). Teams scramble to fix things that were actually done correctly — just not to the unstated expectation.
 
 **Root cause:** The gate checklist was written at review time, not at kickoff.
 
-**Fix:** The Lead writes the complete gate checklist at phase kickoff. Everything on it is known and verifiable from day one. Criteria discovered at review time are process failures. See [§5 How We Gate a Phase](#5-how-we-gate-a-phase).
+**Fix:** The Lead writes the complete gate checklist at sprint kickoff. Everything on it is known and verifiable from day one. Criteria discovered at review time are process failures. See [§5 How We Gate a Sprint](#5-how-we-gate-a-sprint).
 
 ---
 
@@ -672,21 +672,21 @@ These are failure modes that have recurred across phases. Every new team member 
 
 ### Anti-Pattern: Release Pipeline Never Validated
 
-**What happens:** The release automation is set up but never run in dry-run mode. It is deferred phase after phase ("it's not blocking this release"). When a real release is finally attempted, the pipeline fails with missing plugins, incorrect credentials, or misconfigured steps.
+**What happens:** The release automation is set up but never run in dry-run mode. It is deferred sprint after sprint ("it's not blocking this release"). When a real release is finally attempted, the pipeline fails with missing plugins, incorrect credentials, or misconfigured steps.
 
 **Root cause:** Deferral is mistaken for low risk. Each deferral increases the real risk — more versions accumulate, more pipeline assumptions go unchecked.
 
-**Fix:** Run the release dry-run before the first real release. Make it a gate criterion. Three consecutive deferrals means the ownership is unclear — assign a single owner and make it mandatory next phase.
+**Fix:** Run the release dry-run before the first real release. Make it a gate criterion. Three consecutive deferrals means the ownership is unclear — assign a single owner and make it mandatory next sprint.
 
 ---
 
 ### Anti-Pattern: Informal Scope Pivot Without Gate Amendment
 
-**What happens:** Mid-phase, a feature is deferred or a new one added. The gate checklist is silently reduced or expanded. At gate time, there is disagreement about which criteria apply.
+**What happens:** Mid-sprint, a feature is deferred or a new one added. The gate checklist is silently reduced or expanded. At gate time, there is disagreement about which criteria apply.
 
 **Root cause:** Scope changes without written record produce competing memories of what was agreed.
 
-**Fix:** Any mid-phase scope change requires a formal amendment from the Lead: which criteria are deferred, which are added, which are modified. No silent evaluation against a subset. See [§5 Gate Checklist Amendment Protocol](#gate-checklist-amendment-protocol).
+**Fix:** Any mid-sprint scope change requires a formal amendment from the Lead: which criteria are deferred, which are added, which are modified. No silent evaluation against a subset. See [§5 Gate Checklist Amendment Protocol](#gate-checklist-amendment-protocol).
 
 ---
 
@@ -706,7 +706,7 @@ These are failure modes that have recurred across phases. Every new team member 
 
 **Root cause:** Pending tests were treated as a resolution rather than a deferral.
 
-**Fix:** Every pending test is a named debt item with an owner and a target phase. At kickoff, the previous phase's pending tests are reviewed. If they are still pending, they are assigned and prioritised.
+**Fix:** Every pending test is a named debt item with an owner and a target sprint. At kickoff, the previous sprint's pending tests are reviewed. If they are still pending, they are assigned and prioritised.
 
 ---
 
@@ -722,20 +722,20 @@ These are failure modes that have recurred across phases. Every new team member 
 
 ## 14. Debt Ledger
 
-Every piece of work explicitly deferred gets a row here. The ledger is reviewed at every phase kickoff.
+Every piece of work explicitly deferred gets a row here. The ledger is reviewed at every sprint kickoff.
 
-| Item | Introduced | Target Phase | Owner | Condition for Closure |
+| Item | Introduced | Target Sprint | Owner | Condition for Closure |
 |------|-----------|--------------|-------|-----------------------|
-| *(example: CLI integration tests pending)* | Phase 1 | Phase 2 | QA | All pending CLI tests filled with assertions and passing |
+| *(example: CLI integration tests pending)* | Sprint 1 | Sprint 2 | QA | All pending CLI tests filled with assertions and passing |
 
 ### Ledger Rules
 
 - **Every deferred item has an owner.** "Team" is not an owner.
-- **Every deferred item has a target phase.** "Soon" is not a target phase.
-- **Three deferrals = mandatory.** An item that has been pushed to the next phase three times in a row is assigned to a specific owner and added to the gate checklist as a required criterion. It cannot be deferred again.
+- **Every deferred item has a target sprint.** "Soon" is not a target sprint.
+- **Three deferrals = mandatory.** An item that has been pushed to the next sprint three times in a row is assigned to a specific owner and added to the gate checklist as a required criterion. It cannot be deferred again.
 - **Items are closed when the gate verifies them**, not when the implementer says they are done.
 
 ---
 
 *This document describes how we work — the principles, process, and discipline — independent of what we are building and who is building it.*  
-*Maintained by the Lead. All amendments committed with `docs(squad):` prefix. Read before every phase kickoff.*
+*Maintained by the Lead. All amendments committed with `docs(squad):` prefix. Read before every sprint kickoff.*

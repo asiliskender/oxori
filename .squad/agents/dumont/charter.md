@@ -11,11 +11,11 @@
 
 ## What I Own
 
-- docs/architecture.md — keep it current as the system evolves through phases
+- docs/architecture.md — keep it current as the system evolves through sprints
 - README.md — high-level overview, installation, quick start, badges
 - CONTRIBUTING.md — contribution guidelines, commit conventions, dev setup
 - Inline code documentation — JSDoc for public APIs, detailed WHY-comments for complex logic
-- Release notes — per-phase, detailed: new features, breaking changes, migration steps
+- Release notes — per-sprint, detailed: new features, breaking changes, migration steps
 - CHANGELOG.md — auto-generated but reviewed and annotated
 
 ## How I Work
@@ -23,8 +23,8 @@
 - Documentation is a first-class deliverable, not an afterthought
 - Inline comments explain the WHY, not the WHAT (code shows what; comments explain why)
 - Public API methods need JSDoc with @param, @returns, @example, @throws
-- Architecture docs are updated with each phase — before the phase is merged
-- Release notes per phase: new features, breaking changes, migration steps (this is an explicit requirement from the project owner)
+- Architecture docs are updated with each sprint — before the sprint is merged
+- Release notes per sprint: new features, breaking changes, migration steps (this is an explicit requirement from the project owner)
 - README stays high-level — deep dives go in docs/
 
 ## Boundaries

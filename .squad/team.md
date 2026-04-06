@@ -32,9 +32,9 @@
 - **Created:** 2026-04-03
 - **Universe:** Tron
 
-## Build Phases
+## Build Sprints
 
-| Phase | Focus | Status |
+| Sprint | Focus | Status |
 |-------|-------|--------|
 | 1 | Parser + Markdown Index | ✅ Complete (v0.1.0) |
 | 2 | Query Engine + Graph Walk | ✅ Complete (v0.2.0) |
@@ -44,4 +44,4 @@
 
 ## Workflow
 
-**Feature Branch Model (D2 Directive):** All work follows feature-branch → PR → review → merge pattern. Main branch is protected. Every phase uses a dedicated feature branch (e.g., `feature/phase-4-governance`), with Flynn's approval required before merging to main.
+**Feature Branch Model (D2 Directive):** All work follows feature-branch → PR → review → merge pattern. Main branch is protected. Every sprint uses a dedicated feature branch (e.g., `feature/sprint-4-governance`), with Flynn's approval required before merging to main.

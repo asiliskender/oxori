@@ -2,47 +2,47 @@
 
 ## Active Decisions
 
-### 2026-04-03: Full sprint backlog created for all 5 phases
+### 2026-04-03: Full sprint backlog created for all 5 sprints
 
 **By:** Castor (Product Owner)
 
-**What:** Complete sprint backlog written to `.squad/backlog.md` covering ~38 GitHub issues across all 5 phases. Each phase is a separate shippable npm release (v0.1.0 through v0.5.0). Phase gates owned by Flynn, release notes owned by Dumont.
+**What:** Complete sprint backlog written to `.squad/backlog.md` covering ~38 GitHub issues across all 5 sprints. Each sprint is a separate shippable npm release (v0.1.0 through v0.5.0). Sprint gates owned by Flynn, release notes owned by Dumont.
 
-**Why:** Onur Asiliskender requested full sprint planning before development begins. Clear backlog enables team parallelization (Tron on parser, Ram on graph, Yori on tests) and prevents scope creep by defining phase boundaries explicitly.
+**Why:** Onur Asiliskender requested full sprint planning before development begins. Clear backlog enables team parallelization (Tron on parser, Ram on graph, Yori on tests) and prevents scope creep by defining sprint boundaries explicitly.
 
 **Scope Decisions:**
-- Each phase is one npm release — no partial merges to main
-- Phase gates (assigned to Flynn) gate all other PRs per phase — design review + approval before merge
-- Release notes (assigned to Dumont) are the last issue per phase — document features, breaking changes, migration steps
-- Phases 1-3 are "core" (parser, query, write, governance), Phases 4-5 are "extensions" (search, MCP)
-- Phase 4 (semantic search) is optional — core Oxori works without embeddings
-- Phase 5 (MCP + Obsidian) is the capstone — humans + agents on same vault
-- 80% coverage minimum per phase, parser/indexer/governance target 95%
-- All phases use conventional commits, atomic commits, and detailed commit messages
-- Each phase has integration tests that verify all components work together
+- Each sprint is one npm release — no partial merges to main
+- Sprint gates (assigned to Flynn) gate all other PRs per sprint — design review + approval before merge
+- Release notes (assigned to Dumont) are the last issue per sprint — document features, breaking changes, migration steps
+- Sprints 1-3 are "core" (parser, query, write, governance), Sprints 4-5 are "extensions" (search, MCP)
+- Sprint 4 (semantic search) is optional — core Oxori works without embeddings
+- Sprint 5 (MCP + Obsidian) is the capstone — humans + agents on same vault
+- 80% coverage minimum per sprint, parser/indexer/governance target 95%
+- All sprints use conventional commits, atomic commits, and detailed commit messages
+- Each sprint has integration tests that verify all components work together
 
 **Team Routing:**
-- Flynn: Phase gates, architecture review, final approval per phase
-- Tron: types, parser, indexer, query, CLI (Phases 1-2)
-- Ram: graph, writer, governance, search, MCP, watcher (Phases 2-5)
-- Yori: All test suites (Phases 1-5)
-- Dumont: All release notes and documentation (Phases 1-5)
-- Clu: CI/CD setup (Phase 1)
-- Quorra: MCP protocol expertise (Phase 5)
+- Flynn: Sprint gates, architecture review, final approval per sprint
+- Tron: types, parser, indexer, query, CLI (Sprints 1-2)
+- Ram: graph, writer, governance, search, MCP, watcher (Sprints 2-5)
+- Yori: All test suites (Sprints 1-5)
+- Dumont: All release notes and documentation (Sprints 1-5)
+- Clu: CI/CD setup (Sprint 1)
+- Quorra: MCP protocol expertise (Sprint 5)
 
 **Next Steps:**
 1. Team reviews backlog in `.squad/backlog.md`
-2. Each phase starts when previous phase is merged and tagged
-3. Developers create PRs linking to the Phase N Kickoff issue
-4. Flynn approves/gates each PR per phase
+2. Each sprint starts when previous sprint is merged and tagged
+3. Developers create PRs linking to the Sprint N Kickoff issue
+4. Flynn approves/gates each PR per sprint
 5. On merge to main, tag as v0.X.0 and publish to npm
 6. Dumont writes release notes
-7. Repeat for next phase
+7. Repeat for next sprint
 
 **Success Metric:**
-Backlog is complete when: all 5 phases released, 80%+ coverage, full docs, MCP server working, Obsidian compatible, and humans + agents are reading/writing the same vault via Oxori.
+Backlog is complete when: all 5 sprints released, 80%+ coverage, full docs, MCP server working, Obsidian compatible, and humans + agents are reading/writing the same vault via Oxori.
 
-## Phase 1 Retrospective — Oxori v0.1.0
+## Sprint 1 Retrospective — Oxori v0.1.0
 
 **Facilitated by:** Flynn
 **Date:** 2026-04-03
@@ -56,10 +56,10 @@ Backlog is complete when: all 5 phases released, 80%+ coverage, full docs, MCP s
 Tron wrote `types.ts` before touching parser or indexer code. The discipline of establishing a shared type contract first (ParsedFile, FileEntry, IndexState, Result<T,E>, OxoriError) meant every downstream module had a stable shape to code against. No retrofitting, no "oh we need to add a field" mid-sprint.
 
 #### 2. Result<T,E> pattern carried its weight from day one
-Tron's `ok()` / `err()` helpers and the discriminated union on `ok: boolean` proved their worth immediately. Parse errors, ENOENT, and YAML failures all surface as structured `OxoriError` values with `code` and `action` fields — never as uncaught throws. Yori's tests validate this contract end-to-end. The pattern is load-bearing for Phase 2+.
+Tron's `ok()` / `err()` helpers and the discriminated union on `ok: boolean` proved their worth immediately. Parse errors, ENOENT, and YAML failures all surface as structured `OxoriError` values with `code` and `action` fields — never as uncaught throws. Yori's tests validate this contract end-to-end. The pattern is load-bearing for Sprint 2+.
 
 #### 3. Fixture design was thorough and forward-looking (Yori)
-`basic-vault/` (6 files, edge cases), `linked-vault/` (7-node directed graph with A→B→C→A cycle), and `governance-vault/` (protected secrets/ dir) cover the core scenarios at depth. The A→B→C→A cycle fixture is especially good — it verifies the indexer is cycle-safe at scan time before Phase 2 graph traversal even exists. Yori also correctly used `tests/.tmp-cli-<n>/` instead of `/tmp` for CLI tests.
+`basic-vault/` (6 files, edge cases), `linked-vault/` (7-node directed graph with A→B→C→A cycle), and `governance-vault/` (protected secrets/ dir) cover the core scenarios at depth. The A→B→C→A cycle fixture is especially good — it verifies the indexer is cycle-safe at scan time before Sprint 2 graph traversal even exists. Yori also correctly used `tests/.tmp-cli-<n>/` instead of `/tmp` for CLI tests.
 
 #### 4. Clu closed the dual-package gap
 The tsup per-entry banner fix and the dual ESM+CJS output (`dist/index.js` + `dist/index.cjs`) were not optional nice-to-haves — they're table stakes for a library that wants to be consumed by both modern and legacy Node.js consumers. Clu also wired up the ESLint 9 flat config with `@typescript-eslint/no-explicit-any: "error"`, which is the right call to enforce no-`any` at the tooling level rather than trusting code review alone.
@@ -68,13 +68,13 @@ The tsup per-entry banner fix and the dual ESM+CJS output (`dist/index.js` + `di
 `docs/architecture.md` (1000+ lines, 7 ADRs), `CONTRIBUTING.md`, `RELEASES.md`, `README.md` — all in place at gate. Most projects defer this to "someday". Writing the architecture doc while the decisions were fresh paid off: it surfaced two ADR inconsistencies that were quietly corrected before merge.
 
 #### 6. Flynn's code review caught a real gap before it shipped
-The `FrontmatterEntry` issue in `types.ts` was caught at review — not at test time, not post-merge. The explicit review step in the phase gate process works. The gate review checklist (14 criteria) was also a concrete tool, not a vague "looks good to me" approval.
+The `FrontmatterEntry` issue in `types.ts` was caught at review — not at test time, not post-merge. The explicit review step in the sprint gate process works. The gate review checklist (14 criteria) was also a concrete tool, not a vague "looks good to me" approval.
 
 #### 7. Conventional commits + atomic commits were followed correctly
 Every commit in the log is properly prefixed (`feat`, `fix`, `docs`, `test`, `chore`), scoped, and single-purpose. The `[skip ci]` discipline on squad/backlog/setup commits was clean. This makes the `RELEASES.md` changelog trustworthy.
 
 #### 8. Regex g-flag gotcha was caught and documented (Tron)
-Module-level `/g` regex reused across multiple `exec()` calls is a non-deterministic bug that has burned many JS developers. Tron caught it, fixed it (`new RegExp(source, "g")` per call), and documented it in their history. This kind of explicit documentation of gotchas is exactly what prevents the same bug in Phase 2.
+Module-level `/g` regex reused across multiple `exec()` calls is a non-deterministic bug that has burned many JS developers. Tron caught it, fixed it (`new RegExp(source, "g")` per call), and documented it in their history. This kind of explicit documentation of gotchas is exactly what prevents the same bug in Sprint 2.
 
 ---
 
@@ -100,10 +100,10 @@ The backlog acceptance criterion explicitly required `FrontmatterEntry` as a nam
 When writing `indexer.ts`, Tron hit a TS7016 implicit-any error because `@types/micromatch` wasn't in `devDependencies`. This is a dependency discovery that should happen during types/design time, not mid-implementation. The fix is trivial but the interruption pattern — "write code, hit type error, install package, continue" — compounds when it happens multiple times.
 
 #### 5. CLI tests are all `it.todo()` — 11 untested paths at gate
-All 11 `tests/cli.test.ts` tests remain as `it.todo()` stubs. The gate criterion was "all non-todo tests pass", which is satisfied technically. But the CLI commands (`oxori init`, `oxori index`) are entirely untested by automated tests at v0.1.0. Yori correctly noted that CLI e2e tests require knowing exact output strings and exit codes from the implementation — but the implementation (cli.ts) was written before those tests were filled in, and the loop was never closed in Phase 1.
+All 11 `tests/cli.test.ts` tests remain as `it.todo()` stubs. The gate criterion was "all non-todo tests pass", which is satisfied technically. But the CLI commands (`oxori init`, `oxori index`) are entirely untested by automated tests at v0.1.0. Yori correctly noted that CLI e2e tests require knowing exact output strings and exit codes from the implementation — but the implementation (cli.ts) was written before those tests were filled in, and the loop was never closed in Sprint 1.
 
 #### 6. `src/index.ts` was a late addition — not planned in early backlog issues
-The Phase 1 gate criterion #2 ("src/index.ts exports the full public API") passed, but `src/index.ts` was not explicitly listed in the early backlog issue for types or parser. It was created as part of the final integration work. This means there was a brief period where the build config referenced `./dist/index.js` but no `src/index.ts` existed to produce it.
+The Sprint 1 gate criterion #2 ("src/index.ts exports the full public API") passed, but `src/index.ts` was not explicitly listed in the early backlog issue for types or parser. It was created as part of the final integration work. This means there was a brief period where the build config referenced `./dist/index.js` but no `src/index.ts` existed to produce it.
 
 ---
 
@@ -119,10 +119,10 @@ The library's public API surface — what `src/index.ts` re-exports — should b
 The default tsup banner behavior applies globally. Any project that builds both a CLI and a library from the same repo must explicitly configure per-entry banners. This should be in the project scaffolding decisions document, not discovered through a bug.
 
 #### 4. The "different agent reviews than original author" protocol works
-Flynn assigned the `FrontmatterEntry` revision to Ram rather than back to Tron. This introduces a second pair of eyes before the fix is merged, and breaks the "author reviews their own work" failure mode. Keep this protocol in Phase 2+.
+Flynn assigned the `FrontmatterEntry` revision to Ram rather than back to Tron. This introduces a second pair of eyes before the fix is merged, and breaks the "author reviews their own work" failure mode. Keep this protocol in Sprint 2+.
 
-#### 5. The phase gate checklist is the right tool — make it the single source of truth
-The 14-criterion gate checklist in `flynn-phase1-gate.md` was the most concrete artifact in the phase. Every criterion is binary and verifiable by running a command. This is better than a prose "phase complete" declaration. Phase 2 should have its own equivalent checklist written at kickoff, not at review time.
+#### 5. The sprint gate checklist is the right tool — make it the single source of truth
+The 14-criterion gate checklist in `flynn-phase1-gate.md` was the most concrete artifact in the sprint. Every criterion is binary and verifiable by running a command. This is better than a prose "sprint complete" declaration. Sprint 2 should have its own equivalent checklist written at kickoff, not at review time.
 
 #### 6. Documenting gotchas in agent history files is leverage
 Tron's history entry on the `g`-flag regex gotcha and the `readdir` recursive return type is exactly the kind of institutional knowledge that prevents repeated bugs. Dumont's architecture ADRs serve the same function at the design level. Both practices should be maintained as first-class responsibilities.
@@ -132,50 +132,50 @@ Tron's history entry on the `g`-flag regex gotcha and the `readdir` recursive re
 
 ---
 
-### 🔧 Action Items for Phase 2
+### 🔧 Action Items for Sprint 2
 
 | # | Action | Owner | Priority | Notes |
 |---|--------|-------|----------|-------|
-| A1 | Lock `src/index.ts` as the first deliverable in Phase 2 — define public API exports before any feature implementation begins | Flynn + Tron | **P1** | Gate criterion. Must be reviewed and merged before indexer/parser Phase 2 work starts. |
-| A2 | Yori writes test skeletons only after implementation contracts are merged (types.ts + index.ts) — not against backlog ACs | Flynn (process owner) | **P1** | Prevents the API mismatch pattern from Phase 1. Add to CONTRIBUTING.md. |
-| A3 | Fill in all 11 `it.todo()` CLI tests in `tests/cli.test.ts` at Phase 2 kickoff | Yori | **P1** | These are Phase 1 debt. CLI is shipped untested. Fix before any Phase 2 CLI expansion. |
+| A1 | Lock `src/index.ts` as the first deliverable in Sprint 2 — define public API exports before any feature implementation begins | Flynn + Tron | **P1** | Gate criterion. Must be reviewed and merged before indexer/parser Sprint 2 work starts. |
+| A2 | Yori writes test skeletons only after implementation contracts are merged (types.ts + index.ts) — not against backlog ACs | Flynn (process owner) | **P1** | Prevents the API mismatch pattern from Sprint 1. Add to CONTRIBUTING.md. |
+| A3 | Fill in all 11 `it.todo()` CLI tests in `tests/cli.test.ts` at Sprint 2 kickoff | Yori | **P1** | These are Sprint 1 debt. CLI is shipped untested. Fix before any Sprint 2 CLI expansion. |
 | A4 | Add `@types/*` packages to devDependencies during dependency planning, not discovery | Tron | **P2** | When a dep is added to package.json, immediately check `@types/<pkg>` availability and install. |
-| A5 | Codify the "per-entry tsup banner" decision in docs/architecture.md | Clu | **P2** | Prevents the same build bug from recurring when Phase 2 adds new entry points (e.g., bin/query). |
-| A6 | Write Phase 2 gate checklist at kickoff (not at review time) | Flynn | **P2** | Derive from Phase 1 checklist template. Add Phase 2-specific criteria: query AST, graph traversal, CLI query/walk/graph commands. |
+| A5 | Codify the "per-entry tsup banner" decision in docs/architecture.md | Clu | **P2** | Prevents the same build bug from recurring when Sprint 2 adds new entry points (e.g., bin/query). |
+| A6 | Write Sprint 2 gate checklist at kickoff (not at review time) | Flynn | **P2** | Derive from Sprint 1 checklist template. Add Sprint 2-specific criteria: query AST, graph traversal, CLI query/walk/graph commands. |
 | A7 | Backlog ACs must include TypeScript function signatures (not just behavior descriptions) | Castor | **P2** | E.g., `indexVault(config: VaultConfig): Promise<Result<IndexState, OxoriError>>` — removes ambiguity that caused the Yori API mismatch. |
 | A8 | Run `npx vitest run` and verify zero non-todo failures as a local pre-commit check — add to CONTRIBUTING.md | Clu | **P3** | Prevents shipping with broken tests that only show up in CI. |
 | A9 | Add `FrontmatterEntry` export usage examples to docs/architecture.md | Dumont | **P3** | The export exists and passed review, but its intended consumer pattern is not documented. |
 
 ---
 
-### Phase 2 Readiness
+### Sprint 2 Readiness
 
 **Status: ✅ Ready to begin**
 
-Phase 1 delivered its full scope: types, parser, indexer, CLI init/index, full CI/CD, dual ESM+CJS build, and comprehensive documentation. The 31 passing tests give us a stable regression suite to build on top of. The `Result<T,E>` pattern, `ReadonlySet`/`ReadonlyMap` in `FileEntry`, and the `IndexState` map key conventions (absolute paths for files, raw tag strings for tags, lowercase stems for links) are all load-bearing design decisions that Phase 2's query engine and graph traversal will depend on directly.
+Sprint 1 delivered its full scope: types, parser, indexer, CLI init/index, full CI/CD, dual ESM+CJS build, and comprehensive documentation. The 31 passing tests give us a stable regression suite to build on top of. The `Result<T,E>` pattern, `ReadonlySet`/`ReadonlyMap` in `FileEntry`, and the `IndexState` map key conventions (absolute paths for files, raw tag strings for tags, lowercase stems for links) are all load-bearing design decisions that Sprint 2's query engine and graph traversal will depend on directly.
 
-**Debt carried into Phase 2:**
-- 11 CLI tests are `it.todo()` — must be addressed at Phase 2 kickoff before any new CLI work begins (A3)
-- `src/index.ts` public API surface was created late — Phase 2 must define it as deliverable #1 (A1)
+**Debt carried into Sprint 2:**
+- 11 CLI tests are `it.todo()` — must be addressed at Sprint 2 kickoff before any new CLI work begins (A3)
+- `src/index.ts` public API surface was created late — Sprint 2 must define it as deliverable #1 (A1)
 
-**Phase 2 primary concern:**
-The query AST + evaluator is the highest complexity module in the project to date. Tron should design the tokenizer/AST types (analogous to Phase 1's `types.ts`) before Yori writes any test skeletons, and before any query evaluation logic is written. Get the token/node shapes reviewed by Flynn and locked before implementation begins.
+**Sprint 2 primary concern:**
+The query AST + evaluator is the highest complexity module in the project to date. Tron should design the tokenizer/AST types (analogous to Sprint 1's `types.ts`) before Yori writes any test skeletons, and before any query evaluation logic is written. Get the token/node shapes reviewed by Flynn and locked before implementation begins.
 
-Good sprint, team. We shipped a real v0.1.0 with a clean foundation. Phase 2 is where we find out if the type system and index design hold up under real query load.
+Good sprint, team. We shipped a real v0.1.0 with a clean foundation. Sprint 2 is where we find out if the type system and index design hold up under real query load.
 
 — Flynn
 
 ## Governance
 
-## Phase 2 Decisions
+## Sprint 2 Decisions
 
-### 2026-04-03: Phase 2 Backlog Refined with TypeScript Signatures
+### 2026-04-03: Sprint 2 Backlog Refined with TypeScript Signatures
 
 **By:** Castor (Product Owner)  
 **Date:** 2026-04-03  
 **Related:** Retro action item A7
 
-Updated Phase 2 backlog acceptance criteria to include explicit TypeScript function signatures and export lists. This prevents the Phase 1 API mismatch (Yori tests writing for `buildIndex(path)`, Tron building `indexVault(config: VaultConfig)`).
+Updated Sprint 2 backlog acceptance criteria to include explicit TypeScript function signatures and export lists. This prevents the Sprint 1 API mismatch (Yori tests writing for `buildIndex(path)`, Tron building `indexVault(config: VaultConfig)`).
 
 **Changes Made:**
 
@@ -198,20 +198,20 @@ Updated Phase 2 backlog acceptance criteria to include explicit TypeScript funct
    - CLI commands are thin wrappers, no new exports from `cli.ts`
    - Logic lives in `query.ts` and `graph.ts`, CLI layer only handles I/O
 
-5. **Phase 2 Gate Issue (Kickoff)**
-   - AC: All Phase 2 public API types exported from src/index.ts before implementation begins
-   - AC: Yori writes test skeletons only after types.ts Phase 2 types are Flynn-approved
+5. **Sprint 2 Gate Issue (Kickoff)**
+   - AC: All Sprint 2 public API types exported from src/index.ts before implementation begins
+   - AC: Yori writes test skeletons only after types.ts Sprint 2 types are Flynn-approved
 
-**Prevention Strategy:** Enforces the learning from Phase 1 retro: types first, test skeletons follow types, signatures in backlog, parameter names matter.
+**Prevention Strategy:** Enforces the learning from Sprint 1 retro: types first, test skeletons follow types, signatures in backlog, parameter names matter.
 
 ---
 
-### 2025-07-13: Phase 2 Type Contracts (Query Engine + Graph Traversal)
+### 2025-07-13: Sprint 2 Type Contracts (Query Engine + Graph Traversal)
 
 **Author:** Tron  
 **Status:** Proposed — awaiting Flynn review
 
-Phase 2 introduces the query engine and graph traversal layer. All shared type contracts locked before Yori writes test skeletons and before implementation begins.
+Sprint 2 introduces the query engine and graph traversal layer. All shared type contracts locked before Yori writes test skeletons and before implementation begins.
 
 **Key Design Decisions:**
 
@@ -256,13 +256,13 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 
 ---
 
-### 2026-04-03: Phase 2 Gate Checklist — Query Engine + Graph Walk
+### 2026-04-03: Sprint 2 Gate Checklist — Query Engine + Graph Walk
 
 **Date:** 2026-04-03 (kickoff)  
-**Owner:** Flynn (Phase 2 Gate Keeper)  
+**Owner:** Flynn (Sprint 2 Gate Keeper)  
 **Release Target:** v0.2.0
 
-**Inherited from Phase 1** (always required):
+**Inherited from Sprint 1** (always required):
 1. TypeScript Compilation: Zero Errors
 2. Linting: Zero Errors
 3. Test Suite: All Non-Todo Tests Pass
@@ -270,7 +270,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 5. Shebang: CLI Only, Library Clean
 6. No `any` Types in Source
 
-**Phase 2 Specific Criteria:**
+**Sprint 2 Specific Criteria:**
 
 7. JSDoc on All Exported Functions
    - `src/query.ts` — `tokenize()`, `parse()`, `evaluate()`
@@ -278,8 +278,8 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
    - `src/types.ts` — exported types (document type contracts)
    - Each function has `@param`, `@returns`, `@throws` tags
 
-8. README.md Updated with Phase 2 Features
-   - New section: "Phase 2 — Query Engine"
+8. README.md Updated with Sprint 2 Features
+   - New section: "Sprint 2 — Query Engine"
    - Documents `oxori query`, `oxori walk`, `oxori graph` commands with examples
    - Query language quick reference section exists
 
@@ -287,7 +287,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
    - Required: `Token`, `TokenKind`, `QueryAST`, `QueryNode`, `FilterNode`, `OperatorNode`, `GroupNode`, `QueryResult`, `FilterField`, `FILTER_FIELDS`, `Edge`, `WalkOptions`, `WalkResult`, `WalkDirection`, `WalkVia`
 
 10. Public API Re-exports: index.ts
-    - Re-exports all Phase 1 + Phase 2 public API
+    - Re-exports all Sprint 1 + Sprint 2 public API
     - All Query types, Graph types, `tokenize`, `parse`, `evaluate`, `walk`
 
 11. Query Module: tokenize, parse, evaluate
@@ -303,7 +303,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 13. Coverage: 80% Overall, 90% Query/Graph Modules
     - `src/query.ts` coverage: ≥ 90%
     - `src/graph.ts` coverage: ≥ 90%
-    - Phase 1 modules maintain ≥ 95% coverage
+    - Sprint 1 modules maintain ≥ 95% coverage
 
 14. CLI Commands: Functional and Tested
     - `oxori query`, `oxori walk`, `oxori graph` all work end-to-end
@@ -311,11 +311,11 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 
 15. Documentation: Query Language and Architecture
     - `docs/query-language.md` — BNF grammar, filter types, operators, examples, edge cases
-    - `docs/architecture.md` (updated) — Phase 2 section added
+    - `docs/architecture.md` (updated) — Sprint 2 section added
     - `README.md` (updated) — Query, Walk, Graph examples
 
-16. Phase 1 CLI Tests Filled In
-    - The 11 `it.todo()` stubs from Phase 1 now have implementations
+16. Sprint 1 CLI Tests Filled In
+    - The 11 `it.todo()` stubs from Sprint 1 now have implementations
     - Coverage for: `oxori init`, `oxori index`
 
 17. Performance Thresholds Met
@@ -324,7 +324,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 
 ---
 
-### 2026-04-03: Phase 2 Gate Review — ❌ BLOCKED
+### 2026-04-03: Sprint 2 Gate Review — ❌ BLOCKED
 
 **By:** Flynn (Tech Lead / Architect)  
 **Date:** 2026-04-03  
@@ -348,15 +348,15 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 | 5 | Shebang: CLI Only, Library Clean | ✅ PASS | cli.js has `#!/usr/bin/env node`; index.js clean |
 | 6 | No `any` Types in Source | ✅ PASS | grep confirms zero `any` type annotations in src/ |
 | 7 | JSDoc on All Exported Functions | ✅ PASS | tokenize, parse, evaluate, walk all have full JSDoc with @param/@returns/@throws |
-| 8 | README.md Updated with Phase 2 Features | ❌ FAIL | README still says "🔜 Query engine (Phase 2)" as future work — no oxori query/walk/graph examples |
+| 8 | README.md Updated with Sprint 2 Features | ❌ FAIL | README still says "🔜 Query engine (Sprint 2)" as future work — no oxori query/walk/graph examples |
 | 9 | Type Exports: Query Language and Graph Types | ✅ PASS | All 14 required types exported from src/index.ts |
 | 10 | Public API Re-exports: index.ts | ❌ FAIL | tokenize, parse, evaluate (from query.ts) and walk (from graph.ts) NOT exported — confirmed by runtime check |
 | 11 | Query Module: tokenize, parse, evaluate | ✅ PASS | All three functions implemented in query.ts, all cases handled |
 | 12 | Graph Module: walk | ✅ PASS | walk() implemented, cycle-safe BFS, all options supported |
 | 13 | Coverage: 80% Overall, 90% Query/Graph | ❌ FAIL | Overall 68.52% (need 80%); query.ts 64.63% (need 90%); graph.ts 87.84% (need 90%) |
 | 14 | CLI Commands: Functional and Tested | ❌ FAIL | oxori query/walk/graph implemented but cli.test.ts has NO tests for them |
-| 15 | Documentation: Query Language and Architecture | ❌ FAIL | docs/query-language.md ✅ (BNF present); architecture.md ✅ (Phase 2 sections present); README ❌ (no Query/Walk/Graph examples — same as criterion 8) |
-| 16 | Phase 1 CLI Tests Filled In | ✅ PASS | cli.test.ts has 11 real tests (5 init + 6 index), zero it.todo() stubs |
+| 15 | Documentation: Query Language and Architecture | ❌ FAIL | docs/query-language.md ✅ (BNF present); architecture.md ✅ (Sprint 2 sections present); README ❌ (no Query/Walk/Graph examples — same as criterion 8) |
+| 16 | Sprint 1 CLI Tests Filled In | ✅ PASS | cli.test.ts has 11 real tests (5 init + 6 index), zero it.todo() stubs |
 | 17 | Performance Thresholds Met | ✅ PASS | 7-node linked-vault completes well under 100ms/200ms thresholds |
 
 **PHASE 2 GATE: ❌ BLOCKED**
@@ -371,7 +371,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 | Increase query.ts coverage to ≥ 90% | Yori | #13 | Write tests for evaluate() (lines 466-559, 596-624 uncovered) — evaluate handles all filter types, operators, nested groups |
 | Increase graph.ts coverage to ≥ 90% | Yori | #13 | Cover lines 35-36, 129-148 (tagNeighborEdges with empty tags; edge cases in relationEdges) |
 | Add CLI tests for oxori query, walk, graph | Yori | #14 | Add integration tests in cli.test.ts for all three new commands — success, error, --json flag |
-| Update README with Phase 2 commands | Dumont | #8 + #15 | Add "Phase 2 — Query Engine" section with oxori query/walk/graph examples; change 🔜 bullets to ✅ |
+| Update README with Sprint 2 commands | Dumont | #8 + #15 | Add "Sprint 2 — Query Engine" section with oxori query/walk/graph examples; change 🔜 bullets to ✅ |
 
 **Blocked by:** Tron (#10), Yori (#13, #14), Dumont (#8, #15)
 
@@ -383,7 +383,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
 
-### 2026-04-03: Phase 2 Gate Re-check — ❌ BLOCKED (16/17)
+### 2026-04-03: Sprint 2 Gate Re-check — ❌ BLOCKED (16/17)
 
 **By:** Flynn (Tech Lead / Architect)
 **Date:** 2026-04-03 (re-check)
@@ -408,7 +408,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 | 5 | Shebang: CLI Only, Library Clean | ✅ PASS | dist/cli.js has shebang; dist/index.js does not |
 | 6 | No `any` Types in Source | ✅ PASS | Zero `: any`, `as any`, or `<any>` in src/ |
 | 7 | JSDoc on All Exported Functions | ✅ PASS | tokenize, parse, evaluate, walk all have @param, @returns, @throws |
-| 8 | README.md Updated with Phase 2 Features | ✅ PASS | oxori query/walk/graph examples present; npm badge present |
+| 8 | README.md Updated with Sprint 2 Features | ✅ PASS | oxori query/walk/graph examples present; npm badge present |
 | 9 | Type Exports: Query Language and Graph Types | ✅ PASS | 16 named exports confirmed including FILTER_FIELDS |
 | 10 | Public API Re-exports: index.ts | ✅ PASS | tokenize, parse, evaluate, walk all exported from dist/index.js at runtime |
 | 11 | Query Module: tokenize, parse, evaluate | ✅ PASS | All three exported and functional |
@@ -416,7 +416,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 | 13 | Coverage: 80% Overall, 90% Query/Graph Modules | ❌ FAIL | Overall 80.04% ✅; query.ts 93.29% ✅; graph.ts **87.84%** ❌ (needs ≥ 90%) |
 | 14 | CLI Commands: Functional and Tested | ✅ PASS | describe blocks for oxori query, oxori walk, oxori graph; 120 total tests |
 | 15 | Documentation: Query Language and Architecture | ✅ PASS | docs/query-language.md ✅; architecture.md ✅; README ✅ |
-| 16 | Phase 1 CLI Tests Filled In | ✅ PASS | Zero it.todo in cli.test.ts (was 11) |
+| 16 | Sprint 1 CLI Tests Filled In | ✅ PASS | Zero it.todo in cli.test.ts (was 11) |
 | 17 | Performance Thresholds Met | ✅ PASS | Query tokenize+parse: <1ms; walk: previous gate confirmed <200ms |
 
 **Remaining fix (1):**
@@ -429,7 +429,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 
 **Blocked by:** Yori (#13 graph.ts coverage)
 
-### Phase 2 Gate: ✅ APPROVED — v0.2.0
+### Sprint 2 Gate: ✅ APPROVED — v0.2.0
 **Date:** 2026-04-03
 **By:** Flynn
 **All 17 criteria passed.**
@@ -443,7 +443,7 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 
 ---
 
-## Phase 2 Retrospective — Oxori v0.2.0
+## Sprint 2 Retrospective — Oxori v0.2.0
 
 **Facilitated by:** Flynn  
 **Date:** 2026-04-03  
@@ -454,28 +454,28 @@ Phase 2 introduces the query engine and graph traversal layer. All shared type c
 
 ### ✅ What Went Well
 
-#### 1. Types-first discipline held — Phase 1 retro A2 delivered
-The single most impactful retro action from Phase 1 was enforced: Yori wrote test skeletons only after Tron's type contracts were reviewed and merged by Flynn. No API mismatch this phase. query.test.ts and graph.test.ts were written against locked `TokenKind`, `QueryAST`, `WalkResult`, and `Edge` shapes — not against stale backlog ACs.
+#### 1. Types-first discipline held — Sprint 1 retro A2 delivered
+The single most impactful retro action from Sprint 1 was enforced: Yori wrote test skeletons only after Tron's type contracts were reviewed and merged by Flynn. No API mismatch this sprint. query.test.ts and graph.test.ts were written against locked `TokenKind`, `QueryAST`, `WalkResult`, and `Edge` shapes — not against stale backlog ACs.
 
 #### 2. Wave parallelism worked and delivered real throughput
-Wave 1 ran Tron (types.ts Phase 2 additions + query.ts tokenizer/parser) and Ram (graph.ts stub) in parallel. Wave 2 ran Tron (evaluate() + CLI commands) and Ram (graph.ts full BFS implementation) in parallel, with Yori filling in test assertions concurrently. The two-wave cadence covered six modules across two concurrent implementors.
+Wave 1 ran Tron (types.ts Sprint 2 additions + query.ts tokenizer/parser) and Ram (graph.ts stub) in parallel. Wave 2 ran Tron (evaluate() + CLI commands) and Ram (graph.ts full BFS implementation) in parallel, with Yori filling in test assertions concurrently. The two-wave cadence covered six modules across two concurrent implementors.
 
 #### 3. Ram's first contribution (graph.ts BFS) was solid
-New to the phase, Ram delivered a correct BFS implementation with: all `WalkDirection` variants (`outgoing`/`incoming`/`both`), all `WalkVia` modes (links, tags, both, `relation:<key>`), cycle prevention via visited Set, `maxNodes` truncation with `truncated: true` flag, and global edge deduplication. The implementation never throws — unknown `start` paths return an empty `WalkResult`. This is exactly the right "fail-soft" design for a traversal utility.
+New to the sprint, Ram delivered a correct BFS implementation with: all `WalkDirection` variants (`outgoing`/`incoming`/`both`), all `WalkVia` modes (links, tags, both, `relation:<key>`), cycle prevention via visited Set, `maxNodes` truncation with `truncated: true` flag, and global edge deduplication. The implementation never throws — unknown `start` paths return an empty `WalkResult`. This is exactly the right "fail-soft" design for a traversal utility.
 
-#### 4. Phase 1 CLI debt cleared at kickoff (A3 delivered on time)
-All 11 `it.todo()` CLI test stubs from Phase 1 were filled in before any Phase 2 CLI expansion began. This respected the retro A3 directive and meant Phase 2 CLI integration tests were built on top of a tested foundation, not further accumulating untested surface area.
+#### 4. Sprint 1 CLI debt cleared at kickoff (A3 delivered on time)
+All 11 `it.todo()` CLI test stubs from Sprint 1 were filled in before any Sprint 2 CLI expansion began. This respected the retro A3 directive and meant Sprint 2 CLI integration tests were built on top of a tested foundation, not further accumulating untested surface area.
 
 #### 5. Dumont's query-language.md is production-grade from day one
-9200+ words: BNF grammar, full filter/operator reference table, error codes, 8 real-world examples, evaluation semantics, and performance guarantees — all written before gate review. Same pattern as Phase 1's architecture.md. The Phase 2 docs are ship-ready at v0.2.0.
+9200+ words: BNF grammar, full filter/operator reference table, error codes, 8 real-world examples, evaluation semantics, and performance guarantees — all written before gate review. Same pattern as Sprint 1's architecture.md. The Sprint 2 docs are ship-ready at v0.2.0.
 
-#### 6. Clu proactively fixed CI/release pipeline issues before they blocked Phase 3
-The pnpm version conflict in release.yml, Node 24 deprecation warnings, and missing README version sync were all identified and resolved during Phase 2 without blocking the gate. The semantic-release + `@semantic-release/exec` pipeline is wired and ready for v0.2.0 tag.
+#### 6. Clu proactively fixed CI/release pipeline issues before they blocked Sprint 3
+The pnpm version conflict in release.yml, Node 24 deprecation warnings, and missing README version sync were all identified and resolved during Sprint 2 without blocking the gate. The semantic-release + `@semantic-release/exec` pipeline is wired and ready for v0.2.0 tag.
 
 #### 7. evaluate() query engine handles all structural cases correctly
 FilterNode (all 6 fields × 3 operators = 18 combinations), OperatorNode (AND intersection, OR union, NOT complement), GroupNode (transparent pass-through), null root (match all), empty state (short-circuit) — all covered. The throw semantics for query parse errors (vs `Result<T>` return) are consistent and the CLI's try/catch + structural narrowing pattern is clean.
 
-#### 8. Conventional commits held throughout the phase
+#### 8. Conventional commits held throughout the sprint
 All commits in the log follow `feat/fix/docs/test/chore` convention with scoped subjects. The `[skip ci]` discipline on squad/setup commits is maintained. Release notes will be trustworthy.
 
 ---
@@ -484,7 +484,7 @@ All commits in the log follow `feat/fix/docs/test/chore` convention with scoped 
 
 #### 1. Gate blocked twice — five failures on first submission
 The first gate run produced 5 failures simultaneously:
-- **README** still showing Phase 2 features as "🔜 future work" (no query/walk/graph examples)
+- **README** still showing Sprint 2 features as "🔜 future work" (no query/walk/graph examples)
 - **index.ts** missing `tokenize`, `parse`, `evaluate`, `walk` function re-exports (types were all present; the implementation functions themselves were absent — a type-vs-value export mismatch only catchable via runtime check)
 - **query.ts coverage** at 64.63% — `evaluate()` body (lines 466–624) was almost entirely uncovered
 - **graph.ts coverage** at 87.84% — below the 90% threshold
@@ -496,89 +496,89 @@ Root cause: implementors treated coverage and documentation as "follow-on" work 
 After the first gate block, four of five fixes were correctly delivered. graph.ts coverage was assigned to Yori but remained at 87.84% unchanged. The fix summary reported "Overall 80.04%, query.ts 93.29%" — omitting graph.ts entirely. The omission was the signal; the second gate run was needed solely for this one remaining criterion.
 
 #### 3. Type-vs-value export mismatch in index.ts is invisible to TypeScript source inspection
-All 15 Phase 2 types were correctly exported from `src/index.ts`. The four missing exports (`tokenize`, `parse`, `evaluate`, `walk`) were value exports — function re-exports — which TypeScript source inspection does not distinguish from type-only exports. Only a runtime `node -e "import('./dist/index.js')"` check catches this. This class of failure is repeatable in Phase 3 unless the runtime check is in the gate checklist.
+All 15 Sprint 2 types were correctly exported from `src/index.ts`. The four missing exports (`tokenize`, `parse`, `evaluate`, `walk`) were value exports — function re-exports — which TypeScript source inspection does not distinguish from type-only exports. Only a runtime `node -e "import('./dist/index.js')"` check catches this. This class of failure is repeatable in Sprint 3 unless the runtime check is in the gate checklist.
 
 #### 4. Graph.ts test skeleton had parameter order baked in from spec — mismatch with implementation
 Yori's initial `graph.test.ts` skeleton called `walk(state, startPath)` — matching the task spec. Ram's implementation used `walk(startPath, state, options?)` — matching the backlog's TypeScript signature (which was correct). Yori had to fix the parameter order when filling in real assertions. A small friction point, but it shows spec-vs-types drift still occurs when multiple documents describe the same API.
 
 #### 5. indexer.ts coverage dragged overall average (47.15% at first gate)
-The overall 68.52% coverage at first gate was partly driven by indexer.ts at 47.15%. Indexer tests were written in Phase 1 but the incremental indexing paths (`indexFile`, `removeFileFromState`) had low coverage. Phase 2 didn't own this — but it contributed to the first gate failure.
+The overall 68.52% coverage at first gate was partly driven by indexer.ts at 47.15%. Indexer tests were written in Sprint 1 but the incremental indexing paths (`indexFile`, `removeFileFromState`) had low coverage. Sprint 2 didn't own this — but it contributed to the first gate failure.
 
 ---
 
 ### 💡 Key Learnings
 
 #### 1. Runtime export check is a mandatory gate step — not optional verification
-`npx tsc --noEmit` passing does not prove that implementation functions are exported at runtime. `node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"` must be a binary gate criterion from the start of every phase. Add it to the Phase 3 checklist at kickoff.
+`npx tsc --noEmit` passing does not prove that implementation functions are exported at runtime. `node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"` must be a binary gate criterion from the start of every sprint. Add it to the Sprint 3 checklist at kickoff.
 
 #### 2. Coverage fix submissions must include a full per-file table, not a partial summary
 When Yori reported "Overall 80.04%, query.ts 93.29%", graph.ts was absent. Absent metrics mean "unchanged" — not "passing". Fix submissions for coverage must enumerate every module with a coverage threshold, even if it wasn't the primary focus. This is a process rule, not a judgment on the agent.
 
 #### 3. The "stub that throws" test strategy couples to implementation details
-Yori's original graph.test.ts stubs used `expect(() => walk(...)).toThrowError("not implemented")` to assert the stub was wired correctly. When Ram's real implementation landed with a different parameter order, these tests required a rewrite. For Phase 3, stubs for unimplemented modules should use `it.todo()` — real assertions should wait for a locked implementation.
+Yori's original graph.test.ts stubs used `expect(() => walk(...)).toThrowError("not implemented")` to assert the stub was wired correctly. When Ram's real implementation landed with a different parameter order, these tests required a rewrite. For Sprint 3, stubs for unimplemented modules should use `it.todo()` — real assertions should wait for a locked implementation.
 
 #### 4. New agent alignment to src/types.ts (not backlog ACs) is critical
-Ram correctly identified that the task spec had stale type names. The authoritative source is `src/types.ts` after Flynn approves it — not the backlog AC text. For Phase 3 (Ram: writer, governance), this alignment step should be explicit and recorded in Ram's history.md before any implementation begins.
+Ram correctly identified that the task spec had stale type names. The authoritative source is `src/types.ts` after Flynn approves it — not the backlog AC text. For Sprint 3 (Ram: writer, governance), this alignment step should be explicit and recorded in Ram's history.md before any implementation begins.
 
 #### 5. Documentation and CLI coverage are delivery items, not follow-on work
-README and CLI tests were both listed in the gate checklist written at kickoff. Both were missed in the first submission. For Phase 3, treat docs and CLI tests with the same discipline as implementation — not as last-step cleanup after the "real" work.
+README and CLI tests were both listed in the gate checklist written at kickoff. Both were missed in the first submission. For Sprint 3, treat docs and CLI tests with the same discipline as implementation — not as last-step cleanup after the "real" work.
 
-#### 6. The phase gate checklist (written at kickoff) is the single source of truth — and it worked
-All five first-gate failures were explicitly listed in the Phase 2 gate checklist written at kickoff. The checklist did its job. The failures were process failures (agents not checking against the list), not checklist failures.
+#### 6. The sprint gate checklist (written at kickoff) is the single source of truth — and it worked
+All five first-gate failures were explicitly listed in the Sprint 2 gate checklist written at kickoff. The checklist did its job. The failures were process failures (agents not checking against the list), not checklist failures.
 
-#### 7. GitVersion / semantic-release prep is needed before Phase 3 first release
-The release.yml pnpm conflict is fixed, `@semantic-release/exec` is wired, and README version sync is configured. Before the Phase 3 first release, a dry run of the semantic-release pipeline should be validated — not just assumed to work because the config looks correct.
+#### 7. GitVersion / semantic-release prep is needed before Sprint 3 first release
+The release.yml pnpm conflict is fixed, `@semantic-release/exec` is wired, and README version sync is configured. Before the Sprint 3 first release, a dry run of the semantic-release pipeline should be validated — not just assumed to work because the config looks correct.
 
 ---
 
-### 🔧 Action Items for Phase 3
+### 🔧 Action Items for Sprint 3
 
 | # | Action | Owner | Priority | Notes |
 |---|--------|-------|----------|-------|
-| A1 | Add runtime export check (`node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"`) to Phase 3 gate checklist at kickoff as a binary criterion | Flynn | **P1** | Prevents type-vs-value export mismatch. Must appear alongside TypeScript compilation check. |
-| A2 | When writing Phase 3 index.ts additions, explicitly add value exports (function re-exports) alongside type exports — comment them separately | Tron | **P1** | E.g., `// value exports` and `// type-only exports` blocks side by side in index.ts. |
+| A1 | Add runtime export check (`node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"`) to Sprint 3 gate checklist at kickoff as a binary criterion | Flynn | **P1** | Prevents type-vs-value export mismatch. Must appear alongside TypeScript compilation check. |
+| A2 | When writing Sprint 3 index.ts additions, explicitly add value exports (function re-exports) alongside type exports — comment them separately | Tron | **P1** | E.g., `// value exports` and `// type-only exports` blocks side by side in index.ts. |
 | A3 | For unimplemented module stubs, use `it.todo()` (not `expect(toThrowError)`) — reserve real assertions for when the implementation contract is locked and parameter order confirmed | Yori | **P1** | Prevents test rewrites when implementation details differ from spec. |
 | A4 | When submitting coverage fixes, provide a full per-file table for every module with a coverage threshold — do not omit modules even if they weren't the primary focus | Yori | **P1** | Required for gate re-check to succeed on the first attempt. |
-| A5 | Before writing writer.ts and governance.ts, explicitly read src/types.ts and record confirmed function signatures (parameter names, order, return types) in history.md before any implementation code | Ram | **P1** | Phase 3 backlog ACs may have stale names — types.ts is the authoritative spec. |
-| A6 | Write Phase 3 gate checklist at kickoff (not at review time) — include writer.ts, governance.ts, updated public API, runtime export check, and GitVersion/semantic-release dry-run criterion | Flynn | **P1** | Same pattern as Phase 2 checklist. Write it before the first Wave 1 delivery. |
-| A7 | Run `semantic-release --dry-run` on Phase 3 branch before the first release attempt — validate that exec plugin, git assets, and README version sync all fire correctly | Clu | **P2** | Release pipeline has not been validated end-to-end since release.yml was fixed. |
-| A8 | Phase 3 backlog ACs must include confirmed TypeScript function signatures with parameter order explicit — not just behavior descriptions or type names | Castor | **P2** | Addresses the walk(path, state) vs walk(state, path) drift pattern. |
+| A5 | Before writing writer.ts and governance.ts, explicitly read src/types.ts and record confirmed function signatures (parameter names, order, return types) in history.md before any implementation code | Ram | **P1** | Sprint 3 backlog ACs may have stale names — types.ts is the authoritative spec. |
+| A6 | Write Sprint 3 gate checklist at kickoff (not at review time) — include writer.ts, governance.ts, updated public API, runtime export check, and GitVersion/semantic-release dry-run criterion | Flynn | **P1** | Same pattern as Sprint 2 checklist. Write it before the first Wave 1 delivery. |
+| A7 | Run `semantic-release --dry-run` on Sprint 3 branch before the first release attempt — validate that exec plugin, git assets, and README version sync all fire correctly | Clu | **P2** | Release pipeline has not been validated end-to-end since release.yml was fixed. |
+| A8 | Sprint 3 backlog ACs must include confirmed TypeScript function signatures with parameter order explicit — not just behavior descriptions or type names | Castor | **P2** | Addresses the walk(path, state) vs walk(state, path) drift pattern. |
 
 ---
 
-### Phase 3 Readiness
+### Sprint 3 Readiness
 
 **Status: ✅ Ready to begin**
 
-Phase 2 delivered its full scope: query engine (tokenize/parse/evaluate), graph traversal (BFS walk with cycle detection), CLI commands (query/walk/graph), dual public API export, docs/query-language.md, and updated architecture + README. 127 passing tests. Coverage: 82.72% statements / 87.44% branches / 90.24% functions — all thresholds met.
+Sprint 2 delivered its full scope: query engine (tokenize/parse/evaluate), graph traversal (BFS walk with cycle detection), CLI commands (query/walk/graph), dual public API export, docs/query-language.md, and updated architecture + README. 127 passing tests. Coverage: 82.72% statements / 87.44% branches / 90.24% functions — all thresholds met.
 
-**Debt carried into Phase 3:**
-- indexer.ts coverage is 47.15% — significantly below the 95% target. Phase 3 should include explicit indexer coverage improvement, not carry this further.
-- 14 `it.todo()` stubs remain in parser/indexer/query test files — these are Phase 3+ features (writer, governance) and will be addressed as those modules land.
+**Debt carried into Sprint 3:**
+- indexer.ts coverage is 47.15% — significantly below the 95% target. Sprint 3 should include explicit indexer coverage improvement, not carry this further.
+- 14 `it.todo()` stubs remain in parser/indexer/query test files — these are Sprint 3+ features (writer, governance) and will be addressed as those modules land.
 
-**Phase 3 primary risk:**
+**Sprint 3 primary risk:**
 Governance enforcement logic has complex conditional branches (path matching, rule priority, agent-identity checks). This is the most likely module to have coverage gaps. Yori should write governance tests with the same thoroughness applied to graph.ts branch coverage — enumerate every guard clause explicitly.
 
-Good sprint, team. The query engine and graph traversal are real and working. Phase 3 is where we find out if the write path holds the same discipline as the read path.
+Good sprint, team. The query engine and graph traversal are real and working. Sprint 3 is where we find out if the write path holds the same discipline as the read path.
 
 — Flynn
 
 ---
 
-## Phase 3 Wave 0 Decisions
+## Sprint 3 Wave 0 Decisions
 
 ### Wave 0 Agents: Castor, Flynn, Tron, Yori
 
-# Phase 3 Gate Checklist — Read/Write API and Governance
+# Sprint 3 Gate Checklist — Read/Write API and Governance
 
 **Date:** 2026-04-03 (kickoff)  
-**Owner:** Flynn (Phase 3 Gate Keeper)  
+**Owner:** Flynn (Sprint 3 Gate Keeper)  
 **Release Target:** v0.3.0  
-**Wave 0 Delivery:** Phase 3 Kickoff (Flynn)
+**Wave 0 Delivery:** Sprint 3 Kickoff (Flynn)
 
 ---
 
-## Inherited from Phase 1 & 2 (always required):
+## Inherited from Sprint 1 & 2 (always required):
 
 1. **TypeScript Compilation: Zero Errors**
    - `npx tsc --noEmit` exits 0
@@ -607,9 +607,9 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
 
 ---
 
-## Phase 3 Specific Criteria:
+## Sprint 3 Specific Criteria:
 
-### 7. **Runtime Export Check** ⭐ (New — from Phase 2 Retro A1)
+### 7. **Runtime Export Check** ⭐ (New — from Sprint 2 Retro A1)
    - Command: `node -e "import('./dist/index.js').then(m => { const required = ['open', 'write', 'append', 'parseGovernance', 'enforceRule']; const missing = required.filter(k => !m[k]); if (missing.length) throw new Error('Missing exports: ' + missing.join(', ')); console.log('✓ All exports present'); })"`
    - Verifies value exports (functions), not just type exports
    - Must pass before gate approval — **binary pass/fail**
@@ -622,7 +622,7 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
    - Class methods documented with parameter and return types
 
 ### 9. **Type Exports: Writer and Governance Types**
-   - Required exports from src/types.ts (Phase 3 additions):
+   - Required exports from src/types.ts (Sprint 3 additions):
      - `CreateOptions` (for writer.create)
      - `GovernanceRules`, `GovernanceResult` (for governance parsing)
      - `WriteAction`, `Actor`, `Agent`, `Human` (for enforcement)
@@ -631,7 +631,7 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
    - All types documented with JSDoc comments
 
 ### 10. **Public API Re-exports: index.ts** ⭐ (Updated — value exports critical)
-   - All Phase 1 + Phase 2 + Phase 3 public API re-exported
+   - All Sprint 1 + Sprint 2 + Sprint 3 public API re-exported
    - **Type-only exports:** separated with comment `// type-only exports`
    - **Value exports:** separated with comment `// value exports`
      - `export { open } from "./index.js"`
@@ -667,12 +667,12 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
 ### 13. **SDK API: Vault class and open()** ⭐ (New)
    - `open(path: string): Promise<Vault>`
      - Creates and returns Vault instance
-     - Loads index cache (Phase 1 indexer)
-     - Parses governance rules (Phase 3)
+     - Loads index cache (Sprint 1 indexer)
+     - Parses governance rules (Sprint 3)
      - All state initialized and ready for queries/writes
    - `Vault` class public methods:
-     - `query(q: string): Promise<Set<string>>` — delegates to Phase 2 query engine
-     - `walk(start: string, opts?: WalkOptions): Promise<WalkResult>` — delegates to Phase 2 graph
+     - `query(q: string): Promise<Set<string>>` — delegates to Sprint 2 query engine
+     - `walk(start: string, opts?: WalkOptions): Promise<WalkResult>` — delegates to Sprint 2 graph
      - `create(path: string, opts: CreateOptions): Promise<void>` — creates file with governance check
      - `append(path: string, content: string): Promise<void>` — appends with governance check
      - `getGovernanceRules(): GovernanceRules` — returns parsed governance
@@ -680,7 +680,7 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
    - All public methods documented with TypeDoc
    - Coverage: ≥ 90%
 
-### 14. **CLI Commands: Testable and Functional** ⭐ (Updated for Phase 3)
+### 14. **CLI Commands: Testable and Functional** ⭐ (Updated for Sprint 3)
    - `oxori write [--title T] [--tags t1,t2] [--path p] [--body B] [--frontmatter json]`
      - Creates new file, auto-generates filename from title if --path not provided
      - All options work correctly
@@ -691,7 +691,7 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
    - All commands respect --vault flag for targeting specific vault
    - **All commands must have CLI integration tests** (Criterion #15 — not separate)
 
-### 15. **CLI Integration Tests: write, append, config** ⭐ (New — from Phase 2 Retro A7)
+### 15. **CLI Integration Tests: write, append, config** ⭐ (New — from Sprint 2 Retro A7)
    - `tests/cli.test.ts` includes describe blocks for write, append, config commands
    - Minimum test cases (functional + error paths):
      - `oxori write` with all options
@@ -710,20 +710,20 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
    - `src/writer.ts` coverage: ≥ 90%
    - `src/governance.ts` coverage: ≥ 95% (safety-critical)
    - `src/index.ts` (SDK/Vault) coverage: ≥ 90%
-   - Phase 1-2 modules maintain their existing coverage (parser/indexer ≥ 95%, query/graph ≥ 90%)
+   - Sprint 1-2 modules maintain their existing coverage (parser/indexer ≥ 95%, query/graph ≥ 90%)
    - Full report: `npx vitest run --coverage` shows all modules
-   - **Coverage submission must include per-file table** (from Phase 2 Retro A4)
+   - **Coverage submission must include per-file table** (from Sprint 2 Retro A4)
 
-### 17. **Documentation: Writer/Governance/SDK and Updated README** ⭐ (New — from Phase 2 Retro A8)
+### 17. **Documentation: Writer/Governance/SDK and Updated README** ⭐ (New — from Sprint 2 Retro A8)
    - `docs/write-api.md` — complete API reference for create(), append(), with examples
    - `docs/governance.md` — how to write governance.md files, rule syntax, examples, enforcement behavior
    - `docs/sdk-api.md` — Vault class reference, open(), all methods, examples
-   - `README.md` updated with Phase 3 features:
+   - `README.md` updated with Sprint 3 features:
      - Section on write capabilities (create, append examples)
      - Section on governance and agent-vs-human semantics
      - Section on SDK usage (open, query, walk, write examples)
      - Update version reference from v0.2.0 to v0.3.0
-   - `docs/architecture.md` updated with Phase 3 section
+   - `docs/architecture.md` updated with Sprint 3 section
 
 ### 18. **Governance Safety: No Bypass for Agents** ⭐ (New)
    - Verify code enforces: agents always subject to rules, humans always bypass
@@ -752,7 +752,7 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
      - Wikilinks indexed (if any)
    - Index consistency verified: query for newly created file returns correct results
 
-### 22. **Phase 2 Debt: Indexer Coverage** ⭐ (Debt from Phase 2)
+### 22. **Sprint 2 Debt: Indexer Coverage** ⭐ (Debt from Sprint 2)
    - `src/indexer.ts` coverage improved from 47.15% to ≥ 90%
    - Incremental indexing paths (`indexFile`, `removeFileFromState`) covered
    - Edge cases: empty files, special characters in filenames, concurrent write scenarios
@@ -761,7 +761,7 @@ Good sprint, team. The query engine and graph traversal are real and working. Ph
 
 ## Summary
 
-**Total Criteria: 22** (6 inherited + 16 Phase 3 specific)
+**Total Criteria: 22** (6 inherited + 16 Sprint 3 specific)
 
 **Critical New Criteria (must pass for gate approval):**
 - #7: Runtime export check (catches type-vs-value mismatch)
@@ -781,25 +781,25 @@ All 22 criteria pass on first gate run (target: minimize gate blocks). Fix submi
 - [ ] This gate checklist written (Wave 0 — Flynn's responsibility)
 - [ ] Dumont agrees on docs structure (Wave 0 — async with implementation)
 - [ ] Yori designs test fixtures: governance-vault/ with sample governance.md (Wave 0)
-- [ ] Ready for Wave 1: Tron writes Phase 3 types (create, governance, Vault types)
-# Phase 3 Gate Checklist — v0.3.0 (Read/Write API + Governance)
+- [ ] Ready for Wave 1: Tron writes Sprint 3 types (create, governance, Vault types)
+# Sprint 3 Gate Checklist — v0.3.0 (Read/Write API + Governance)
 
 **Written by:** Flynn (Tech Lead / Gatekeeper)
 **Date:** 2026-04-04
-**Phase:** Phase 3 — Read/Write API and Governance
+**Sprint:** Sprint 3 — Read/Write API and Governance
 **Status:** 🔒 GATE OPEN (ready for Wave 1 types submission)
 
 ---
 
 ## Overview
 
-Phase 3 delivers write capability (SDK + CLI) with governance enforcement on agent writes. This checklist applies all Phase 2 retrospective action items (A1–A8) to prevent previous gate failures.
+Sprint 3 delivers write capability (SDK + CLI) with governance enforcement on agent writes. This checklist applies all Sprint 2 retrospective action items (A1–A8) to prevent previous gate failures.
 
 **Core deliverables:**
 - `src/writer.ts` — file creation and append operations
 - `src/governance.ts` — governance rule parsing and enforcement
 - `src/index.ts` — updated exports for Vault class and new functions
-- Updated README.md and docs with Phase 3 features
+- Updated README.md and docs with Sprint 3 features
 - CLI commands: `oxori write`, `oxori append`, `oxori config`
 - Full test coverage (writer ≥ 90%, governance ≥ 95%, global ≥ 80%)
 
@@ -820,7 +820,7 @@ Phase 3 delivers write capability (SDK + CLI) with governance enforcement on age
 
 **Criterion #2: Runtime export check (Retro A1)** ✅ **Binary gate**
 - After build, run: `node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"`
-- Output must include ALL new Phase 3 exports:
+- Output must include ALL new Sprint 3 exports:
   - Type exports: `CreateOptions`, `GovernanceRule`, `Actor`, `WriteAction`, `SearchResult`
   - Function exports: `create`, `append`, `parseGovernance`, `enforceRule`, `open` (Vault class method)
   - Class exports: `Vault` (if class, otherwise just method exports from `open`)
@@ -831,7 +831,7 @@ Phase 3 delivers write capability (SDK + CLI) with governance enforcement on age
 ---
 
 **Criterion #3: Types-first approval (Retro A2)**
-- All Phase 3 types must be merged to types.ts BEFORE any writer.ts or governance.ts implementation
+- All Sprint 3 types must be merged to types.ts BEFORE any writer.ts or governance.ts implementation
 - Flynn must review and approve types.ts as a standalone PR before Wave 2 begins
 - Types include: `CreateOptions`, `GovernanceRule`, `Actor`, `WriteAction`, `SearchResult`, and any helper types
 - Approved types commit must be tagged (e.g., `types-phase3-approved`) before implementation PRs are opened
@@ -841,7 +841,7 @@ Phase 3 delivers write capability (SDK + CLI) with governance enforcement on age
 ---
 
 **Criterion #4: TypeScript signatures in acceptance criteria (Retro A5 + A8)**
-- All new Phase 3 function signatures must be documented in `.squad/backlog.md` with exact parameter order and return types
+- All new Sprint 3 function signatures must be documented in `.squad/backlog.md` with exact parameter order and return types
 - Examples:
   - `create(path: string, content: string, actor?: Actor): Promise<Result<string, OxoriError>>`
   - `append(path: string, content: string, actor?: Actor): Promise<Result<string, OxoriError>>`
@@ -858,7 +858,7 @@ Phase 3 delivers write capability (SDK + CLI) with governance enforcement on age
 **Criterion #5: Test skeletons written only after types locked**
 - Yori must write `tests/writer.test.ts` and `tests/governance.test.ts` ONLY after Tron's types.ts is Flynn-approved
 - All test skeletons use `it.todo()` for unimplemented features (not `expect(toThrowError)`)
-- Test skeleton PRs must be reviewed before implementation begins (prevent the Phase 1 API mismatch)
+- Test skeleton PRs must be reviewed before implementation begins (prevent the Sprint 1 API mismatch)
 
 **Status:** ⏳ Pending Wave 1 (types locked) → Wave 1 (test skeletons)
 
@@ -908,7 +908,7 @@ Global | 82% | ... | 83% | 81% | 82%
 
 ### Documentation Updates (Retro A8)
 
-**Criterion #8: README updated with Phase 3 features**
+**Criterion #8: README updated with Sprint 3 features**
 - README.md must include:
   - Write API usage examples (create, append)
   - Governance rules explanation and example syntax
@@ -922,11 +922,11 @@ Global | 82% | ... | 83% | 81% | 82%
 
 **Criterion #9: Architecture docs updated**
 - docs/architecture.md must include:
-  - Phase 3 ADR: Write API design (create vs append rationale)
+  - Sprint 3 ADR: Write API design (create vs append rationale)
   - Governance rule enforcement workflow (decision tree)
   - Actor model (human vs agent distinction)
   - Integration diagram: Vault + Writer + Governance flow
-  - Per-entry tsup banner decision codified (from Phase 2 A5)
+  - Per-entry tsup banner decision codified (from Sprint 2 A5)
 - Any new architectural decisions (e.g., sync vs async, in-memory vs disk governance cache) must be documented
 
 **Status:** ⏳ Pending Wave 4 (documentation)
@@ -1072,8 +1072,8 @@ Global | 82% | ... | 83% | 81% | 82%
 ---
 
 **Criterion #17: All 14 existing it.todo() stubs resolved**
-- Phase 1 and Phase 2 left 14 `it.todo()` test stubs scattered across test files
-- By end of Phase 3, ALL must be resolved:
+- Sprint 1 and Sprint 2 left 14 `it.todo()` test stubs scattered across test files
+- By end of Sprint 3, ALL must be resolved:
   - Either filled with actual test implementations
   - Or explicitly removed with justification documented in commit message
 - No PR may merge with unresolved `it.todo()` stubs that relate to delivered features
@@ -1098,8 +1098,8 @@ Global | 82% | ... | 83% | 81% | 82%
 **Criterion #19: pnpm test passes, 127+ existing + 40+ new tests**
 - `pnpm test` (or `npx vitest run`) must complete with all tests passing
 - Test count breakdown:
-  - Existing: 127+ tests from Phase 1 & 2
-  - Phase 3: 40+ new tests
+  - Existing: 127+ tests from Sprint 1 & 2
+  - Sprint 3: 40+ new tests
     - writer.test.ts: 12+ tests
     - governance.test.ts: 16+ tests
     - index.test.ts: 14+ tests
@@ -1116,10 +1116,10 @@ Global | 82% | ... | 83% | 81% | 82%
   - writer.ts ≥ 90%
   - governance.ts ≥ 95%
   - index.ts ≥ 90%
-  - parser.ts ≥ 95% (inherited from Phase 1, must not regress)
-  - indexer.ts ≥ 90% (Phase 2 improvement target)
-  - query.ts ≥ 90% (Phase 2)
-  - graph.ts ≥ 90% (Phase 2)
+  - parser.ts ≥ 95% (inherited from Sprint 1, must not regress)
+  - indexer.ts ≥ 90% (Sprint 2 improvement target)
+  - query.ts ≥ 90% (Sprint 2)
+  - graph.ts ≥ 90% (Sprint 2)
   - all other modules ≥ 80%
   - **Global ≥ 80%**
 - If any module below threshold, gate **FAILS** — no exceptions
@@ -1159,7 +1159,7 @@ Global | 82% | ... | 83% | 81% | 82%
 
 ---
 
-## Phase 3 Gate Workflow
+## Sprint 3 Gate Workflow
 
 ### Wave 0 (Types Planning) — Kickoff
 - Flynn writes this gate checklist ✅ (done)
@@ -1168,7 +1168,7 @@ Global | 82% | ... | 83% | 81% | 82%
 - **Gate:** Checklist reviewed and agreed by team
 
 ### Wave 1 (Types Locked) — Type Review
-- Tron implements types.ts Phase 3 additions
+- Tron implements types.ts Sprint 3 additions
 - Yori writes test skeletons (after types approved)
 - **Gate:** Flynn reviews types.ts PR → approves → merge
 - **Blocker:** No implementation work begins until types approved
@@ -1195,7 +1195,7 @@ Global | 82% | ... | 83% | 81% | 82%
 
 ## Retro Action Item Mapping
 
-| Retro Item | Phase 3 Application | Criterion # |
+| Retro Item | Sprint 3 Application | Criterion # |
 |------------|-------------------|------------|
 | A1 | Runtime export check added to gate | #2 |
 | A2 | Types-first approval: types before implementation | #3 |
@@ -1204,7 +1204,7 @@ Global | 82% | ... | 83% | 81% | 82%
 | A5 | Function signatures in backlog ACs | #4 |
 | A6 | Gate checklist written at kickoff (this doc) | #1-22 |
 | A7 | CLI tests for write/append/config/check | #7 |
-| A8 | README updated with Phase 3 features | #8 |
+| A8 | README updated with Sprint 3 features | #8 |
 
 ---
 
@@ -1216,7 +1216,7 @@ Global | 82% | ... | 83% | 81% | 82%
 
 **Required Approvals Before Merge:**
 - [ ] Flynn: Gate checklist review and team agreement
-- [ ] Tron: types.ts Phase 3 additions ready for Wave 1
+- [ ] Tron: types.ts Sprint 3 additions ready for Wave 1
 - [ ] Castor: Backlog ACs aligned with criteria
 - [ ] Dumont: Documentation structure confirmed
 
@@ -1224,13 +1224,13 @@ Global | 82% | ... | 83% | 81% | 82%
 
 ---
 
-**Document Version:** Phase 3 Gate v1.0
+**Document Version:** Sprint 3 Gate v1.0
 **Last Updated:** 2026-04-04
-**Phase 3 Release Target:** v0.3.0 (npm)
-# Tron: Phase 3 Type Contracts
+**Sprint 3 Release Target:** v0.3.0 (npm)
+# Tron: Sprint 3 Type Contracts
 
 **Date:** 2026-04-03  
-**Phase:** 3 (Watcher + Governance)  
+**Sprint:** 3 (Watcher + Governance)  
 **Wave:** 1 — Types Locked  
 **Status:** ✅ Implemented & Build Verified  
 
@@ -1238,7 +1238,7 @@ Global | 82% | ... | 83% | 81% | 82%
 
 ## Overview
 
-This document specifies all TypeScript type contracts for Phase 3 modules:
+This document specifies all TypeScript type contracts for Sprint 3 modules:
 - **Watcher** (`src/watcher.ts`): File system change monitoring
 - **Governance** (`src/governance.ts`): Rule-based write policy enforcement
 
@@ -1334,7 +1334,7 @@ export interface VaultWatcher {
 
 ## Existing Types Referenced
 
-### `WatchEvent` (from Phase 1)
+### `WatchEvent` (from Sprint 1)
 
 Used by the watcher to emit filesystem changes:
 
@@ -1351,7 +1351,7 @@ export type WatchEvent = {
 
 ---
 
-### `GovernanceRule` (from Phase 1)
+### `GovernanceRule` (from Sprint 1)
 
 Defines a single access control rule evaluated by the governance engine:
 
@@ -1372,7 +1372,7 @@ export type GovernanceRule = {
 
 ---
 
-### `IndexState` (from Phase 1)
+### `IndexState` (from Sprint 1)
 
 Current state of the vault index; input to governance evaluation:
 
@@ -1497,7 +1497,7 @@ All new types are exported from `src/index.ts`:
 ```typescript
 export type {
   // ... existing types ...
-  // Phase 3 — Watcher and Governance
+  // Sprint 3 — Watcher and Governance
   VaultWatcher,
   GovernanceViolation,
   GovernanceResult,
@@ -1565,7 +1565,7 @@ import {
 - **castor-phase3-gate.md** — 22-criterion gate checklist
 - **flynn-phase3-types-review.md** — (To be written after this document)
 - **yori-fixture-design.md** — governance-vault/ fixture specification
-# Phase 3 Test Audit + Skeleton Plan — Summary
+# Sprint 3 Test Audit + Skeleton Plan — Summary
 
 **Author:** Yori (Test Engineer)  
 **Date:** April 3, 2024  
@@ -1581,14 +1581,14 @@ Audited all existing test files and identified 14 `it.todo()` stubs across the c
 
 | File | Stubs | Fillable? | Action |
 |------|-------|-----------|--------|
-| `tests/parser.test.ts` | 3 | ❌ No | Error handling requires Phase 3 work |
-| `tests/indexer.test.ts` | 8 | ❌ No | Output file writing is Phase 3 feature |
+| `tests/parser.test.ts` | 3 | ❌ No | Error handling requires Sprint 3 work |
+| `tests/indexer.test.ts` | 8 | ❌ No | Output file writing is Sprint 3 feature |
 | `tests/query.test.ts` | 3 | ✅ Yes | **FILLED** |
 | **Total** | **14** | **3 filled** | **11 remain pending** |
 
 ### Filled Tests (Query Module)
 
-All 3 query stubs have been **implemented** as they test Phase 2 functionality:
+All 3 query stubs have been **implemented** as they test Sprint 2 functionality:
 
 1. ✅ **"handles leading and trailing whitespace gracefully"** (line 150)
    - Tests that tokenizer correctly handles `"  tag:auth  "`
@@ -1604,9 +1604,9 @@ All 3 query stubs have been **implemented** as they test Phase 2 functionality:
 
 **Result:** All 3 query tests now pass. Query module test coverage: **50/50 passed** (100%)
 
-### Remaining Stubs (Pending Phase 3)
+### Remaining Stubs (Pending Sprint 3)
 
-The following 11 stubs depend on Phase 3 implementations and remain unfilled:
+The following 11 stubs depend on Sprint 3 implementations and remain unfilled:
 
 **Parser (3 stubs):**
 - `parseFile()` error handling: malformed YAML, file not found, filepath in error
@@ -1617,13 +1617,13 @@ The following 11 stubs depend on Phase 3 implementations and remain unfilled:
 - Edge cases: empty vault, duplicate filenames
 
 These are correctly left as stubs because they require:
-- Error object contracts not yet finalized (Phase 3)
-- File I/O operations to write index outputs (Phase 3)
+- Error object contracts not yet finalized (Sprint 3)
+- File I/O operations to write index outputs (Sprint 3)
 - Complete errorhandling infrastructure
 
 ---
 
-## Part 2: New Phase 3 Test Skeleton Files
+## Part 2: New Sprint 3 Test Skeleton Files
 
 ### Created: `tests/watcher.test.ts`
 
@@ -1683,9 +1683,9 @@ describe('checkGovernance()', () => {
 
 ---
 
-## Part 3: Phase 3 CLI Stubs
+## Part 3: Sprint 3 CLI Stubs
 
-Added 12 new `it.todo()` stubs to `tests/cli.test.ts` for Phase 3 commands:
+Added 12 new `it.todo()` stubs to `tests/cli.test.ts` for Sprint 3 commands:
 
 ### `oxori watch <path>` (6 stubs)
 
@@ -1726,7 +1726,7 @@ describe('oxori check', () => {
 ### After Changes
 - Test Files: 7 (added watcher.test.ts, governance.test.ts)
 - Tests Passed: 130 (3 newly filled from query stubs)
-- Tests Todo: 43 (11 existing pending + 20 new Phase 3 + 12 new CLI)
+- Tests Todo: 43 (11 existing pending + 20 new Sprint 3 + 12 new CLI)
 - Total: 173
 
 ### Command Output
@@ -1735,9 +1735,9 @@ describe('oxori check', () => {
 ✓ tests/parser.test.ts (19 tests | 3 skipped) — 3 error stubs remain pending
 ✓ tests/graph.test.ts (24 tests) — complete
 ✓ tests/indexer.test.ts (23 tests | 8 skipped) — 8 output stubs remain pending
-✓ tests/cli.test.ts (37 tests | 12 skipped) — 12 new Phase 3 stubs
-↓ tests/watcher.test.ts (10 tests | 10 skipped) — phase 3 skeleton
-↓ tests/governance.test.ts (10 tests | 10 skipped) — phase 3 skeleton
+✓ tests/cli.test.ts (37 tests | 12 skipped) — 12 new Sprint 3 stubs
+↓ tests/watcher.test.ts (10 tests | 10 skipped) — sprint 3 skeleton
+↓ tests/governance.test.ts (10 tests | 10 skipped) — sprint 3 skeleton
 
 Test Files  7 passed | 2 skipped
 Tests       130 passed | 43 todo
@@ -1750,8 +1750,8 @@ All tests pass ✅
 
 - ✅ **Part 1:** Audited all existing `it.todo()` stubs
   - 3 query stubs **FILLED AND PASSING**
-  - 11 remaining stubs flagged as Phase 3 dependencies
-- ✅ **Part 2:** Created Phase 3 skeleton files
+  - 11 remaining stubs flagged as Sprint 3 dependencies
+- ✅ **Part 2:** Created Sprint 3 skeleton files
   - `tests/watcher.test.ts` — 10 it.todo() stubs for file watcher
   - `tests/governance.test.ts` — 10 it.todo() stubs for governance engine
 - ✅ **Part 3:** Added CLI stubs to `tests/cli.test.ts`
@@ -1764,16 +1764,16 @@ All tests pass ✅
 
 ## Next Steps for Implementation Teams
 
-### Phase 2 Remaining Work (Parser/Indexer)
+### Sprint 2 Remaining Work (Parser/Indexer)
 - **Parser team (Tron):** Implement error handling for parseFile() and fill 3 parser stubs
 - **Indexer team (Tron):** Implement index file output and fill 8 indexer stubs
 
-### Phase 3 Implementation Work
+### Sprint 3 Implementation Work
 - **Watcher team:** Implement `src/watcher.ts` and fill 10 watcher stubs + 6 CLI watch stubs
 - **Governance team:** Implement `src/governance.ts` and fill 10 governance stubs + 6 CLI check stubs
 
 ### Test Fixture Requirements
-- Phase 3 tests will need fixtures in `tests/fixtures/` (to be created during implementation)
+- Sprint 3 tests will need fixtures in `tests/fixtures/` (to be created during implementation)
 - CLI watch/check tests may need isolated temp directories (test setup already in place)
 
 ---
@@ -1913,11 +1913,11 @@ code path is correct and will be exercised on other platforms.
    "no-orphan", and "max-links" stubs assume a rule system based on file content/graph
    properties. The actual `checkGovernance` only supports path-glob matching. Left as
    named todos rather than deleting them — they document unimplemented governance features
-   that could be added in a future phase.
+   that could be added in a future sprint.
 
 ---
 
-# Decision: Phase 3 Documentation Updates
+# Decision: Sprint 3 Documentation Updates
 
 **Date:** 2026-04-04  
 **Author:** Dumont (Documentation Engineer)  
@@ -1925,7 +1925,7 @@ code path is correct and will be exercised on other platforms.
 
 ## Context
 
-Phase 3 implementation is underway with two major additions:
+Sprint 3 implementation is underway with two major additions:
 1. **Watcher** (`src/watcher.ts`) — Real-time file monitoring via EventEmitter
 2. **Governance** (`src/governance.ts`) — Glob-pattern rule evaluation
 
@@ -1933,7 +1933,7 @@ Documentation needed updates to reflect these capabilities in README, architectu
 
 ## Decision
 
-Update three key documentation files to document Phase 3 additions:
+Update three key documentation files to document Sprint 3 additions:
 
 ### 1. README.md
 - Updated features list: v0.2.0 → v0.3.0
@@ -1943,10 +1943,10 @@ Update three key documentation files to document Phase 3 additions:
   - Query and Walk (existing, reorganized)
   - **File Watcher** (new) — shows `watch()` API with `on('change')` listener pattern
   - **Governance** (new) — shows `checkGovernance()` API with rule definition and violation handling
-- Updated Architecture section description to reflect Phase 3 completeness
+- Updated Architecture section description to reflect Sprint 3 completeness
 
 ### 2. docs/architecture.md
-- Added new section **"Phase 3 Additions"** after System Layers and before Data Flow
+- Added new section **"Sprint 3 Additions"** after System Layers and before Data Flow
 - Summarizes Watcher layer: EventEmitter-based, wraps fs.watch, emits WatchEvent (add/change/unlink)
 - Summarizes Governance layer: glob-pattern rules, deny/allow effects, agents-only enforcement
 - Emphasizes that both are pure functions ready for MCP integration
@@ -1973,7 +1973,7 @@ All examples validated against source files:
 - Governance: shows rule definition with id/description/pattern/effect/appliesTo, result checking, violation iteration
 
 ### Architecture Clarity
-- Phase 3 section emphasizes: Watcher is optional (for long-running processes), Governance is agent-only (humans bypass), both are pure functions
+- Sprint 3 section emphasizes: Watcher is optional (for long-running processes), Governance is agent-only (humans bypass), both are pure functions
 - Fits naturally between Layer 9 description and existing Data Flow section
 
 ## Testing
@@ -1982,19 +1982,19 @@ All examples validated against source files:
 - All three files are valid markdown with proper formatting
 
 ## Outcome
-Phase 3 documentation is now complete and ready for:
+Sprint 3 documentation is now complete and ready for:
 - SDK users to understand the new Watcher and Governance APIs
 - Architecture reviewers to see integration points with existing layers
-- Release notes to reflect Phase 3 delivery
+- Release notes to reflect Sprint 3 delivery
 
 ## Follow-up
 - Monitor user feedback on API clarity and example usefulness
 - Update if governance rule syntax evolves
-- Add CLI command docs for `watch` and `governance` commands (Phase 5/MCP alignment)
+- Add CLI command docs for `watch` and `governance` commands (Sprint 5/MCP alignment)
 
 ---
 
-# Phase 3 Gate Verdict — v0.3.0
+# Sprint 3 Gate Verdict — v0.3.0
 
 **By:** Flynn (Tech Lead / Gatekeeper)  
 **Date:** 2025-07-14  
@@ -2012,7 +2012,7 @@ Phase 3 documentation is now complete and ready for:
 | 4 | watcher.ts ≥ 90% coverage | ✅ PASS | 97.43% stmts, 92.3% branch, 100% funcs, 97.43% lines |
 | 5 | Global coverage ≥ 80% | ✅ PASS | 84.6% stmts, 88.54% branch, 91.3% funcs, 84.6% lines |
 | 6 | Runtime export check (Retro A1) | ✅ PASS | `watch` and `checkGovernance` present in dist/index.js (18 exports total) |
-| 7 | README updated with Phase 3 features | ✅ PASS | File Watcher + Governance sections with code examples, features list updated (10 matches) |
+| 7 | README updated with Sprint 3 features | ✅ PASS | File Watcher + Governance sections with code examples, features list updated (10 matches) |
 | 8 | RELEASES.md has v0.3.0 entry | ✅ PASS | `## [Unreleased] — v0.3.0` with watcher + governance content |
 | 9 | CLI tests include stubs for `oxori watch` and `oxori check` | ✅ PASS | `describe('oxori watch')` (4 it.todo), `describe('oxori check')` (2 it.todo) |
 | 10 | `src/watcher.ts` exists | ✅ PASS | File present |
@@ -2032,7 +2032,7 @@ Phase 3 documentation is now complete and ready for:
 | query.ts | 95.12 | 87.93 | 100 | 95.12 | ✅ inherited |
 | parser.ts | 80.76 | 74.07 | 100 | 80.76 | ⚠️ below 95% target |
 | types.ts | 75 | 100 | 50 | 75 | ⚠️ runtime code minimal |
-| indexer.ts | 47.15 | 80 | 57.14 | 47.15 | ⚠️ debt from Phase 2 |
+| indexer.ts | 47.15 | 80 | 57.14 | 47.15 | ⚠️ debt from Sprint 2 |
 
 ---
 
@@ -2048,18 +2048,18 @@ The 4 remaining `it.todo()` stubs are for governance rule types that are **not i
 4. `severity:warning` — only `severity:'error'` exists in the implementation
 
 **Rationale:**
-- `checkGovernance` works correctly within its designed scope: glob-based path pattern rules with deny/allow effects. This is the Phase 3 contract.
+- `checkGovernance` works correctly within its designed scope: glob-based path pattern rules with deny/allow effects. This is the Sprint 3 contract.
 - The 4 rule types are extensions beyond the current architecture, not bugs or missing implementations.
 - Tests correctly use `it.todo()` with explicit explanations (per Retro A3: "use it.todo() for stubs, not throwError").
-- These should be a **Phase 4 backlog item**, not a gate blocker.
+- These should be a **Sprint 4 backlog item**, not a gate blocker.
 
-**Action:** Castor to create Phase 4 backlog issue for the 4 governance rule extensions.
+**Action:** Castor to create Sprint 4 backlog issue for the 4 governance rule extensions.
 
 ---
 
-## Phase 2 Retro Action Items — Compliance Check
+## Sprint 2 Retro Action Items — Compliance Check
 
-| AI | Description | Phase 3 Status |
+| AI | Description | Sprint 3 Status |
 |----|-------------|----------------|
 | A1 | Runtime export check in gate checklist | ✅ Applied — criterion #6 above |
 | A2 | Value exports alongside type exports in index.ts | ✅ 18 exports confirmed at runtime |
@@ -2072,13 +2072,13 @@ The 4 remaining `it.todo()` stubs are for governance rule types that are **not i
 
 ---
 
-## Minor Items for Phase 4
+## Minor Items for Sprint 4
 
 1. **4 governance rule extensions** — required-tag, no-orphan, max-links, severity:warning (backlog issue needed)
-2. **indexer.ts coverage at 47.15%** — carried from Phase 2, significantly below 95% target. Must be addressed in Phase 4.
+2. **indexer.ts coverage at 47.15%** — carried from Sprint 2, significantly below 95% target. Must be addressed in Sprint 4.
 3. **parser.ts coverage at 80.76%** — acceptable but below 95% target
 4. **semantic-release dry-run** — A7 not verified in this gate; must be validated before v0.3.0 publish
-5. **CLI test stubs** — 12 it.todo in cli.test.ts (6 for watch+check, 6 from earlier phases); fill in when CLI commands are fully wired
+5. **CLI test stubs** — 12 it.todo in cli.test.ts (6 for watch+check, 6 from earlier sprints); fill in when CLI commands are fully wired
 
 ---
 
@@ -2086,10 +2086,10 @@ The 4 remaining `it.todo()` stubs are for governance rule types that are **not i
 
 **✅ APPROVED — v0.3.0 ready for release.**
 
-All 12 mandatory gate criteria pass. Phase 3 delivers a working file watcher (chokidar-based, 97.43% coverage) and a governance layer (glob-based path pattern rules, 100% coverage). Runtime exports confirmed. Documentation complete. No regressions from Phase 2.
+All 12 mandatory gate criteria pass. Sprint 3 delivers a working file watcher (chokidar-based, 97.43% coverage) and a governance layer (glob-based path pattern rules, 100% coverage). Runtime exports confirmed. Documentation complete. No regressions from Sprint 2.
 
-This is the first Phase gate to pass on the first attempt. The Phase 2 retro actions (especially A1: runtime export check, A3: it.todo() discipline, A6: gate checklist at kickoff) directly contributed to this result.
-## Phase 3 Retrospective — Oxori v0.3.0
+This is the first Sprint gate to pass on the first attempt. The Sprint 2 retro actions (especially A1: runtime export check, A3: it.todo() discipline, A6: gate checklist at kickoff) directly contributed to this result.
+## Sprint 3 Retrospective — Oxori v0.3.0
 
 **Facilitated by:** Flynn
 **Date:** 2026-04-04
@@ -2101,52 +2101,52 @@ This is the first Phase gate to pass on the first attempt. The Phase 2 retro act
 ### ✅ What Went Well
 
 #### 1. First clean gate pass in the project's history — 12/12 on attempt #1
-Phase 1 passed on attempt #1 (but with 11 untested CLI paths carried as debt). Phase 2 required 3 gate runs (5 failures → 1 failure → pass). Phase 3 passed every criterion on the first submission. This is the most concrete evidence that the retro action item discipline works — the process improved measurably across three phases.
+Sprint 1 passed on attempt #1 (but with 11 untested CLI paths carried as debt). Sprint 2 required 3 gate runs (5 failures → 1 failure → pass). Sprint 3 passed every criterion on the first submission. This is the most concrete evidence that the retro action item discipline works — the process improved measurably across three sprints.
 
-#### 2. Phase 2 retro action items A1–A8 delivered — 7/8 applied and verified
-The retro wasn't a ceremony that produced a document nobody read. Seven of eight action items from Phase 2 were directly applied and verified at gate:
+#### 2. Sprint 2 retro action items A1–A8 delivered — 7/8 applied and verified
+The retro wasn't a ceremony that produced a document nobody read. Seven of eight action items from Sprint 2 were directly applied and verified at gate:
 
 | AI | Action | Applied? | Impact |
 |----|--------|----------|--------|
-| A1 | Runtime export check in gate | ✅ | `watch` and `checkGovernance` confirmed in dist/index.js — the exact class of failure that blocked Phase 2 twice |
+| A1 | Runtime export check in gate | ✅ | `watch` and `checkGovernance` confirmed in dist/index.js — the exact class of failure that blocked Sprint 2 twice |
 | A2 | Value exports alongside type exports | ✅ | 18 exports confirmed at runtime; no type-vs-value mismatch |
 | A3 | `it.todo()` for stubs, not throwError | ✅ | All 27 todos use `it.todo()` — no test rewrites from stub coupling |
 | A4 | Full per-file coverage table | ✅ | Full table submitted with gate — no silent omissions |
 | A5 | Ram confirms signatures from types.ts before implementation | ✅ | Implementation matched types; no parameter order mismatches |
 | A6 | Gate checklist written at kickoff | ✅ | `flynn-phase3-gate.md` written in Wave 0, before any implementation |
-| A7 | semantic-release dry-run | ⚠️ Deferred | Not verified — Clu responsibility pre-publish. Carried to Phase 4. |
+| A7 | semantic-release dry-run | ⚠️ Deferred | Not verified — Clu responsibility pre-publish. Carried to Sprint 4. |
 | A8 | Backlog ACs include TS function signatures | ✅ | Contracts matched implementation |
 
-A1 and A6 were the highest-impact items. Writing the gate checklist at kickoff (A6) gave the team a concrete target list. The runtime export check (A1) directly prevented the Phase 2 failure mode.
+A1 and A6 were the highest-impact items. Writing the gate checklist at kickoff (A6) gave the team a concrete target list. The runtime export check (A1) directly prevented the Sprint 2 failure mode.
 
 #### 3. Coverage numbers exceeded thresholds across all new modules
 - **governance.ts: 100%** (all dimensions) — against a 90% threshold. Yori added 7 extra tests beyond the original 10 stubs, reaching 13 real assertions. This is the right approach for a safety-critical module.
 - **watcher.ts: 97.43% stmts / 92.3% branch / 100% funcs** — the 2.57% uncovered is a platform-specific branch (macOS `fs.watch` emits "rename" instead of "change"). Yori documented this explicitly — the uncovered branch runs on Linux and is not a test gap.
-- **Global: 84.6%** — exceeds 80% threshold. Up from 82.72% at Phase 2 close.
+- **Global: 84.6%** — exceeds 80% threshold. Up from 82.72% at Sprint 2 close.
 
 #### 4. Wave structure and parallel fan-out worked cleanly
 Wave 0 (kickoff): Flynn wrote gate checklist + Castor refined backlog + Tron planned types + Yori designed fixtures.
 Wave 1: Tron implemented watcher.ts + Ram implemented governance.ts + Yori wrote test skeletons — all in parallel after types were locked.
 No wave produced a blocking dependency surprise. The types-first discipline (A2) meant Wave 1 implementation started from a locked contract, not a moving target.
 
-#### 5. Types-first discipline held for the third consecutive phase
-Tron's type contracts (`WatchEvent`, `GovernanceRule`, `VaultWatcher`, `GovernanceViolation`, `GovernanceResult`) were locked before any implementation code was written. Yori's test skeletons were written against these locked types. No API mismatch between tests and implementation in Phase 3 — the exact pattern that caused the most friction in Phase 1 and Phase 2.
+#### 5. Types-first discipline held for the third consecutive sprint
+Tron's type contracts (`WatchEvent`, `GovernanceRule`, `VaultWatcher`, `GovernanceViolation`, `GovernanceResult`) were locked before any implementation code was written. Yori's test skeletons were written against these locked types. No API mismatch between tests and implementation in Sprint 3 — the exact pattern that caused the most friction in Sprint 1 and Sprint 2.
 
 #### 6. Test skeleton quality improved — 10/10 watcher stubs filled, governance stubs correctly triaged
 Yori filled all 10 watcher stubs to real assertions (100% conversion). For governance, 6/10 original stubs were filled, 4 were correctly left as `it.todo()` with explicit justifications documenting that the underlying rule types don't exist in the implementation. This is the right call — tests shouldn't fake coverage for unimplemented features.
 
 #### 7. Dumont's documentation was accurate on first submission
-README, architecture.md, and RELEASES.md all used correct field names (`filepath` not `path`, `"add"/"change"/"unlink"` not `"create"/"modify"/"delete"`) and correct API signatures. In Phase 2, README was still showing Phase 2 features as "🔜 future work" at first gate. In Phase 3, docs were gate-ready on first attempt.
+README, architecture.md, and RELEASES.md all used correct field names (`filepath` not `path`, `"add"/"change"/"unlink"` not `"create"/"modify"/"delete"`) and correct API signatures. In Sprint 2, README was still showing Sprint 2 features as "🔜 future work" at first gate. In Sprint 3, docs were gate-ready on first attempt.
 
 #### 8. Conventional commit discipline and atomic commits maintained
-Every Phase 3 commit (`02748e1`, `437f5e8`, `ac3644c`, `9a832f9`, `d0275f9`) follows the `feat/test/docs/chore` convention with correct scoping. The commit history is clean and trustworthy for release notes.
+Every Sprint 3 commit (`02748e1`, `437f5e8`, `ac3644c`, `9a832f9`, `d0275f9`) follows the `feat/test/docs/chore` convention with correct scoping. The commit history is clean and trustworthy for release notes.
 
 ---
 
 ### ❌ What Was Harder Than Expected
 
 #### 1. GovernanceRule type gap — 4 rule types not implementable in the current architecture
-The `GovernanceRule` type was defined in Phase 1's `types.ts` with 5 fields: `id`, `description`, `pattern`, `effect`, `appliesTo`. The implementation in `src/governance.ts` supports exactly one rule evaluation mode: glob-based path pattern matching with deny/allow effects. Four governance features from the test skeletons and backlog are not implementable against this type shape:
+The `GovernanceRule` type was defined in Sprint 1's `types.ts` with 5 fields: `id`, `description`, `pattern`, `effect`, `appliesTo`. The implementation in `src/governance.ts` supports exactly one rule evaluation mode: glob-based path pattern matching with deny/allow effects. Four governance features from the test skeletons and backlog are not implementable against this type shape:
 
 - **required-tag**: needs a `requiredTags: string[]` field and access to `IndexState.tags` — not just filepath matching
 - **no-orphan**: needs link-count evaluation via `IndexState.links` — not a glob pattern
@@ -2155,7 +2155,7 @@ The `GovernanceRule` type was defined in Phase 1's `types.ts` with 5 fields: `id
 
 **Root cause:** `GovernanceRule` was designed as a single shape (pattern + effect) without anticipating that different rule types need fundamentally different evaluation inputs. A `required-tag` rule doesn't match against filepaths — it inspects file metadata. The type needed to be a discriminated union from the start: `GovernanceRule = PathRule | TagRule | LinkRule`.
 
-**Lesson:** When a type is designed to support "future rule types," the future shapes should be sketched as a discriminated union during type design — not deferred to "Phase N+1." The single-shape approach created a false sense of completeness.
+**Lesson:** When a type is designed to support "future rule types," the future shapes should be sketched as a discriminated union during type design — not deferred to "Sprint N+1." The single-shape approach created a false sense of completeness.
 
 #### 2. WatchEvent field name discrepancy discovered during implementation
 Yori's original test skeletons included stubs like `'type field on WatchEvent is correct for create/modify/delete'` — using assumed event names (`create/modify/delete`) rather than the actual field values (`add/change/unlink`). The `WatchEvent.filepath` field was also documented inconsistently as `path` in early planning.
@@ -2166,80 +2166,80 @@ Tron's implementation used the correct field names from `types.ts` (`filepath`, 
 
 **Lesson:** Test stub descriptions should use exact type field values. `'emits WatchEvent with type "add" when file created'` is better than `'emits change event when a markdown file is created'`. The stub description is a micro-contract.
 
-#### 3. pnpm-lock.yaml missing at Phase 3 start — CI infrastructure debt
-The `pnpm-lock.yaml` was not committed during Phase 1 or Phase 2. It was added as commit `336864b` at Phase 3 start. This means CI would have failed on a clean clone before this fix — `pnpm install --frozen-lockfile` requires the lockfile to exist.
+#### 3. pnpm-lock.yaml missing at Sprint 3 start — CI infrastructure debt
+The `pnpm-lock.yaml` was not committed during Sprint 1 or Sprint 2. It was added as commit `336864b` at Sprint 3 start. This means CI would have failed on a clean clone before this fix — `pnpm install --frozen-lockfile` requires the lockfile to exist.
 
-**Root cause:** The lockfile was in `.gitignore` or never staged during initial project setup. Clu fixed CI infrastructure in Phase 2 (release.yml, Node 24, semantic-release), but the lockfile gap was not caught because local `pnpm install` generates it on the fly.
+**Root cause:** The lockfile was in `.gitignore` or never staged during initial project setup. Clu fixed CI infrastructure in Sprint 2 (release.yml, Node 24, semantic-release), but the lockfile gap was not caught because local `pnpm install` generates it on the fly.
 
 **Lesson:** The gate checklist should include a "clean clone + install" verification step. If CI can't reproduce the build from a fresh clone, the lockfile is either missing or stale.
 
 #### 4. Scope pivot from Write API to Watcher + Governance
-The original Phase 3 backlog defined "Read/Write API and Governance" as the scope — with `src/writer.ts` (create/append), governance, and a Vault SDK class. The actual Phase 3 delivery was **Watcher + Governance** — `src/watcher.ts` and `src/governance.ts`, with no writer or Vault SDK. The 22-criterion gate checklist written at kickoff included criteria for writer.ts, Vault class, and SDK tests that were never evaluated.
+The original Sprint 3 backlog defined "Read/Write API and Governance" as the scope — with `src/writer.ts` (create/append), governance, and a Vault SDK class. The actual Sprint 3 delivery was **Watcher + Governance** — `src/watcher.ts` and `src/governance.ts`, with no writer or Vault SDK. The 22-criterion gate checklist written at kickoff included criteria for writer.ts, Vault class, and SDK tests that were never evaluated.
 
-The scope change was the right call — watcher + governance are foundational for Phase 4/5 MCP integration. But the gate checklist was effectively reduced from 22 criteria to 12 without a formal rescoping decision. The unused 10 criteria (writer, Vault SDK, integration tests, indexer coverage) should be explicitly carried to Phase 4.
+The scope change was the right call — watcher + governance are foundational for Sprint 4/5 MCP integration. But the gate checklist was effectively reduced from 22 criteria to 12 without a formal rescoping decision. The unused 10 criteria (writer, Vault SDK, integration tests, indexer coverage) should be explicitly carried to Sprint 4.
 
 ---
 
 ### 💡 Key Learnings
 
 #### 1. Retro action items have compounding value when actually enforced
-A1 (runtime export check) was written in the Phase 2 retro. It was applied in Phase 3. The exact failure it prevents (type-vs-value export mismatch) did not occur. This is the invisible win — the failure that didn't happen because the process worked. The ROI of retro action items is measured in failures avoided, not features delivered.
+A1 (runtime export check) was written in the Sprint 2 retro. It was applied in Sprint 3. The exact failure it prevents (type-vs-value export mismatch) did not occur. This is the invisible win — the failure that didn't happen because the process worked. The ROI of retro action items is measured in failures avoided, not features delivered.
 
-#### 2. Gate checklist at kickoff is now a proven pattern — three phases validate it
-Phase 1: no formal kickoff checklist (gate criteria discovered at review). Phase 2: checklist written at kickoff, but 5 failures still occurred (implementation didn't check against it). Phase 3: checklist at kickoff + retro discipline = first-attempt pass. The checklist isn't sufficient alone — the team has to actually verify against it before submitting for gate. Phase 3 proved both sides.
+#### 2. Gate checklist at kickoff is now a proven pattern — three sprints validate it
+Sprint 1: no formal kickoff checklist (gate criteria discovered at review). Sprint 2: checklist written at kickoff, but 5 failures still occurred (implementation didn't check against it). Sprint 3: checklist at kickoff + retro discipline = first-attempt pass. The checklist isn't sufficient alone — the team has to actually verify against it before submitting for gate. Sprint 3 proved both sides.
 
 #### 3. `it.todo()` discipline prevents test-rewrite cascades
-Phase 1's `expect(toThrowError)` stubs required rewriting when implementation differed. Phase 2's graph.test.ts had parameter order baked into stubs. Phase 3's `it.todo()` stubs were either filled correctly or left as documented future work — no rewrite cycle. The discipline from Retro A3 is now validated across one full phase.
+Sprint 1's `expect(toThrowError)` stubs required rewriting when implementation differed. Sprint 2's graph.test.ts had parameter order baked into stubs. Sprint 3's `it.todo()` stubs were either filled correctly or left as documented future work — no rewrite cycle. The discipline from Retro A3 is now validated across one full sprint.
 
 #### 4. Coverage thresholds alone don't guarantee architectural completeness
 governance.ts hit 100% coverage, but that 100% only covers the glob-based path pattern rule type. Four conceptual rule types (required-tag, no-orphan, max-links, severity:warning) are not testable — not because tests are missing, but because the type system doesn't support them. Coverage measures what's implemented, not what's designed.
 
 #### 5. A scope pivot should update the gate checklist formally
-The Phase 3 gate checklist had 22 criteria. 12 were evaluated. 10 were implicitly dropped when scope changed from Write API to Watcher + Governance. Future scope changes should produce a formal "gate checklist amendment" documenting which criteria are deferred, added, or modified — not just silently evaluated against a subset.
+The Sprint 3 gate checklist had 22 criteria. 12 were evaluated. 10 were implicitly dropped when scope changed from Write API to Watcher + Governance. Future scope changes should produce a formal "gate checklist amendment" documenting which criteria are deferred, added, or modified — not just silently evaluated against a subset.
 
 #### 6. Platform-specific behavior (macOS fs.watch) should be documented, not chased
 Yori correctly documented the watcher.ts branch coverage gap (line 28: `type = "change"` path unreachable on macOS because `fs.watch` emits `"rename"` for all operations). Rather than adding platform-detection hacks to reach 100%, the decision was to document and move on. This is the right call for CI that runs on a single platform.
 
 ---
 
-### 🔧 Action Items for Phase 4
+### 🔧 Action Items for Sprint 4
 
 | # | Action | Owner | Priority | Notes |
 |---|--------|-------|----------|-------|
-| A1 | GovernanceRule type extension — refine as discriminated union (`PathRule \| TagRule \| LinkRule`) or add `ruleType` discriminator field + type-specific fields for required-tag, no-orphan, max-links. Create Phase 4 backlog issue with exact type shapes. | Castor + Tron | **P1** | Current single-shape `GovernanceRule` can't express tag/link rules. This is a types-first design task for Wave 0. |
+| A1 | GovernanceRule type extension — refine as discriminated union (`PathRule \| TagRule \| LinkRule`) or add `ruleType` discriminator field + type-specific fields for required-tag, no-orphan, max-links. Create Sprint 4 backlog issue with exact type shapes. | Castor + Tron | **P1** | Current single-shape `GovernanceRule` can't express tag/link rules. This is a types-first design task for Wave 0. |
 | A2 | WatchEvent canonical field check — at Wave 0, Tron must verify EVERY type field name against existing `types.ts` before writing test stub descriptions. Stub descriptions must use exact field values (`"add"`, not `"create"`; `filepath`, not `path`). | Tron + Yori | **P1** | A single naming discrepancy in stub descriptions creates confusion even if code is correct. |
-| A3 | Carry deferred gate criteria from Phase 3's 22-criterion checklist — writer.ts, Vault SDK class, integration tests, indexer coverage improvement — as explicit Phase 4 backlog items with original criterion numbers for traceability | Castor | **P1** | 10 criteria were implicitly dropped during scope pivot. They need formal tracking. |
-| A4 | indexer.ts coverage: 47.15% → 95%+ — this has been carried across two phases. Phase 4 must address it or formally accept the debt with documented rationale. | Yori | **P1** | Carried from Phase 2. Three phases of "will fix next phase" is a pattern, not a plan. |
-| A5 | parser.ts coverage: 80.76% → 95%+ — below target since Phase 1. Same treatment as A4. | Yori | **P2** | Less critical than indexer but still below stated target. |
-| A6 | semantic-release dry-run (Phase 2 Retro A7, still deferred) — must be validated before v0.3.0 is actually published to npm | Clu | **P1** | Deferred from Phase 2 → Phase 3 → now Phase 4. Three deferrals = mandatory next phase. |
-| A7 | Gate checklist amendment protocol — when scope changes mid-phase, produce a formal "gate checklist v2" documenting which criteria are deferred, added, or modified. Don't silently evaluate against a subset. | Flynn | **P2** | Prevents the 22-to-12 implicit reduction pattern. |
+| A3 | Carry deferred gate criteria from Sprint 3's 22-criterion checklist — writer.ts, Vault SDK class, integration tests, indexer coverage improvement — as explicit Sprint 4 backlog items with original criterion numbers for traceability | Castor | **P1** | 10 criteria were implicitly dropped during scope pivot. They need formal tracking. |
+| A4 | indexer.ts coverage: 47.15% → 95%+ — this has been carried across two sprints. Sprint 4 must address it or formally accept the debt with documented rationale. | Yori | **P1** | Carried from Sprint 2. Three sprints of "will fix next sprint" is a pattern, not a plan. |
+| A5 | parser.ts coverage: 80.76% → 95%+ — below target since Sprint 1. Same treatment as A4. | Yori | **P2** | Less critical than indexer but still below stated target. |
+| A6 | semantic-release dry-run (Sprint 2 Retro A7, still deferred) — must be validated before v0.3.0 is actually published to npm | Clu | **P1** | Deferred from Sprint 2 → Sprint 3 → now Sprint 4. Three deferrals = mandatory next sprint. |
+| A7 | Gate checklist amendment protocol — when scope changes mid-sprint, produce a formal "gate checklist v2" documenting which criteria are deferred, added, or modified. Don't silently evaluate against a subset. | Flynn | **P2** | Prevents the 22-to-12 implicit reduction pattern. |
 | A8 | Clean clone verification — add `git clone → pnpm install --frozen-lockfile → pnpm build → pnpm test` as a gate criterion to catch missing lockfiles, uncommitted dependencies, or environment-specific assumptions | Clu | **P2** | pnpm-lock.yaml gap would have been caught by this. |
 
 ---
 
 ### 📊 Gate Performance Analysis
 
-#### What made Phase 3 pass on attempt #1 vs Phase 2's two failures?
+#### What made Sprint 3 pass on attempt #1 vs Sprint 2's two failures?
 
 Three specific factors:
 
-1. **A6 (gate checklist at kickoff) + team actually checking against it.** Phase 2 had a checklist too, but implementors submitted without verifying all criteria. Phase 3's narrower scope (12 criteria vs 22) made it feasible for each agent to self-verify before submission. Fewer criteria = less surface area for oversight.
+1. **A6 (gate checklist at kickoff) + team actually checking against it.** Sprint 2 had a checklist too, but implementors submitted without verifying all criteria. Sprint 3's narrower scope (12 criteria vs 22) made it feasible for each agent to self-verify before submission. Fewer criteria = less surface area for oversight.
 
-2. **A1 (runtime export check) eliminated the most common Phase 2 failure.** The type-vs-value export mismatch caused 2 of 5 Phase 2 first-gate failures. With the runtime check baked into the gate criteria, Tron verified exports before submission.
+2. **A1 (runtime export check) eliminated the most common Sprint 2 failure.** The type-vs-value export mismatch caused 2 of 5 Sprint 2 first-gate failures. With the runtime check baked into the gate criteria, Tron verified exports before submission.
 
-3. **A3 (it.todo() discipline) eliminated test-rewrite friction.** Phase 2's test stubs had implementation assumptions baked in (parameter order, throw semantics). Phase 3's `it.todo()` stubs were either filled from the locked type contract or left as documented future work. No rewrite cycle consumed implementation time.
+3. **A3 (it.todo() discipline) eliminated test-rewrite friction.** Sprint 2's test stubs had implementation assumptions baked in (parameter order, throw semantics). Sprint 3's `it.todo()` stubs were either filled from the locked type contract or left as documented future work. No rewrite cycle consumed implementation time.
 
 #### Gate criteria maturity
 
 | Category | Status | Notes |
 |----------|--------|-------|
-| TypeScript compilation, linting, build | ✅ Well-established | Never failed in any phase |
+| TypeScript compilation, linting, build | ✅ Well-established | Never failed in any sprint |
 | Test suite (non-todo pass) | ✅ Well-established | Never failed |
-| Runtime export check | ✅ Proven (Phase 3) | Prevented Phase 2's #1 failure mode |
-| Coverage thresholds | ⚠️ Needs vigilance | indexer.ts at 47.15% carried 2 phases; parser.ts at 80.76% |
-| README/docs updated | ⚠️ Needs vigilance | Failed in Phase 2, passed in Phase 3 — one success doesn't establish the pattern |
-| CLI integration tests | ⚠️ Needs vigilance | Phase 3 used it.todo() stubs for watch/check CLI — real tests needed in Phase 4 |
-| semantic-release verification | ❌ Never verified | Deferred three consecutive phases |
+| Runtime export check | ✅ Proven (Sprint 3) | Prevented Sprint 2's #1 failure mode |
+| Coverage thresholds | ⚠️ Needs vigilance | indexer.ts at 47.15% carried 2 sprints; parser.ts at 80.76% |
+| README/docs updated | ⚠️ Needs vigilance | Failed in Sprint 2, passed in Sprint 3 — one success doesn't establish the pattern |
+| CLI integration tests | ⚠️ Needs vigilance | Sprint 3 used it.todo() stubs for watch/check CLI — real tests needed in Sprint 4 |
+| semantic-release verification | ❌ Never verified | Deferred three consecutive sprints |
 
 ---
 
@@ -2248,68 +2248,68 @@ Three specific factors:
 #### Coordination patterns that worked well
 - **Tron + Ram parallel implementation in Wave 1** — watcher and governance developed independently against the same locked type contract. No merge conflicts, no API coordination needed. The types-first discipline is the coordination mechanism.
 - **Yori's triage of governance stubs** — rather than forcing coverage on unimplemented features, Yori correctly classified 4 stubs as `it.todo()` with explanations. This is product judgment in test engineering, not just code coverage optimization.
-- **Dumont's source-validated documentation** — docs used actual field names from source files, not assumptions from planning documents. This is the first phase where docs were gate-ready on first submission.
+- **Dumont's source-validated documentation** — docs used actual field names from source files, not assumptions from planning documents. This is the first sprint where docs were gate-ready on first submission.
 
 #### Handoff frictions
 - **Scope pivot was informal** — the shift from Write API to Watcher + Governance happened without a formal decision document. The gate checklist went from 22 to 12 criteria without an amendment. Future pivots need a `decisions/inbox` entry.
-- **Clu's A7 (semantic-release dry-run) deferred for three consecutive phases** — this is not a handoff friction per se, but a dependency that keeps being punted. If no one owns the timeline, it won't happen. Phase 4 must either do it or remove it from the action items.
+- **Clu's A7 (semantic-release dry-run) deferred for three consecutive sprints** — this is not a handoff friction per se, but a dependency that keeps being punted. If no one owns the timeline, it won't happen. Sprint 4 must either do it or remove it from the action items.
 
 ---
 
-### Phase 4 Readiness
+### Sprint 4 Readiness
 
 **Status: ✅ Ready to begin**
 
-Phase 3 delivered watcher and governance — the two modules needed for real-time vault monitoring and agent write policy. 153 tests passing, 84.6% global coverage, runtime exports confirmed, docs complete.
+Sprint 3 delivered watcher and governance — the two modules needed for real-time vault monitoring and agent write policy. 153 tests passing, 84.6% global coverage, runtime exports confirmed, docs complete.
 
-**Debt carried into Phase 4:**
-- indexer.ts at 47.15% (carried since Phase 2)
-- parser.ts at 80.76% (below 95% target since Phase 1)
+**Debt carried into Sprint 4:**
+- indexer.ts at 47.15% (carried since Sprint 2)
+- parser.ts at 80.76% (below 95% target since Sprint 1)
 - semantic-release dry-run never validated (A7 deferred 3×)
 - 4 governance rule types unimplemented (required-tag, no-orphan, max-links, severity:warning)
-- 10 gate criteria from Phase 3's 22-criterion checklist deferred (writer.ts, Vault SDK, etc.)
+- 10 gate criteria from Sprint 3's 22-criterion checklist deferred (writer.ts, Vault SDK, etc.)
 - 6 CLI it.todo() stubs for watch/check commands
 
-**Phase 4 scope (from now.md):**
+**Sprint 4 scope (from now.md):**
 1. Governance rule extensions (required-tag, no-orphan, max-links, severity:warning)
 2. Coverage improvements (indexer.ts → 95%+, parser.ts → 95%+)
 3. CLI integration (wire watch/check commands, fill 6 it.todo stubs)
 4. MCP planning and preparation
 
-Good sprint, team. Three phases in, and the process is measurably better than where we started. The first clean gate pass isn't luck — it's the compound interest on retro action items that were actually enforced. Phase 4 is where governance gets real (discriminated unions, tag/link rules) and the remaining debt gets paid.
+Good sprint, team. Three sprints in, and the process is measurably better than where we started. The first clean gate pass isn't luck — it's the compound interest on retro action items that were actually enforced. Sprint 4 is where governance gets real (discriminated unions, tag/link rules) and the remaining debt gets paid.
 
 — Flynn
 
 ---
 
-## Pre-Phase 4 Directives — by Onur Asiliskender
+## Pre-Sprint 4 Directives — by Onur Asiliskender
 
 > Captured: 2026-04-05
 
-These directives apply from Phase 4 onwards and must be reviewed at each phase kickoff.
+These directives apply from Sprint 4 onwards and must be reviewed at each sprint kickoff.
 
 **D1 — Language:** User communicates in Turkish; team always responds in English. All code and documentation in English.
 
-**D2 — Protected main / Feature branches:** Main is protected. Every phase (or significant work unit) must use a feature branch, push, and open a PR. No direct commits to main.
+**D2 — Protected main / Feature branches:** Main is protected. Every sprint (or significant work unit) must use a feature branch, push, and open a PR. No direct commits to main.
 
 **D3 — Trunk-based development:** Short-lived feature branches, frequent integration with main. No long-running branches.
 
-**D4 — Retro/lessons-learned review:** Mandatory review of lessons learned and retro notes before every phase kickoff.
+**D4 — Retro/lessons-learned review:** Mandatory review of lessons learned and retro notes before every sprint kickoff.
 
 **D5 — Doxygen-compatible docstrings:** All source code exports must have JSDoc/TSDoc docstrings compatible with Doxygen.
 
 **D6 — RELEASE-NOTES.md:** Use RELEASE-NOTES.md (not RELEASES.md). Contains only the current/latest release notes — no history.
 
-**D7 — README scope:** README covers only: what is it, how to install, how to use. No roadmap, phases, or future plans.
+**D7 — README scope:** README covers only: what is it, how to install, how to use. No roadmap, sprints, or future plans.
 
-**D8 — .md file review before each phase:** All team members review .md files before each phase, updating stale content and retro/lessons-learned items.
+**D8 — .md file review before each sprint:** All team members review .md files before each sprint, updating stale content and retro/lessons-learned items.
 
-**D9 — Conventional commit format at phase end:**
-When a phase/sprint ends, the final commit message MUST use the correct conventional commit type that reflects the magnitude of the changes, because the CI pipeline derives the semver version number from commit messages (GitVersion + semantic-release):
+**D9 — Conventional commit format at sprint end:**
+When a sprint/sprint ends, the final commit message MUST use the correct conventional commit type that reflects the magnitude of the changes, because the CI pipeline derives the semver version number from commit messages (GitVersion + semantic-release):
 - Breaking API changes → `feat!: ...` or footer `BREAKING CHANGE:` → major bump
 - New features/capabilities added → `feat: ...` → minor bump
 - Fixes/patches only → `fix: ...` → patch bump
-Use the type that honestly reflects what changed in the phase.
+Use the type that honestly reflects what changed in the sprint.
 
 **D10 — Remove CONTRIBUTING.md:**
 Delete CONTRIBUTING.md entirely. Remove all references to it from other files (README.md, docs/, .github/, etc.).
@@ -2325,7 +2325,7 @@ Delete CONTRIBUTING.md entirely. Remove all references to it from other files (R
 - `Result<T, E>` tagged union pattern (discriminated on `ok: boolean`) for structured error handling across all modules — helper functions `ok()` and `err()` keep call sites concise
 - `ParsedFile.tags` stores ALL ancestor levels of hierarchical tags (not just leaf) — `#project/auth/oauth` → `["project", "project/auth", "project/auth/oauth"]` enabling O(1) prefix matching at query time
 - `TypedRelation.source` tracks filepath (not just filename stem) to enable graph traversal by absolute path — avoids an extra resolution step on every edge hop
-- `WatchEvent` and `GovernanceRule` defined in Phase 1 to avoid type churn when Phase 3/5 lands
+- `WatchEvent` and `GovernanceRule` defined in Sprint 1 to avoid type churn when Sprint 3/5 lands
 - `IndexState` map keys are consistent conventions: absolute paths for `files`, raw tag strings for `tags`, lowercase stems for `links`
 - `typedRelations` values are `readonly string[]` in `FileEntry` vs mutable `string[]` in `ParsedFile` — indexer must copy/freeze parser output before storing in cache
 
@@ -2345,7 +2345,7 @@ Delete CONTRIBUTING.md entirely. Remove all references to it from other files (R
 
 ### ❌ Issue 1 — `FrontmatterEntry` not exported (BLOCKER)
 
-The Phase 1 backlog explicitly lists `FrontmatterEntry` as a required named export. It is absent. `Record<string, unknown>` is used inline in both `ParsedFile` and `FileEntry`. While semantically equivalent, a named `FrontmatterEntry` type is required for:
+The Sprint 1 backlog explicitly lists `FrontmatterEntry` as a required named export. It is absent. `Record<string, unknown>` is used inline in both `ParsedFile` and `FileEntry`. While semantically equivalent, a named `FrontmatterEntry` type is required for:
 - Consistent import surface (`import type { FrontmatterEntry } from './types'`)
 - Future narrowing/extension without touching `ParsedFile`/`FileEntry` signatures
 
@@ -2368,7 +2368,7 @@ The file header JSDoc is excellent. However, the backlog criterion "Types docume
 **Fix:** Add a JSDoc comment above each exported type explaining:
 - What the type represents
 - Any non-obvious field semantics (e.g., why `FileEntry` uses `ReadonlySet`/`ReadonlyMap` vs `ParsedFile`)
-- Phase relevance for Phase 3-5 types
+- Sprint relevance for Sprint 3-5 types
 
 Example for `ParsedFile`:
 ```typescript
@@ -2401,9 +2401,9 @@ No imports from other `src/` modules. Types are self-contained.
 ### ✅ API surface quality — PASS (with notes)
 
 - `ParsedFile` vs `FileEntry` mutability split (mutable for parser, readonly for index) is good design — but **must be explained in JSDoc** (Issue 2 above).
-- `TagEntry.files` and `LinkEntry.sources` are mutable `Set<string>` while `FileEntry` uses `ReadonlySet`. Minor inconsistency — acceptable for Phase 1 since these are index-builder intermediates, but should be noted in JSDoc.
+- `TagEntry.files` and `LinkEntry.sources` are mutable `Set<string>` while `FileEntry` uses `ReadonlySet`. Minor inconsistency — acceptable for Sprint 1 since these are index-builder intermediates, but should be noted in JSDoc.
 - `Result<T, E>` with `ok()`/`err()` constructors is a clean pattern.
-- Phase 2-5 types (`IndexState`, `VaultConfig`, `WatchEvent`, `GovernanceRule`) are forward-looking and do not create breaking changes — approved as-is.
+- Sprint 2-5 types (`IndexState`, `VaultConfig`, `WatchEvent`, `GovernanceRule`) are forward-looking and do not create breaking changes — approved as-is.
 
 ---
 
@@ -2433,7 +2433,7 @@ No other src/ files need to change — `FrontmatterEntry` is a transparent alias
 
 ## Problem
 
-Phase 1 CI/CD infrastructure required:
+Sprint 1 CI/CD infrastructure required:
 1. Proper bundling for both library consumers (ESM + CommonJS) and CLI users
 2. Type safety via linting without allowing `any` types
 3. Shebang handling for CLI without polluting library output
@@ -2557,11 +2557,11 @@ Node.js resolves based on consumer's import mode:
 
 ---
 
-### 2026-04-03: Dumont's Documentation Design Decisions — Phase 1
+### 2026-04-03: Dumont's Documentation Design Decisions — Sprint 1
 
 **Date:** 2026-04-03  
 **Agent:** Dumont (DevRel / Docs)  
-**Phase:** 1 (Parser + Markdown Index)  
+**Sprint:** 1 (Parser + Markdown Index)  
 **Status:** Complete
 
 ## Decision 1: Architecture Document Structure
@@ -2575,79 +2575,79 @@ Node.js resolves based on consumer's import mode:
 - Type system explanation helps developers understand how data flows through the system
 
 **How:**
-- Structured as: Overview → Principles → 9 Layers (each with dependencies, decisions, returns) → Data Flow (by phase) → Type System → Error Handling → Build Phases → File Structure → ADRs → What NOT to Do → Performance
+- Structured as: Overview → Principles → 9 Layers (each with dependencies, decisions, returns) → Data Flow (by sprint) → Type System → Error Handling → Build Sprints → File Structure → ADRs → What NOT to Do → Performance
 
 **Impact:**
 - Single source of truth for architecture — reduces duplicate explanations in PRs and issues
 - ADRs make it clear why SQLite was rejected, why wikilinks are extensionless, why governance is agent-only
-- Data flow section shows Phase 2+ engineers how their modules integrate
+- Data flow section shows Sprint 2+ engineers how their modules integrate
 
-## Decision 2: README.md — Phase 1 Features Only
+## Decision 2: README.md — Sprint 1 Features Only
 
-**What:** Updated README to focus exclusively on Phase 1 (Parser + Markdown Index), with clear "coming soon" labels for Phases 2-5.
+**What:** Updated README to focus exclusively on Sprint 1 (Parser + Markdown Index), with clear "coming soon" labels for Sprints 2-5.
 
 **Why:**
-- Avoid overpromising. Phase 1 is parser and index; Phases 2-5 are separate releases with separate timelines.
+- Avoid overpromising. Sprint 1 is parser and index; Sprints 2-5 are separate releases with separate timelines.
 - Users installing v0.1.0 should know what they're actually getting (parsing, indexing) vs. what's coming (querying, search).
 - Clear roadmap manages expectations and prevents feature creep.
 
 **How:**
-- Feature list: ✅ for Phase 1 (parse, index, human-readable index), 🔜 for future phases
-- Quick Start: shows only `oxori init` and `oxori index` (Phase 1 CLI commands)
-- SDK Usage: shows only parser and buildIndex from Phase 1
+- Feature list: ✅ for Sprint 1 (parse, index, human-readable index), 🔜 for future sprints
+- Quick Start: shows only `oxori init` and `oxori index` (Sprint 1 CLI commands)
+- SDK Usage: shows only parser and buildIndex from Sprint 1
 - Index Files: explains what files.md, tags.md, links.md contain (the actual index format)
 
 **Impact:**
-- Users understand what Phase 1 delivers and when to expect more
-- Phase 2+ can add features to README without cluttering Phase 1 messaging
+- Users understand what Sprint 1 delivers and when to expect more
+- Sprint 2+ can add features to README without cluttering Sprint 1 messaging
 
 ## Decision 3: CONTRIBUTING.md — Comprehensive, Not Minimal
 
-**What:** Wrote a full 300+ line contributor guide covering setup, conventions, testing, PR process, phase gates, and CI/CD.
+**What:** Wrote a full 300+ line contributor guide covering setup, conventions, testing, PR process, sprint gates, and CI/CD.
 
 **Why:**
 - Oxori is built by a specialist team (Tron, Yori, Ram, Flynn, etc.). Clear conventions prevent conflicts.
-- Phase gates are critical: Phase 1 must be complete (tests, 80% coverage, docs) before Phase 2 starts.
+- Sprint gates are critical: Sprint 1 must be complete (tests, 80% coverage, docs) before Sprint 2 starts.
 - New contributors should understand why Oxori uses certain conventions (strict TypeScript, Result<T,E>, JSDoc, etc.)
 
 **How:**
-- Sections: Getting Started → Running Commands → Code Conventions (TS, functions, comments, paths, async, etc.) → Commit Convention with examples → Testing (structure, coverage targets, examples) → PR Checklist → Phases and Releases → Documentation → CI/CD
+- Sections: Getting Started → Running Commands → Code Conventions (TS, functions, comments, paths, async, etc.) → Commit Convention with examples → Testing (structure, coverage targets, examples) → PR Checklist → Sprints and Releases → Documentation → CI/CD
 
 **Impact:**
 - Onboarding is faster — developers know exactly what's expected
 - Code is consistent — no debates about `any` type, function vs. class, or commit format
-- Phase gates are clear: no phase merges without tests, coverage, docs, and Flynn approval
+- Sprint gates are clear: no sprint merges without tests, coverage, docs, and Flynn approval
 
 ## Decision 4: RELEASES.md — Detailed, Not Auto-Generated
 
-**What:** Manually wrote detailed release notes for v0.1.0 covering Parser, Indexer, CLI, Type System, and Phase 2 preview.
+**What:** Manually wrote detailed release notes for v0.1.0 covering Parser, Indexer, CLI, Type System, and Sprint 2 preview.
 
 **Why:**
 - Release notes are marketing + documentation. They tell users what's new, what's changed, what's broken.
-- For Phase 1, Dumont writes manual notes (this PR). Later, `semantic-release` auto-generates changelogs from commits, but release notes are still hand-written for clarity.
-- Users need to know limitations (e.g., "no query engine yet — Phase 2 adds this") so they understand what they're building on.
+- For Sprint 1, Dumont writes manual notes (this PR). Later, `semantic-release` auto-generates changelogs from commits, but release notes are still hand-written for clarity.
+- Users need to know limitations (e.g., "no query engine yet — Sprint 2 adds this") so they understand what they're building on.
 
 **How:**
-- Structure: What's New (Parser, Index, CLI, Types) → Installation → Quick Start → SDK Usage → Architecture Reference → Breaking Changes → Known Limitations → Migration Guide → Phase 2 Preview → Testing/CI → Contributors
+- Structure: What's New (Parser, Index, CLI, Types) → Installation → Quick Start → SDK Usage → Architecture Reference → Breaking Changes → Known Limitations → Migration Guide → Sprint 2 Preview → Testing/CI → Contributors
 
 **Impact:**
-- Users understand exactly what Phase 1 is and how to use it
+- Users understand exactly what Sprint 1 is and how to use it
 - Release notes are a first-class deliverable, not an afterthought
-- Clear progression to Phase 2 manages expectations
+- Clear progression to Sprint 2 manages expectations
 
-## Decision 5: Structure — API Docs Deferred to Phase 3
+## Decision 5: Structure — API Docs Deferred to Sprint 3
 
 **What:** Did NOT create `docs/phase1-api.md` (detailed API reference). Instead, documented parseFile() and buildIndex() in RELEASES.md and README.md SDK section.
 
 **Why:**
-- Phase 1 API is very small: just two exported functions (parseFile, buildIndex) plus types.
-- Detailed API docs are useful in Phase 3 when there's a public SDK (Oxori.open(), vault.query(), vault.walk(), vault.write()).
-- For Phase 1, the relevant docs are: architecture.md (how Parser/Indexer work), README.md (quick start), RELEASES.md (feature overview), and inline JSDoc.
+- Sprint 1 API is very small: just two exported functions (parseFile, buildIndex) plus types.
+- Detailed API docs are useful in Sprint 3 when there's a public SDK (Oxori.open(), vault.query(), vault.walk(), vault.write()).
+- For Sprint 1, the relevant docs are: architecture.md (how Parser/Indexer work), README.md (quick start), RELEASES.md (feature overview), and inline JSDoc.
 
 **Impact:**
-- Avoid over-documentation for Phase 1
-- Phase 3 can create comprehensive API docs when the surface is larger (SDK public API)
-- Current docs (architecture, README, releases) are sufficient for Phase 1 users
+- Avoid over-documentation for Sprint 1
+- Sprint 3 can create comprehensive API docs when the surface is larger (SDK public API)
+- Current docs (architecture, README, releases) are sufficient for Sprint 1 users
 
 ## Decision 6: Code Examples — Tested or Marked
 
@@ -2666,32 +2666,32 @@ Node.js resolves based on consumer's import mode:
 - Users don't get confused by inaccurate examples
 - Examples are illustrative, not load-bearing (no one copies-pastes them expecting 1:1 accuracy)
 
-## Decision 7: Docs Are Part of Phase
+## Decision 7: Docs Are Part of Sprint
 
-**What:** Documentation is a work item in Phase 1, not a separate concern. Scheduled for completion before phase merge.
+**What:** Documentation is a work item in Sprint 1, not a separate concern. Scheduled for completion before sprint merge.
 
 **Why:**
-- "Done" for a phase means: code is complete + tests pass + docs are written + reviewed.
-- Docs are not optional. They're how future phases understand what Phase 1 built.
+- "Done" for a sprint means: code is complete + tests pass + docs are written + reviewed.
+- Docs are not optional. They're how future sprints understand what Sprint 1 built.
 - If docs are delayed until after merge, they often don't happen or become stale.
 
 **How:**
-- This work is Phase 1 delivery
-- RELEASES.md is the last thing written for Phase 1 before tagging v0.1.0
-- Architecture.md is updated before Phase 2 begins (to incorporate any Phase 1 learnings)
+- This work is Sprint 1 delivery
+- RELEASES.md is the last thing written for Sprint 1 before tagging v0.1.0
+- Architecture.md is updated before Sprint 2 begins (to incorporate any Sprint 1 learnings)
 
 **Impact:**
 - Documentation debt is prevented
-- Each phase has clear docs from the start
+- Each sprint has clear docs from the start
 - Future maintainers don't inherit undocumented code
 
 ## Lessons Learned
 
 1. **Architecture docs must precede code.** Developers read docs before touching code. If docs are missing or unclear, developers make different architectural decisions than intended.
 
-2. **Release notes are user guidance, not changelogs.** A changelog says "Added parseFile() function." Release notes say "Phase 1 is now available! Here's what you can do (parse files, build index), here's what's coming (query, graph, search), and here's what you should know (this is schemaless, governance is Phase 3)."
+2. **Release notes are user guidance, not changelogs.** A changelog says "Added parseFile() function." Release notes say "Sprint 1 is now available! Here's what you can do (parse files, build index), here's what's coming (query, graph, search), and here's what you should know (this is schemaless, governance is Sprint 3)."
 
-3. **Phase gates matter.** Documentation is a gate. No phase merge without docs. This ensures knowledge is captured when it's fresh.
+3. **Sprint gates matter.** Documentation is a gate. No sprint merge without docs. This ensures knowledge is captured when it's fresh.
 
 4. **Decisions need ADRs.** "Why do wikilinks not have extensions?" is answered in ADR-002. Future engineers can read it and understand the reasoning, not just the rule.
 
@@ -2703,7 +2703,7 @@ Node.js resolves based on consumer's import mode:
 
 **Reviewed by:** Flynn (Lead & Architect)  
 **Date:** 2026-04-03  
-**Phase:** 1 — Parser + Markdown Index
+**Sprint:** 1 — Parser + Markdown Index
 
 ---
 
@@ -2721,7 +2721,7 @@ Node.js resolves based on consumer's import mode:
 | 8 | dist/index.js does NOT have a shebang | ✅ PASS |
 | 9 | No `any` types in src/ | ✅ PASS |
 | 10 | All exported functions have JSDoc | ✅ PASS |
-| 11 | README.md documents Phase 1 features | ✅ PASS |
+| 11 | README.md documents Sprint 1 features | ✅ PASS |
 | 12 | docs/architecture.md exists and covers the system layers | ✅ PASS |
 | 13 | CONTRIBUTING.md exists | ✅ PASS |
 | 14 | RELEASES.md has v0.1.0 notes | ✅ PASS |
@@ -2730,11 +2730,11 @@ Node.js resolves based on consumer's import mode:
 
 ### Summary
 
-All 14 acceptance criteria for Phase 1 pass. The implementation is clean: strict TypeScript with zero `any`, full JSDoc coverage on every exported function, all non-todo tests green, build artifacts correct (CLI shebang present, library shebang absent), and all documentation in place.
+All 14 acceptance criteria for Sprint 1 pass. The implementation is clean: strict TypeScript with zero `any`, full JSDoc coverage on every exported function, all non-todo tests green, build artifacts correct (CLI shebang present, library shebang absent), and all documentation in place.
 
-**Phase 1 is approved for merge to `main` and npm release as v0.1.0.**
+**Sprint 1 is approved for merge to `main` and npm release as v0.1.0.**
 
-Next: Phase 2 — Query Engine + Graph Walk.
+Next: Sprint 2 — Query Engine + Graph Walk.
 
 ---
 
@@ -2748,7 +2748,7 @@ Next: Phase 2 — Query Engine + Graph Walk.
 
 ## Context
 
-Phase 1 test fixtures were designed before `src/parser.ts` and `src/indexer.ts` exist.
+Sprint 1 test fixtures were designed before `src/parser.ts` and `src/indexer.ts` exist.
 This document records the design rationale so Tron (implementer) and Flynn (reviewer) can
 verify the fixtures match the intended behaviour.
 
@@ -2802,10 +2802,10 @@ Testing `count of 'project' in tag array === 1` is more robust than adding an ex
 
 ### Graph topology
 
-The linked-vault was designed to hit all graph edge types in Phase 2:
+The linked-vault was designed to hit all graph edge types in Sprint 2:
 
 - **Cycle (A→B→C→A):** Tests cycle-safety in `buildIndex()` (must not loop) and cycle
-  detection in the Phase 2 graph walker (must not recurse infinitely).
+  detection in the Sprint 2 graph walker (must not recurse infinitely).
 - **Leaf (node-d):** Tests termination — `wikilinks.size === 0`, `typedRelations.size === 0`.
 - **Hub (node-e):** Tests high in-degree detection via `links` map (multiple sources map to same target).
 - **Multiple typed targets (node-f):** `related_to: ["[[node-e]]", "[[node-c]]"]` exercises the
@@ -2832,7 +2832,7 @@ The governance.md was updated to match the spec format:
 - Applies to: agents
 ```
 
-This is the human-readable format Tron will parse in Phase 3. The format was chosen to be
+This is the human-readable format Tron will parse in Sprint 3. The format was chosen to be
 parseable with simple line-by-line regex (no YAML block) while remaining readable to humans.
 
 ### Why `secrets/` subdirectory?
@@ -2879,7 +2879,7 @@ These concerns require additional fixtures or implementation-specific mocks:
 
 ---
 
-## Review: Phase 2 Type Contracts (Query Engine + Graph Traversal)
+## Review: Sprint 2 Type Contracts (Query Engine + Graph Traversal)
 
 **Author:** Flynn (Lead & Architect)  
 **Date:** 2025-07-13  
@@ -2897,16 +2897,16 @@ All five verification criteria pass. `src/index.ts` updated. `npx tsc --noEmit` 
 ### Verification Results
 
 #### 1. No `any` types
-✅ **Pass.** Scanned the Phase 2 sections (lines 381–682). Zero uses of the `any` type. All mentions of "any" appear only in comment prose (e.g., "any YAML is valid"). Types use `string`, `number`, `boolean`, `ReadonlySet<T>`, `readonly T[]`, and `unknown` where appropriate.
+✅ **Pass.** Scanned the Sprint 2 sections (lines 381–682). Zero uses of the `any` type. All mentions of "any" appear only in comment prose (e.g., "any YAML is valid"). Types use `string`, `number`, `boolean`, `ReadonlySet<T>`, `readonly T[]`, and `unknown` where appropriate.
 
 #### 2. All exported types use the `type` keyword
-✅ **Pass.** Every Phase 2 type declaration uses `export type { ... }`. The one exception, `FILTER_FIELDS`, correctly uses `export const` — it must be a value (not erased by the compiler) so the evaluator can iterate over it at runtime. This is the correct and intended design.
+✅ **Pass.** Every Sprint 2 type declaration uses `export type { ... }`. The one exception, `FILTER_FIELDS`, correctly uses `export const` — it must be a value (not erased by the compiler) so the evaluator can iterate over it at runtime. This is the correct and intended design.
 
 #### 3. Named exports only, no defaults
-✅ **Pass.** No `export default` anywhere in the Phase 2 sections. All types and the `FILTER_FIELDS` const are named exports.
+✅ **Pass.** No `export default` anywhere in the Sprint 2 sections. All types and the `FILTER_FIELDS` const are named exports.
 
 #### 4. All types have JSDoc
-✅ **Pass.** Every Phase 2 type has a `@description`, `@remarks`, and `@example` block. Field-level inline JSDoc comments are present on non-obvious fields (`relationType?`, `truncated`, `position`, etc.). Quality is high — the doc blocks explain semantics, not just structure.
+✅ **Pass.** Every Sprint 2 type has a `@description`, `@remarks`, and `@example` block. Field-level inline JSDoc comments are present on non-obvious fields (`relationType?`, `truncated`, `position`, etc.). Quality is high — the doc blocks explain semantics, not just structure.
 
 #### 5. Types are complete for `query.ts` and `graph.ts`
 ✅ **Pass.** The type surface covers:
@@ -2915,8 +2915,8 @@ All five verification criteria pass. `src/index.ts` updated. `npx tsc --noEmit` 
 - **Evaluator:** `QueryResult`, `FilterField`, `FILTER_FIELDS` — result shape and runtime field validation.
 - **Graph:** `Edge`, `WalkDirection`, `WalkVia`, `WalkOptions`, `WalkResult` — full walk API surface including deduplication semantics.
 
-#### 6. `src/index.ts` — Phase 2 re-exports
-✅ **Updated.** Added all Phase 2 types to `src/index.ts`:
+#### 6. `src/index.ts` — Sprint 2 re-exports
+✅ **Updated.** Added all Sprint 2 types to `src/index.ts`:
 ```typescript
 export type { Token, TokenKind, QueryAST, QueryNode, FilterNode, OperatorNode, GroupNode,
               QueryResult, FilterField, Edge, WalkOptions, WalkResult, WalkDirection, WalkVia } from "./types.js";
@@ -2987,8 +2987,8 @@ The type contracts are clean, well-documented, and complete. Tron's design decis
 
 ### 2. RELEASES.md → RELEASE-NOTES.md
 - **Created:** `RELEASE-NOTES.md` with v0.3.0 content only
-- **Deleted:** `RELEASES.md` (which contained v0.1.0 history, v0.3.0 unreleased notes, and Phase references)
-- **Format:** Clean, user-focused release notes with no internal team references, phase numbers, or squad mentions
+- **Deleted:** `RELEASES.md` (which contained v0.1.0 history, v0.3.0 unreleased notes, and Sprint references)
+- **Format:** Clean, user-focused release notes with no internal team references, sprint numbers, or squad mentions
 
 ### 3. Reference Audit
 Searched for references to RELEASES.md in:
@@ -3019,9 +3019,9 @@ Commit SHA: `60beef5`
 
 ## Next Steps
 
-- Other agents will add commits to this branch (Phase 4 semantic search work)
-- Will be merged to main once Phase 4 is complete
-- Branch remains open for additional pre-Phase 4 cleanup work
+- Other agents will add commits to this branch (Sprint 4 semantic search work)
+- Will be merged to main once Sprint 4 is complete
+- Branch remains open for additional pre-Sprint 4 cleanup work
 
 ---
 
@@ -3030,30 +3030,30 @@ Commit SHA: `60beef5`
 Backlog migrated from .squad/backlog.md to GitHub Projects #4 "Oxori Backlog".
 - Project URL: https://github.com/users/asiliskender/projects/4
 - Total issues created: 36
-- Phase 1-3 issues: Done status
-- Phase 4-5 issues: Todo status
+- Sprint 1-3 issues: Done status
+- Sprint 4-5 issues: Todo status
 - .squad/backlog.md is now DEPRECATED — use GitHub Projects going forward
 
 ---
 
-### 2026-04-05: User directives — Pre-Phase 4
+### 2026-04-05: User directives — Pre-Sprint 4
 
 **By:** Onur Asiliskender (via Copilot)
 
 **D1 — Language:** User will interact in Turkish going forward. Team always responds in English. All code and documentation must remain in English.
 
-**D2 — Protected main branch:** Main branch is now protected. Every phase (and significant work) must use a feature branch, push to that branch, and open a PR. Never commit directly to main.
+**D2 — Protected main branch:** Main branch is now protected. Every sprint (and significant work) must use a feature branch, push to that branch, and open a PR. Never commit directly to main.
 
 **D3 — Trunk-based development:** Use trunk-based development. Short-lived feature branches, frequent integration, no long-running branches.
 
-**D4 — Retro/lessons-learned review:** Lessons learned and retro notes must be reviewed before starting each new phase. This is a mandatory step in phase kickoff.
+**D4 — Retro/lessons-learned review:** Lessons learned and retro notes must be reviewed before starting each new sprint. This is a mandatory step in sprint kickoff.
 
 **D5 — Doxygen docstrings:** All source code must have Doxygen-compatible docstrings. New and existing functions must conform.
 
 **D6 — RELEASE-NOTES.md only:** Replace RELEASES.md with RELEASE-NOTES.md. Contains only the current/latest release notes — no history, no future plans.
 
-**D7 — README scope:** README should only explain what the project is, how to use it, and what it does. No future plans, phases, roadmap, or team references.
+**D7 — README scope:** README should only explain what the project is, how to use it, and what it does. No future plans, sprints, roadmap, or team references.
 
-**D8 — .md file review:** All team members must review .md files, update missing notes, and ensure lessons learned and retro items are properly captured before Phase 4.
+**D8 — .md file review:** All team members must review .md files, update missing notes, and ensure lessons learned and retro items are properly captured before Sprint 4.
 
-**Why:** User request — all captured for team memory and Phase 4 kickoff.
+**Why:** User request — all captured for team memory and Sprint 4 kickoff.
