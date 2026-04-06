@@ -30,18 +30,18 @@
 - Strict TypeScript — no any, use unknown and narrow
 - Functions over classes (except Vault and MCP server)
 
-**Build phases:**
-- Phase 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
-- Phase 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
-- Phase 3: Write API + Governance (writer, governance, SDK public API)
-- Phase 4: Semantic Search (embeddings, vector storage, cosine similarity)
-- Phase 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
+**Build sprints:**
+- Sprint 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
+- Sprint 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
+- Sprint 3: Write API + Governance (writer, governance, SDK public API)
+- Sprint 4: Semantic Search (embeddings, vector storage, cosine similarity)
+- Sprint 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
 
 **Conventions:**
 - Conventional commits (feat/fix/docs/test/refactor)
 - Atomic commits — one logical change per commit
-- No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
-- Each phase = a separate npm release with detailed release notes
+- No sprint merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
+- Each sprint = a separate npm release with detailed release notes
 
 ## Learnings
 
@@ -55,7 +55,7 @@
 - **.npmignore**: Excludes development artifacts (.squad/, tests/, docs/, .github/, *.config.ts, src/) while preserving README.md and only shipping dist/.
 - **vitest.config.ts**: Verified 80% threshold across lines, functions, branches, statements. Excludes cli.ts from coverage (entry point, tested by integration).
 
-**Why:** Phase 1 acceptance criteria required full CI/CD infrastructure. The dual-package approach allows Oxori to be consumed by both ESM (modern) and CommonJS (legacy) consumers. Strict no-any rule enforces type safety from day one. Shebang per-entry prevents accidental executable output in library builds.
+**Why:** Sprint 1 acceptance criteria required full CI/CD infrastructure. The dual-package approach allows Oxori to be consumed by both ESM (modern) and CommonJS (legacy) consumers. Strict no-any rule enforces type safety from day one. Shebang per-entry prevents accidental executable output in library builds.
 
 **Decisions Made:**
 1. **Dual-package strategy** — ESM for Node.js, CJS for legacy consumers. Type declarations generated for both.
@@ -158,12 +158,12 @@
 
 ## 2026-04-05: Feature Branch + RELEASE-NOTES Refactor
 
-**What:** Created `feature/pre-phase4-cleanup` branch and refactored release documentation per pre-Phase 4 cleanup directives:
+**What:** Created `feature/pre-phase4-cleanup` branch and refactored release documentation per pre-Sprint 4 cleanup directives:
 
-1. **Feature Branch Created** — `feature/pre-phase4-cleanup` for all pre-Phase 4 work (main branch now protected)
+1. **Feature Branch Created** — `feature/pre-phase4-cleanup` for all pre-Sprint 4 work (main branch now protected)
 2. **RELEASES.md → RELEASE-NOTES.md** — Replaced RELEASES.md with clean, user-focused v0.3.0 release notes only
    - Removed v0.1.0 historical section
-   - Removed [Unreleased] marker and phase references
+   - Removed [Unreleased] marker and sprint references
    - Kept only what users need: new features, changed items, documentation updates
 3. **Reference Audit** — Confirmed no references to RELEASES.md in package.json, .releaserc, .github/workflows, or code files
 

@@ -177,35 +177,35 @@ Test vaults under `tests/fixtures/`:
 ### Coverage Target
 80% minimum. Parser and governance modules should aim for near 100%.
 
-## Build Order (Phased)
+## Build Order (Sprint)
 
-### Phased 1 — Parse and Markdown Index
+### Sprint 1 — Parse and Markdown Index
 1. `types.ts` — type definitions: ParsedFile, FileEntry, TagEntry, LinkEntry
 2. `parser.ts` — extract frontmatter, tags, wikilinks, typed relations from one file
 3. `indexer.ts` — scan vault, build in-memory cache (Maps/Sets), write `.oxori/index/*.md`
 4. `cli.ts` — `oxori init`, `oxori index`
 5. Tests + CI pipeline setup
 
-### Phased 2 — Query and Graph Walk
+### Sprint 2 — Query and Graph Walk
 1. `query.ts` — tokenizer, AST parser, evaluator against in-memory cache
 2. `graph.ts` — walk with depth, direction, relation, via (links/tags/both)
 3. `cli.ts` — `oxori query`, `oxori walk`, `oxori graph`
 4. Tests for query language edge cases and graph cycles
 
-### Phased 3 — Read/Write API and Governance
+### Sprint 3 — Read/Write API and Governance
 1. `writer.ts` — create and append with frontmatter conventions
 2. `governance.ts` — parse governance.md, enforce rules on writes
 3. `cli.ts` — `oxori write`, `oxori append`
 4. `index.ts` — public SDK API: `Oxori.open()`, `vault.query()`, `vault.walk()`, `vault.write()`
 5. Tests for governance allow/deny and write validation
 
-### Phased 4 — Semantic Search
+### Sprint 4 — Semantic Search
 1. `search.ts` — embedding provider interface, binary vector storage, cosine similarity
 2. Default provider: OpenAI API (HTTP call, no heavy deps)
 3. CLI: `oxori search`, `oxori embed`
 4. Tests with mock embeddings for deterministic results
 
-### Phased 5 — MCP Server and Obsidian Compatibility
+### Sprint 5 — MCP Server and Obsidian Compatibility
 1. `mcp.ts` — MCP server exposing all Oxori tools and resources
 2. `watcher.ts` — chokidar-based filesystem monitoring for live index updates
 3. Obsidian compatibility documentation and testing
@@ -256,7 +256,7 @@ pnpm dev -- query "type:decision"
 
 Make super detailed documentation and comments in the code. This is a complex system with many interacting parts. Future maintainers (including future you) will thank you for clear explanations of the why behind each design choice, especially in edge cases and non-obvious logic. Write really datailed Release Notes for each version, summarizing new features, breaking changes, and migration steps if needed.
 
-Every phase should be different iterations and should be merged into `main` only when fully complete with tests and documentation. Don't merge half-baked features. It's better to have a smaller, well-documented, fully-tested codebase than a larger, incomplete one. Every phase is new release.
+Every sprint should be different iterations and should be merged into `main` only when fully complete with tests and documentation. Don't merge half-baked features. It's better to have a smaller, well-documented, fully-tested codebase than a larger, incomplete one. Every sprint is new release.
 
 Make your commit messages clear and descriptive, following the Conventional Commits format. This will help with generating changelogs and understanding the history of changes.
 

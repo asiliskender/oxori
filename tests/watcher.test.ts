@@ -1,6 +1,6 @@
 /**
  * @file watcher.test.ts
- * @description Unit + integration tests for the watch() function — Phase 3.
+ * @description Unit + integration tests for the watch() function — Sprint 3.
  *
  * Tests cover the VaultWatcher implementation in src/watcher.ts. Because the
  * watcher is built on Node.js `fs.watch`, most tests are async and rely on real

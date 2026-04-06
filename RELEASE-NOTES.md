@@ -21,7 +21,7 @@ Oxori v0.3.0 extends the query engine with real-time vault monitoring and policy
 ### Documentation
 
 - **README.md** — Updated with "File Watcher" and "Governance" sections with complete code examples.
-- **docs/architecture.md** — Added "Phase 3 Additions" section with watcher and governance implementation details.
+- **docs/architecture.md** — Added "Sprint 3 Additions" section with watcher and governance implementation details.
 
 ### Pure Function Design
 

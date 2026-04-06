@@ -30,22 +30,22 @@
 - Strict TypeScript — no any, use unknown and narrow
 - Functions over classes (except Vault and MCP server)
 
-**Build phases:**
-- Phase 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
-- Phase 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
-- Phase 3: Write API + Governance (writer, governance, SDK public API)
-- Phase 4: Semantic Search (embeddings, vector storage, cosine similarity)
-- Phase 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
+**Build sprints:**
+- Sprint 1: Parser + Markdown Index (types, parser, indexer, CLI init/index)
+- Sprint 2: Query Engine + Graph Walk (query AST, graph, CLI query/walk/graph)
+- Sprint 3: Write API + Governance (writer, governance, SDK public API)
+- Sprint 4: Semantic Search (embeddings, vector storage, cosine similarity)
+- Sprint 5: MCP Server + Watcher (MCP server, chokidar, Obsidian compat)
 
 **Conventions:**
 - Conventional commits (feat/fix/docs/test/refactor)
 - Atomic commits — one logical change per commit
-- No phase merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
-- Each phase = a separate npm release with detailed release notes
+- No sprint merge without: passing tests, 80%+ coverage, docs updated, Flynn approved
+- Each sprint = a separate npm release with detailed release notes
 
 ## Learnings
 
-### Phase 1 — Fixture design and test skeleton (2026-04-03)
+### Sprint 1 — Fixture design and test skeleton (2026-04-03)
 
 **What was built:**
 - `tests/fixtures/basic-vault/` — 6 root-level files covering all core parser edge cases
@@ -80,7 +80,7 @@
 
 6. **Cycle safety in linked-vault:** The A→B→C→A cycle tests that `buildIndex()` does not loop
    infinitely — it should detect cycles at the wikilink collection level, not at graph traversal
-   (traversal is Phase 2's concern). The cycle fixture verifies the indexer is cycle-safe at scan time.
+   (traversal is Sprint 2's concern). The cycle fixture verifies the indexer is cycle-safe at scan time.
 
 ---
 
@@ -111,14 +111,14 @@ Both test files were written against a pre-implementation API that has since cha
      since `indexVault` does not auto-exclude hidden dirs.
 
 ### Outcome
-31 non-todo tests pass (22 todos remain as stubs for future implementation phases).
+31 non-todo tests pass (22 todos remain as stubs for future implementation sprints).
 
 ---
 
 ## Retro A3 — Fill all 11 `it.todo()` CLI tests (P1 debt)
 
 ### Task
-Phase 1 retro flagged 11 `it.todo()` stubs in `tests/cli.test.ts` as P1 debt: the CLI entry point was shipped untested. All 11 were implemented before any Phase 2 CLI work begins.
+Sprint 1 retro flagged 11 `it.todo()` stubs in `tests/cli.test.ts` as P1 debt: the CLI entry point was shipped untested. All 11 were implemented before any Sprint 2 CLI work begins.
 
 ### Changes made
 - **`tests/cli.test.ts`**: Replaced all 11 `it.todo()` stubs with real test implementations.
@@ -132,16 +132,16 @@ Phase 1 retro flagged 11 `it.todo()` stubs in `tests/cli.test.ts` as P1 debt: th
 3. **"re-index in cwd" reinterpretation**: CLI always takes explicit `<vaultPath>` arg; test runs with `cwd=testDir` (different from vault) to show path resolution works correctly.
 
 ### Outcome
-11/11 CLI tests pass. Full suite: 42 passed | 11 todo (the 11 todos are pre-existing stubs in parser/indexer for Phase 2+ features — out of scope).
+11/11 CLI tests pass. Full suite: 42 passed | 11 todo (the 11 todos are pre-existing stubs in parser/indexer for Sprint 2+ features — out of scope).
 
 ---
 
-## Phase 2 Wave 1 — Test skeletons for graph.ts and query.ts (2026-04-03)
+## Sprint 2 Wave 1 — Test skeletons for graph.ts and query.ts (2026-04-03)
 
 ### What was built
 
 - **`src/graph.ts`** — minimal stub exporting `walk(state, startPath, options?)` with the correct
-  `WalkResult` return type. Throws `"not implemented"` until Phase 2 implementation ships.
+  `WalkResult` return type. Throws `"not implemented"` until Sprint 2 implementation ships.
   Needed so `graph.test.ts` compiles cleanly against the locked type contracts.
 
 - **`tests/graph.test.ts`** — 3 real assertions + 11 `it.todo()` skeletons:
@@ -173,7 +173,7 @@ Phase 1 retro flagged 11 `it.todo()` stubs in `tests/cli.test.ts` as P1 debt: th
    when the implementation lands (prompting a proper assertion fill-in).
 
 3. **query.ts is fully implemented**: All `tokenize`/`parse` tests were written with real
-   assertions (no `it.todo()`), because `src/query.ts` shipped complete in Phase 2 Wave 1.
+   assertions (no `it.todo()`), because `src/query.ts` shipped complete in Sprint 2 Wave 1.
    Only corner cases requiring deeper investigation remain as todos.
 
 ### Outcome
@@ -184,7 +184,7 @@ Phase 1 retro flagged 11 `it.todo()` stubs in `tests/cli.test.ts` as P1 debt: th
 
 ---
 
-## Phase 2 Wave 2 — Fill graph.test.ts assertions (2026-04-03)
+## Sprint 2 Wave 2 — Fill graph.test.ts assertions (2026-04-03)
 
 ### Task
 Ram's `src/graph.ts` was fully implemented. Replaced all 12 `it.todo()` skeletons in
@@ -225,11 +225,11 @@ Ram's `src/graph.ts` was fully implemented. Replaced all 12 `it.todo()` skeleton
 
 ### Outcome
 **87 passed | 14 todo** (101 total). All 12 new graph tests pass. The 14 remaining todos are
-pre-existing stubs in parser/indexer/query for Phase 3+ features — out of scope.
+pre-existing stubs in parser/indexer/query for Sprint 3+ features — out of scope.
 
 ---
 
-## Phase 2 Wave 2 — Fill evaluate() tests in query.test.ts (2026-04-03)
+## Sprint 2 Wave 2 — Fill evaluate() tests in query.test.ts (2026-04-03)
 
 ### Task
 `evaluate()` in `src/query.ts` had 0% test coverage, dragging `query.ts` overall to 64.63%
@@ -278,13 +278,13 @@ Overall lines/statements: **80.04%** (was below 80% threshold).
 
 ---
 
-## Phase 2 CLI Integration Tests — oxori query / walk / graph
+## Sprint 2 CLI Integration Tests — oxori query / walk / graph
 
 **Date:** 2025-07
 
 ### What was added
 
-Added three new `describe` blocks at the end of `tests/cli.test.ts` covering the Phase 2 CLI commands:
+Added three new `describe` blocks at the end of `tests/cli.test.ts` covering the Sprint 2 CLI commands:
 
 **`oxori query` (6 tests)**
 - `tag:auth` returns matching files (e.g. `decisions/api-choice.md`) from `basic-vault`
@@ -348,7 +348,7 @@ Flynn's gate found graph.ts at 87.84% branch coverage. Target: ≥ 90%.
 ## Wave 1 Retro — Fill watcher.test.ts and governance.test.ts (2026-04-03)
 
 ### Task
-Fill all `it.todo()` stubs in `tests/watcher.test.ts` (10 stubs) and `tests/governance.test.ts` (10 stubs) for the Phase 3 implementations.
+Fill all `it.todo()` stubs in `tests/watcher.test.ts` (10 stubs) and `tests/governance.test.ts` (10 stubs) for the Sprint 3 implementations.
 
 ### What was built
 

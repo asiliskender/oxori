@@ -10,7 +10,7 @@
  * - `ReadonlySet` / `ReadonlyMap` on index entries to prevent accidental cache mutation.
  * - `Result<T, E>` tagged union for structured, recoverable error handling.
  * - All file paths are absolute, normalized via `path.resolve()` before storage.
- * - Types defined for all 5 phases upfront to avoid breaking changes mid-project.
+ * - Types defined for all 5 sprints upfront to avoid breaking changes mid-project.
  */
 
 // === Frontmatter ===
@@ -410,13 +410,13 @@ export function err<E>(error: E): Result<never, E> {
   return { ok: false, error };
 }
 
-// === Watcher (Phase 5) ===
+// === Watcher (Sprint 5) ===
 
 /**
  * @brief Describes a filesystem event emitted by the watcher module.
  *
  * Describes a filesystem event emitted by the watcher module.
- * Defined in Phase 1 to avoid type churn when the watcher lands in Phase 5.
+ * Defined in Sprint 1 to avoid type churn when the watcher lands in Sprint 5.
  *
  * @remarks
  * `"add"` fires on new files detected (including during initial scan if configured).
@@ -444,7 +444,7 @@ export type WatchEvent = {
   timestamp: number;
 };
 
-// === Query Engine (Phase 2) ===
+// === Query Engine (Sprint 2) ===
 
 /**
  * @brief Enumerates every token kind the query tokenizer can emit.
@@ -672,7 +672,7 @@ export const FILTER_FIELDS = ["tag", "type", "path", "frontmatter", "title", "li
  */
 export type FilterField = (typeof FILTER_FIELDS)[number];
 
-// === Graph Traversal (Phase 2) ===
+// === Graph Traversal (Sprint 2) ===
 
 /**
  * @brief A single directed edge in the file-relationship graph.
@@ -807,13 +807,13 @@ export type WalkResult = {
   truncated: boolean;
 };
 
-// === Governance (Phase 3) ===
+// === Governance (Sprint 3) ===
 
 /**
  * @brief A single governance rule parsed from `.oxori/governance.md`.
  *
  * A single governance rule parsed from `.oxori/governance.md`.
- * Defined in Phase 1 to avoid type churn when governance lands in Phase 3.
+ * Defined in Sprint 1 to avoid type churn when governance lands in Sprint 3.
  *
  * @remarks
  * `pattern` is a glob or regex string matched against the filepath or content

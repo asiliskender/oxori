@@ -1,6 +1,6 @@
 /**
  * @file watcher.ts
- * @description Vault filesystem watcher — Phase 3.
+ * @description Vault filesystem watcher — Sprint 3.
  *
  * Wraps Node.js `fs.watch` to emit typed `WatchEvent` objects for `.md` files.
  * Only `.md` files are surfaced; all other extensions are silently ignored.

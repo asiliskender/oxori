@@ -1,6 +1,6 @@
 /**
  * @file query.test.ts
- * @description Test suite for `tokenize()` and `parse()` — Phase 2 Wave 1.
+ * @description Test suite for `tokenize()` and `parse()` — Sprint 2 Wave 1.
  *
  * Both functions are implemented in src/query.ts. The vast majority of tests
  * here run with real assertions. `it.todo()` is used only for edge-case
