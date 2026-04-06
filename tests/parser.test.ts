@@ -10,7 +10,7 @@
  * Run: pnpm test:coverage
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { fileURLToPath } from 'url'
 import { dirname, join, resolve } from 'path'
 import { mkdir, writeFile, rm } from 'node:fs/promises'
