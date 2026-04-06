@@ -1,686 +1,741 @@
 # Way of Working
 
-> **Audience:** Every team member (human or AI agent) joining any squad.  
-> **Purpose:** The methodology handbook — how this kind of team works.  
-> Fill in project-specific details (member names, module names, tech stack) in your project's routing table and directives. The principles here are universal.
+> **Audience:** Every team member — human or AI agent — on any squad.  
+> **Purpose:** A project-agnostic, team-agnostic playbook. The principles apply regardless of language, framework, domain, or team composition.  
+> **Usage:** Adopt as-is. Extend with a project-specific companion (routing table, tech stack directives, module ownership). Never override the core principles here.
 
 ---
 
 ## Table of Contents
 
-1. [Team Composition & Role Boundaries](#1-team-composition--role-boundaries)
-2. [Development Model](#2-development-model)
-3. [Directives](#3-directives)
-4. [Commit Conventions](#4-commit-conventions)
-5. [Code Quality Standards](#5-code-quality-standards)
-6. [Coverage Thresholds](#6-coverage-thresholds)
-7. [Build System](#7-build-system)
-8. [Phase Gate Process](#8-phase-gate-process)
-9. [Code Review Protocol](#9-code-review-protocol)
-10. [Contract-First Discipline](#10-contract-first-discipline)
-11. [Test Strategy](#11-test-strategy)
-12. [Documentation Standards](#12-documentation-standards)
-13. [Retrospective Process](#13-retrospective-process)
-14. [Ceremonies](#14-ceremonies)
-15. [Routing Rules](#15-routing-rules)
-16. [Known Anti-Patterns](#16-known-anti-patterns)
-17. [Architectural Principles](#17-architectural-principles)
-18. [Debt Ledger](#18-debt-ledger)
+1. [Roles & Boundaries](#1-roles--boundaries)
+2. [How We Plan Work](#2-how-we-plan-work)
+3. [How We Branch & Commit](#3-how-we-branch--commit)
+4. [How We Maintain Quality](#4-how-we-maintain-quality)
+5. [How We Gate a Phase](#5-how-we-gate-a-phase)
+6. [How We Review Code](#6-how-we-review-code)
+7. [Contract-First Discipline](#7-contract-first-discipline)
+8. [How We Test](#8-how-we-test)
+9. [How We Document](#9-how-we-document)
+10. [How We Retrospect](#10-how-we-retrospect)
+11. [Ceremonies](#11-ceremonies)
+12. [How Work Is Routed](#12-how-work-is-routed)
+13. [Anti-Patterns (Retro-Derived)](#13-anti-patterns-retro-derived)
+14. [Debt Ledger](#14-debt-ledger)
 
 ---
 
-## 1. Team Composition & Role Boundaries
+## 1. Roles & Boundaries
 
-### Standard Roles
+### The Standard Roles
 
-| Role | Responsibility | What They Own |
-|------|---------------|---------------|
-| **Lead / Architect** | Phase gates, API design, code review, final approval | All phase merges, all PRs, architecture decisions |
-| **Core Dev** | Core domain implementation | Core logic modules defined at project start |
-| **Platform Dev** | Integration and platform implementation | Integration, platform, and infrastructure modules |
-| **Tester / QA** | Quality assurance, test coverage | All test files, all fixtures, coverage reports |
-| **Docs / DevRel** | Documentation and developer experience | README, architecture docs, release notes |
-| **DevOps** | Build, CI/CD, release pipeline | CI workflows, build config, publish automation |
-| **Product Owner** | Scope, priorities, requirements | Backlog, phase scope decisions, trade-offs |
-| **Scribe** | Session memory | Decision log, session logs, cross-agent context |
-| **Ralph** | Work queue | Backlog monitoring, issue triage, keep-alive |
+Every squad needs these capabilities. Names and headcount vary — the responsibilities do not.
 
-### Key Boundaries
+| Role | Core Responsibility | Owns |
+|------|---------------------|------|
+| **Lead / Architect** | Phase gates, interface design, final approval | All merges to main, all architecture decisions |
+| **Implementer(s)** | Building what was designed | Their assigned modules / components |
+| **QA / Tester** | Quality assurance, test coverage | All test files, all fixtures, all coverage reports |
+| **Docs** | Developer experience, documentation | README, architecture log, release notes |
+| **DevOps** | Build pipeline, CI/CD, releases | CI workflows, build config, deployment automation |
+| **Product Owner** | Scope, priorities, backlog | Phase scope decisions, trade-off calls |
 
-- **The Lead does not implement features.** The Lead designs interfaces, reviews submissions, approves or blocks gates, and documents decisions. Implementation always routes to the domain owner.
-- **Scribe and Ralph are automatic.** Never route work to them explicitly — they run after every substantial session.
-- **Where two roles share a domain** (e.g., design vs. implementation of an integration layer), the boundary must be made explicit at kickoff. Neither acts unilaterally.
-- **No role reviews their own work.** The Lead reviews all submissions. The author is never the reviewer.
+Smaller teams merge roles. Larger teams split them. The responsibilities stay.
+
+### Non-Negotiable Boundaries
+
+**The Lead does not implement.** The Lead designs, reviews, gates, and decides. When the Lead also implements, there is no one to review the Lead's work. **This is not allowed.** If the team is too small to avoid it, the Lead's code is subject to mandatory review by the most senior available non-Lead member before merge.
+
+**The Lead has a deputy.** The Lead nominates one team member as deputy at phase kickoff. If the Lead is unavailable (unreachable for more than half a working session), the deputy holds gate authority temporarily: they may review code and block merges, but may not approve a gate or merge to main without a quorum decision from at least two other role-holders. The deputy appointment is written in the phase scope document.
+
+**No one reviews their own work.** The author of a submission is never its reviewer.
+
+**When two roles overlap on a shared system**, the boundary between them must be written down at kickoff. Unwritten boundaries are resolved by whoever acts first — which produces inconsistent results.
+
+**Automatic roles (Scribe, monitor) are never routed to explicitly.** They run after every substantial session. Routing work to them wastes the session.
+
+### Sign-Off Requirements
+
+Work is not done when it is implemented. Work is done when it has been signed off by the relevant roles:
+
+| Work Type | Required Sign-Offs |
+|-----------|-------------------|
+| Code change | Lead (code review) |
+| New contract / interface | Lead (contract review) |
+| Test suite | QA (coverage + correctness) |
+| Documentation | Docs (accuracy + completeness) |
+| Architecture decision (ADR) | Lead + relevant role-holders impacted by the decision |
+| Phase gate | Lead + QA + Docs + DevOps (all gate criteria met) |
+| Release | Lead + DevOps (pipeline validated) |
+
+No phase merges without all required sign-offs. Partial sign-offs are not sign-offs.
 
 ---
 
-## 2. Development Model
+## 2. How We Plan Work
 
 ### Feature Branch Model
 
-All work lives on feature branches. **Never commit directly to `main`.**
+All work lives on feature branches. **Direct commits to `main` are not allowed.**
 
 ```
 main (protected)
-  └── feature/phase-N-<name>
-        ├── commits by all team members for that phase
-        └── merged to main ONLY after Lead's gate approval
+  └── feature/phase-N-<short-name>
+        ├── work by all team members for this phase
+        └── merged to main ONLY after the Lead's gate sign-off
 ```
 
-- Each phase = one dedicated branch: `feature/phase-N-<short-name>`
-- Each phase = one release (v0.1.0, v0.2.0, …)
-- **No partial merges.** A phase either ships complete or it does not ship.
-- **The Lead must approve all phase merges.** No exceptions.
+Every phase has exactly one feature branch. Every phase produces exactly one release. No partial phases. No partial merges.
 
-### Backlog Management
+### Phases
 
-- All backlog items live in the team's project tracker (GitHub Projects, Linear, etc.)
-- Acceptance criteria **must include precise API/type contracts** — not just behaviour descriptions
+A phase is a bounded unit of work with:
+- A named scope (what is in and what is explicitly out)
+- A feature branch
+- A gate checklist (written at kickoff, not at review time)
+- A release version on successful merge
 
-  ```
-  ❌  "The indexer should load vault files"
-  ✅  indexVault(config: VaultConfig): Promise<Result<IndexState, AppError>>
-  ```
+**Phases should be sized so the team can ship a working, tested, documented increment.** If a phase cannot ship something end-to-end functional, it is too small or too fragmented. Combine or re-scope.
 
-  Vague ACs produce an API mismatch when the implementation diverges from the tester's assumptions. The result is a full test rewrite. See [§16 Anti-Pattern: Test Skeletons Against Backlog ACs](#anti-pattern-test-skeletons-against-backlog-acs).
+**Phase sizing heuristic:** A phase should represent work that can be completed and gated in one focused sprint of team effort — typically one to three weeks depending on team size and cadence. A phase contains all the work needed to ship a user-facing or integration-ready capability. If two features can be shipped and used independently, they belong in separate phases. If a feature requires two phases to be useful, the phase boundary should be at the first independently testable increment.
+
+### Backlog
+
+All work items live in the team's project tracker. Every item must have:
+
+1. **A clear outcome** — what "done" looks like from the outside
+2. **A precise contract** — the exact interface, signature, or schema the implementation must match
+
+```
+❌  "The auth module should handle login"
+✅  POST /auth/login → { token: string, expiresAt: ISO8601 } | { error: { code, message, action } }
+```
+
+Vague acceptance criteria produce implementation–test mismatches. When the tester writes tests against a vague AC and the implementer interprets it differently, the result is a complete test rewrite. The fix is precision in the AC, not flexibility in the test.
+
+### Kickoff Checklist
+
+Before any phase begins:
+
+- [ ] Phase scope is written down, agreed, and signed by the Product Owner (what is in, what is explicitly out)
+- [ ] Trade-off authority is clear: **the Product Owner owns scope and business priority; the Lead owns architecture and technical feasibility.** If they conflict, the Product Owner states the business constraint and the Lead states the technical constraint — the resolution is written down as a formal decision, not a verbal compromise.
+- [ ] Gate checklist is written (owned by the Lead)
+- [ ] Contracts / interfaces for new modules are **assigned for drafting** (not yet drafted, not yet approved — the drafting sequence follows in §7)
+- [ ] Debt items from the previous phase are reviewed and assigned or explicitly deferred
+- [ ] Each team member knows which modules they own for this phase
+- [ ] Lead deputy is nominated for this phase
+
+### Feature Flags
+
+A feature flag is acceptable when an implementation spans multiple phases or when a capability must be deployed but not yet user-visible. Feature flags are not shortcuts around incomplete work.
+
+A feature flag is valid only if:
+1. The disabled code path is fully tested (tests pass in both the enabled and disabled state)
+2. The flag is documented in the architecture log with the target phase for its removal
+3. The flag cannot surface to end users while disabled — only internal or CI-level access is permitted
+
+A feature flag that ships untested disabled code is technical debt, not a phase increment.
 
 ---
 
-## 3. Directives
+### Branch Names
 
-Directives are team-wide rules set by the project owner. They apply to all phases from their introduction date. **Review all active directives at every phase kickoff.**
+```
+feature/phase-N-<short-name>    # phase branches
+fix/<short-description>         # hotfixes on top of main
+docs/<short-description>        # documentation-only branches
+```
 
-| # | Directive | What It Means |
-|---|-----------|--------------|
-| **D1** | No escape hatches in type system | No `any` (TS), no `# type: ignore` (Python), no unsafe casts. Enforced at tooling level — linter error, not review suggestion. |
-| **D2** | Feature branch model | All work on branches. Never commit directly to `main`. |
-| **D3** | Contract-first | Shared type/interface contracts reviewed and merged before any implementation begins. See [§10](#10-contract-first-discipline). |
-| **D4** | Atomic commits | One logical change per commit. Meaningful messages. No "wip", no "update". |
-| **D5** | Phase boundary = release boundary | No partial phases. A phase ships complete or not at all. |
-| **D6** | Rejection lockout | If an artifact is rejected, the original author does **not** own the next version. A different team member does. No exceptions. |
-| **D7** | Gate checklist at kickoff | The Lead writes the phase gate checklist before implementation starts. Not at review time. |
-| **D8** | Doc review before each phase | All team members review documentation before phase kickoff — update stale content, capture retro items. |
-| **D9** | Commit types drive version bumps | `feat:` = minor bump, `fix:` = patch bump, `BREAKING CHANGE:` in footer = major bump. The final phase commit must reflect the magnitude of changes. |
-
-**Directives accumulate — they do not expire.** Add project-specific directives below as they are established.
-
----
-
-## 4. Commit Conventions
-
-### Format
+### Commit Format
 
 ```
 <type>(<scope>): <subject>
 
-[optional body — explain WHY, not WHAT]
+[body — explain WHY, not WHAT]
 
-[optional footer(s)]
+[footer — breaking changes, issue references]
 ```
 
-### Types
+### Commit Types
 
 | Type | When |
 |------|------|
-| `feat` | New feature — triggers minor version bump |
-| `fix` | Bug fix — triggers patch version bump |
+| `feat` | New capability added |
+| `fix` | Defect corrected |
 | `docs` | Documentation only |
 | `test` | Test additions or corrections |
-| `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `chore` | Build process, dependency updates, CI config |
+| `refactor` | Code restructured, no behavior change |
+| `chore` | Build, tooling, dependency updates |
 
-### Rules
+### Commit Rules
 
-- **Atomic commits** — one logical change per commit, always
-- `[skip ci]` suffix on team-admin/setup commits that should not trigger CI
-- No vague subjects: "wip", "update", "fixes" are rejected at review
-- Breaking changes: `BREAKING CHANGE: <description>` in footer — triggers major version bump
+- **One logical change per commit.** A commit that does two things should be two commits.
+- **Subject line is imperative, specific, lowercase.** Not "wip", not "update", not "stuff".
+- **Body explains the why** when the why is non-obvious.
+- **Breaking changes go in the footer:** `BREAKING CHANGE: <description>` — this signals a major version increment.
+- **Skip CI when appropriate:** commits that only touch team tooling, backlog, or planning files should not trigger the full pipeline.
 
----
+### What "Atomic" Means in Practice
 
-## 5. Code Quality Standards
-
-### Static Typing
-
-- **Strict mode on.** Use the strictest available type-checking config.
-- **No escape hatches.** Enforce at tooling level — make it a build failure, not a reviewer suggestion.
-- **Named exports only.** No default exports.
-- **Functions over classes** — except where lifecycle state explicitly justifies a class.
-
-### Error Handling
-
-All error paths use a structured result type, not uncaught exceptions:
-
-```typescript
-type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
-
-const ok  = <T>(value: T): Result<T, never> => ({ ok: true, value });
-const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
-```
-
-**Consumer pattern — always handle the error case before accessing the success value:**
-
-```typescript
-const result = await doWork();
-if (!result.ok) {
-  handle(result.error); // error.code = machine-readable, error.action = human-readable next step
-  return;
-}
-use(result.value); // safe
-```
-
-**Never access `.value` without first checking `.ok`.** This is the single most common Result-type misuse.
-
-### Error Shape
-
-Every error exposes:
-- `code` — machine-readable identifier (`"ENOENT"`, `"PARSE_ERROR"`)
-- `message` — human-readable description
-- `action` — human-readable next step (`"Check that the file exists"`)
-
-### Public API Types
-
-- Use immutable collection wrappers in all public types: `ReadonlySet<T>`, `ReadonlyMap<K,V>`, `readonly T[]`
-- Immutability at the type level prevents consumers from accidentally mutating internal state
-
-### Linting
-
-- Run linting as a gate criterion: `--max-warnings 0`
-- Linting is not a suggestion. It is a gate failure.
-
-### Inline Documentation
-
-Every exported function requires:
-
-```typescript
-/**
- * Brief summary.
- *
- * @param config - What it is and any constraints
- * @returns What is returned and in what shape
- * @throws Never — errors returned as Result<T,E>
- */
-```
+An atomic commit can be reverted without breaking anything else. If reverting a commit requires also reverting three other commits to keep the codebase functional, the commit was not atomic.
 
 ---
 
-## 6. Coverage Thresholds
+## 4. How We Maintain Quality
 
-Thresholds are enforced in test config **and** in CI. A gate will not pass if any threshold is unmet.
+### The Non-Negotiables
 
-**Set thresholds per module, not just globally.** A high global threshold can mask a critical module at 0% if other modules are over-covered.
+These apply to every project, every phase, every language:
 
-| Module Type | Suggested Minimum |
-|-------------|------------------|
-| Core domain logic | ≥ 95% |
-| Integration / platform modules | ≥ 90% |
-| Global | ≥ 80% |
+**1. Use your language's strictest type-checking mode.**  
+Types are the cheapest form of documentation and the cheapest form of testing. Turning off type strictness to "move faster" produces slower movement within a few iterations.
 
-### Thresholds Are a Floor, Not a Definition of Done
+**2. Enforce quality at tooling level, not at review level.**  
+If a rule matters, make it a build failure. Rules enforced only by human review are inconsistently applied and produce reviewer fatigue.
 
-Coverage numbers are a minimum. They do not substitute for integration coverage at module seams. You can meet every threshold and still have the main entry point of your tool completely untested.
+**3. Structure errors; do not scatter them.**  
+Every error surface should produce a value with at minimum:
+- A machine-readable `code` (for programmatic handling)
+- A human-readable `message` (for logs and debugging)
+- A human-readable `action` (what the caller should do next)
 
-### Coverage Fix Submissions
+Callers should not need to inspect exception types or parse error strings to handle errors correctly.
 
-Include the **full per-file table** — no selective reporting. Reporting Module A's improvement while omitting Module B (still failing) is a known failure mode. The omission is the signal that the fix is incomplete.
+**4. Handle errors at the call site, not somewhere upstream.**  
+Return errors as values where practical. Unhandled exceptions that propagate silently to a generic handler hide the actual failure point and make debugging harder.
 
-### Known Acceptable Gaps
+**5. Immutability in shared interfaces.**  
+Public interfaces should not allow callers to mutate internal state. Use immutable types at API boundaries.
 
-Some paths cannot be meaningfully tested (e.g., live external API calls without credentials). When this applies:
-- Document the gap with explicit rationale
-- Track it as phase debt
-- Never silently omit it from coverage reports
+**6. Functions over stateful objects where possible.**  
+Stateless functions are easier to test, easier to compose, and easier to reason about. Reserve stateful objects for things that genuinely have lifecycle — connections, event emitters, long-lived caches, subscription managers. "Prefer functions" does not mean "never use objects" — it means the burden of justification lies with the stateful design, not the stateless one.
 
----
+**7. Handle errors at the call site, not somewhere upstream.**  
+Return errors as values where practical. Unhandled exceptions that propagate silently to a generic handler hide the actual failure point and make debugging harder. For async or streaming contexts, the call site is the first consumer of the async result — the handler that awaits, subscribes to, or reads from the async source. Error handling must be placed at that boundary, not deferred to a parent or caller that has already lost the original context.
 
-## 7. Build System
+### Code Review Expectations
 
-### Output Correctness
+Reviews check:
+- Correctness against the locked contract
+- No regressions against prior phases
+- No half-exposed internals in the public interface
+- Inline docs are accurate — not just present
+- Tests cover the specification, not just the happy path
+- No escape hatches (type casts to `any`, explicit `unsafe`, `# type: ignore`, lint suppressions in source)
 
-If your project builds both a library entry and a CLI entry:
-- CLI entry gets the shebang (`#!/usr/bin/env node`)
-- Library entry does **not**
-- Build tool banner/header configs often apply globally — configure per-output explicitly
-
-**Failure mode:** Shebang on the library entry corrupts any bundler that imports your package. It passes all tests and only surfaces in consumers.
-
-### Lockfile Discipline
-
-- **Commit your lockfile** (`pnpm-lock.yaml`, `package-lock.json`, `poetry.lock`, etc.)
-- CI runs with `--frozen-lockfile`. Missing lockfile = every clean CI run fails at install.
-- Verify at every phase kickoff that the lockfile is staged and not in `.gitignore`.
-
-### Release Pipeline
-
-- All required release plugins must be **explicitly declared** in your manifest — never assume transitive inclusion
-- Run the release dry-run (`--dry-run`) before attempting a real release
-- Three deferred dry-run validations in a row = mandatory escalation. Assign a single owner and make it a gate criterion.
-
-### Runtime Export Check
-
-After any change to your public API surface file, verify runtime exports:
-
-```bash
-node -e "import('./dist/index.js').then(m => console.log(Object.keys(m)))"
-```
-
-TypeScript source inspection cannot catch type-vs-value export mismatches. `export type Foo` is erased at build time. `export function foo` is not. This check is a gate criterion.
+**Escape hatch detection — QA verifies at gate:**
+- No type suppressions or unsafe casts in source files (test files are exempt with justification)
+- Any suppression in test files is QA-owned: document the exception inline with a comment explaining why it is necessary and when it can be removed
 
 ---
 
-## 8. Phase Gate Process
+## 5. How We Gate a Phase
 
-The gate is the Lead's binary checklist. Every criterion must pass. There are no partial passes.
+The gate is the Lead's binary checklist. Every criterion passes or the phase does not merge.
 
 ### Gate Outcomes
 
-| Outcome | Meaning |
-|---------|---------|
-| **APPROVED** | Merge proceeds |
-| **CONDITIONAL PASS** | Named exception documented as phase debt; merge allowed with explicit tracking |
-| **BLOCKED** | Failing criteria listed; specific owners assigned to fix |
+| Outcome | What It Means |
+|---------|--------------|
+| **APPROVED** | All criteria pass. Merge proceeds. |
+| **CONDITIONAL PASS** | One named exception, documented as phase debt with explicit owner and target. Merge allowed. |
+| **BLOCKED** | One or more criteria fail. Specific failures listed. Specific owners assigned. |
 
-### Gate Checklist — Inherited (Every Phase)
+### Gate Checklist — Universal Criteria (Every Phase)
 
 | # | Criterion | How to Verify |
 |---|-----------|---------------|
-| 1 | Compiler: zero errors | `tsc --noEmit` → exit 0 |
-| 2 | Linter: zero warnings | `eslint --max-warnings 0` → exit 0 |
-| 3 | Tests: all non-pending pass | Test runner → zero failures |
-| 4 | Build: clean outputs | Build succeeds; all expected output files present |
-| 5 | Output format correct | Library entry has no shebang; CLI entry has shebang |
-| 6 | Runtime exports verified | Import built library, enumerate keys — all public functions present |
-| 7 | No type escape hatches | No `any`, no `@ts-ignore`, no unsafe casts in `src/` |
-| 8 | Inline docs complete | All exports have summary, `@param`, `@returns`, `@throws` |
-| 9 | README updated | Phase features documented with examples |
-| 10 | Architecture doc updated | ADRs written for all major decisions made this phase |
-| 11 | Release notes written | Current release notes in place |
-| 12 | Coverage thresholds met | Full per-file coverage table passes all thresholds |
-| 13 | Lockfile committed | `git status` shows lockfile is clean |
-| 14 | Clean clone passes | `clone → install --frozen → build → test` succeeds end-to-end |
+| 1 | Static analysis: zero errors | Run type-checker, compiler, or linter in strict mode → exit 0 |
+| 2 | Linter: zero warnings | Run linter with strictest flag → exit 0 |
+| 3 | Tests: all non-pending pass | Run full test suite → zero failures |
+| 4 | Build: all outputs present and correct | Build succeeds; verify output files exist |
+| 5 | Public interface exports verified at runtime | Import or load the built artifact, enumerate exported names — all expected symbols present and callable |
+| 6 | No escape hatches in source | No unsafe type casts, no lint suppressions in source |
+| 7 | Inline docs complete | All public exports have summary, parameters, return, and error docs |
+| 8 | README updated | Phase capabilities documented with usage examples |
+| 9 | Architecture log updated | Design decisions from this phase recorded as ADRs |
+| 10 | Release notes written | Changelog entry for this release complete |
+| 11 | Coverage thresholds met | Full per-file coverage table passes all project-defined thresholds |
+| 12 | Lockfile / dependency manifest committed | Reproducible install verified |
+| 13 | Clean install passes | Fresh checkout → install → build → test succeeds end-to-end |
 
-**Phase-specific criteria are added by the Lead at kickoff, not discovered at review time (D7).**
+**Phase-specific criteria are written by the Lead at phase kickoff** — not discovered at review time. Anything the team did not know was required until gate day is a process failure, not a technical failure.
 
 ### Gate Checklist Amendment Protocol
 
-When scope changes mid-phase (feature deferred, new feature added), the Lead writes a formal amendment:
+When scope changes mid-phase, the Lead writes a formal amendment documenting:
 - Which criteria are deferred (with rationale and target phase)
 - Which criteria are added
 - Which criteria are modified
 
-**Never silently evaluate against a reduced subset.** Informal scope pivots without an amendment create ambiguity at gate time.
+No silent subset evaluation. Informal scope pivots without an amendment create ambiguity at gate time and erode trust in the checklist.
+
+### Who Signs Off at the Gate
+
+The gate is not a solo exercise by the Lead. All sign-offs must be in place:
+
+- **Lead** — architecture, code quality, interface correctness
+- **QA** — coverage completeness, test correctness, full per-file table
+- **Docs** — README accuracy, architecture log completeness, release notes
+- **DevOps** — clean install validated, build pipeline confirmed
+
+A phase does not merge until all four sign-offs are recorded.
+
+### Conditional Pass Stacking Limit
+
+A CONDITIONAL PASS carries exactly one named exception into the next phase. If that exception is deferred again — becoming a conditional exception in a second consecutive phase — it must be treated as a debt ledger item subject to the three-deferral rule (§14). A single exception deferred three phases in a row is automatically elevated to a gate blocker for the next phase. It cannot receive another CONDITIONAL PASS.
 
 ---
 
-## 9. Code Review Protocol
+## 6. How We Review Code
 
-### Who Reviews
+### The Lead Reviews Everything
 
-The Lead reviews all PRs. Every submission passes through the Lead before merge.
+All PRs pass through the Lead before merge. The Lead is the reviewer for code correctness, architecture consistency, and API surface coherence.
 
-### Rejection Lockout (D6)
+**Rejection Lockout**
 
-**If an artifact is rejected, the original author may not produce the next version.**
+**If the Lead rejects an artifact, the original author does not own the next version.**
 
-A different team member owns the revision — not the author, not even as an advisor.
+A different team member takes the revision. The author may not advise, co-author, or pair on the revision. The revision must be independently produced.
 
-**Why:** The author of a rejected artifact has a mental model that produced the failure. Returning to the same author risks the same blind spot. A fresh reviewer, briefed on the rejection criteria, produces a more reliable revision.
+**Why:** The author's mental model produced the failure. Sending the fix back to the same author risks the same blind spot. A fresh perspective, briefed on the rejection criteria, produces a more reliable revision.
 
-**Cascade rule:** If the revision is also rejected, the revision author is now also locked out. A third team member owns the next attempt. If all eligible team members have been locked out, escalate to the project owner.
+**Artifact scope:** The lockout applies to the specific files or interfaces directly implicated in the rejection — not the entire PR. If a PR contains six files and two are rejected, the lockout covers those two files only. The original author may continue work on the non-implicated files.
 
-### Review Criteria
+**Cascade:** If the revision is also rejected, the revision author is now also locked out. A third team member takes the next attempt.
 
-Beyond the gate checklist, reviewers verify:
-- Type contracts match the locked contract file — no silent deviations
-- No API design regressions from prior phases
-- Public API surface is coherent — no half-exposed internals
-- Inline docs are accurate, not just present
-- Tests address the specification, not just the happy path
+**Lockout escalation:** If all eligible team members have been locked out of an artifact, this is an escalation signal — not an implementation problem, but a design problem. The Product Owner is notified. The Lead reviews the artifact history and decides: (a) revert to an earlier approved design, (b) bring in external review, or (c) treat as a blocking debt item — design the artifact from scratch next phase with explicit Lead involvement from the start. Re-admitting a locked-out author is not an option without explicit Product Owner sign-off and a written rationale.
+
+### What Rejection Lockout Is Not
+
+It is not punitive. It is structural. The original author continues to work on other tasks in parallel. The lockout applies only to the implicated artifact, only for that revision cycle.
+
+### Review Turnaround
+
+Code review is not a batch job. A submitted PR should receive review feedback within one working session — not "when I get to it." Review debt is a team throughput problem, not an individual problem.
+
+**Author response SLA:** Once review feedback is delivered, the author must address it and re-submit within one working session. If the author cannot respond within that window, they explicitly hand off to another implementer and notify the Lead. Silent non-response blocks the pipeline.
 
 ---
 
-## 10. Contract-First Discipline (D3)
+## 7. Contract-First Discipline
+
+### The Problem It Solves
+
+When an implementer and a tester both start from the same backlog item but interpret the interface differently, the result is a test suite that passes with the implementation the tester expected but not with the implementation that was actually built. The fix is always a full test rewrite.
+
+The root cause is not imprecision in the implementation or carelessness in the tests. The root cause is that both people were working from a description of behavior, not a binding interface contract.
 
 ### The Sequence
 
 ```
-1. Developer writes shared types/interfaces (new phase additions only)
-2. Lead reviews → APPROVED or CHANGES REQUESTED
-3. APPROVED → QA writes test skeletons against the locked contract
-4. Implementation begins (parallel across modules)
-5. QA fills in test bodies as implementations stabilise
+1. Implementer drafts the shared interface contract (new types, signatures, schemas)
+2. Lead reviews the contract → APPROVED or CHANGES REQUESTED
+3. On APPROVED: QA writes test skeletons against the locked contract
+4. Implementation begins (across all modules, in parallel)
+5. QA fills in test assertions as each implementation unit stabilises
 ```
 
-**No step may be skipped or reordered.**
+**No step is optional. No step is reordered.**
 
-### What "Contract-First" Means in Practice
+**Implementer owns the draft; Lead owns the approval.** The kickoff ceremony assigns contracts for drafting — it does not draft them. Drafting happens when the implementer has enough context to specify the interface precisely. A contract drafted by the Lead at kickoff without implementer input is an architecture decree, not a contract — and decrees do not surface implementation constraints early enough.
 
-- The shared types file is written before any implementation module
-- The public API surface file (`index.ts`, `__init__.py`, etc.) is defined **alongside** the types file — it is not an afterthought
-- Test skeletons are written **against the locked contract** — never against backlog ACs
-  - Backlog ACs are product requirements; they are not type contracts
-  - Writing tests against vague ACs produces a test rewrite when the implementation takes a different (correct) shape
+### Contract Amendment Protocol
+
+When a locked, approved contract must change mid-implementation because a design assumption was wrong, the following applies:
+
+1. The implementer raises the change request explicitly — no silent deviations
+2. The Lead reviews: approve the amendment or reject the implementation approach
+3. If the amendment is approved: QA is notified immediately; test skeletons against the old contract are invalidated; new skeletons are written against the amended contract before implementation continues
+4. The amendment is recorded in the architecture log as a decision with rationale
+5. A CONDITIONAL PASS is not a substitute for a contract amendment — a gate pass does not retroactively legitimise an unrecorded contract mutation
+
+### What a Contract Looks Like
+
+A contract is the exact interface between modules — not a description of what it does, but the precise shape of what it takes and what it returns:
+
+- For an API: endpoint path, method, request schema, response schema, error codes
+- For a library function: signature, parameter types, return type, error type
+- For a message queue: message schema, topic/queue name, delivery guarantees
+- For a CLI command: argument names and types, flag semantics, exit codes, stdout/stderr shape
+
+Prose descriptions are not contracts. Diagrams are not contracts. A contract is precise enough that two developers can implement and test against it independently and arrive at compatible results.
 
 ### Contract Review Checklist
 
-When reviewing the shared types file, the Lead verifies:
+When reviewing a proposed contract, the Lead verifies:
 
 | Check | What to Look For |
 |-------|-----------------|
-| No escape hatches | No `any`, no overly wide `object` or `unknown` where a precise type is possible |
-| Correct export keyword | Type exports use `type` keyword; runtime constants use `const` |
-| Named exports only | No default exports |
-| Per-type documentation | Every exported type has description, usage notes, non-obvious field comments |
-| Immutable public types | Public API types use `ReadonlySet`, `ReadonlyMap`, `readonly` arrays |
-| No circular imports | The contract file has no imports from implementation files |
+| Precision | Every input and output has an explicit type and shape — no "object", no "any", no implicit |
+| Completeness | All error cases are in the contract — not just the happy path |
+| Immutability | Shared data structures at API boundaries are immutable — callers cannot mutate internal state |
+| Independence | The contract file has no runtime dependencies on implementation files |
+| Documentation | Every exported item has a description, parameter docs, return docs, and error docs |
 
-### Open Design Questions
+### Open Questions Surface at Contract Time, Not Implementation Time
 
-When a developer has open design questions (e.g., "should this field be a union or a string?"), they surface them explicitly — they do not silently pick one. The Lead answers them at review time. The decision and rationale are logged in the architecture doc.
+When a developer has a design question while writing the contract ("should this return a union type or raise an exception?"), they surface it explicitly for the Lead to answer at review — they do not silently pick one. The decision and its rationale go into the architecture log. Silent decisions produce inconsistent patterns across modules.
+
+### Dependency Stability at Contract Time
+
+When drafting the interface contract, verify that all external dependencies required are:
+- Stable (not alpha, not pre-release)
+- Actively maintained
+- Compatible with the project's existing dependency graph
+
+Unstable dependencies are a known risk. If a dependency is unavoidably unstable, the risk is documented in the ADR and QA is involved in designing error case tests that cover dependency failure modes. Do not discover dependency gaps during implementation — discovery during implementation breaks flow and invalidates work already done.
 
 ---
 
-## 11. Test Strategy
+## 8. How We Test
 
-### Ownership
+### QA Owns Tests
 
-QA owns all test files and all fixtures. No other team member modifies test files without QA involvement.
+QA owns all test files and all fixtures. No other team member modifies test files without QA involvement. This is not a territorial rule — it is a coherence rule. A test suite written by multiple hands without a single owner becomes incoherent.
 
 ### Test Writing Sequence
 
-1. Contract locked (Lead approved types + public API surface)
-2. QA writes test **skeletons** (describe blocks, test cases — no assertions yet)
+1. Contract is locked (Lead approved)
+2. QA writes test **skeletons**: describe blocks, test cases named, assertions empty
 3. Implementation proceeds in parallel
-4. QA fills in test bodies as each implementation unit stabilises
+4. QA fills in assertions as each implementation unit stabilises
 
-### Pending Test Discipline
+**Skeleton completeness requirement:** Every skeleton must include structure for:
+- Happy path with representative inputs
+- All documented error cases from the contract
+- Boundary and edge conditions (empty input, maximum values, missing required fields)
 
-Use pending tests (`it.todo()`, `@pytest.mark.skip`, etc.) for tests that cannot be written yet:
-- Integration/e2e tests that need stable implementation output to assert against
-- Tests for complex branching that would couple to implementation details
+Minimum test case count is derived from contract complexity and confirmed by the Lead at kickoff review. A skeleton that covers only happy path is not a skeleton — it is an incomplete draft.
 
-**Do not** write stub tests with trivially-true assertions. These couple test stubs to implementation details and require a full rewrite when the implementation diverges.
+**Implementer stabilisation signal:** "Stabilised" means the implementer explicitly notifies QA that a module is ready for assertion fill-in. QA does not poll. If a module is not signalled, QA marks it pending with the implementer as owner.
 
-```typescript
-// ✅ Correct — documents future work, zero coupling
-it.todo("should reject writes to protected paths");
+**Handoff for usability:** If QA needs a code sample or usage example to fill assertions, the implementer provides it as a comment or example file. QA cleans it up afterward. Waiting for documentation that does not exist yet is not QA's problem — it is a handoff gap.
 
-// ❌ Wrong — couples to internals, becomes stale
-it("should reject writes to protected paths", () => {
-  expect(() => write(protectedPath)).toThrow();
-});
-```
+### Pending Tests Are Debt, Not Done
 
-Pending tests are **debt items**, not permanent states. Track them with a target phase.
+Use your test framework's pending mechanism (`it.todo()`, `@pytest.mark.skip`, `xit`, etc.) for tests that cannot be written yet:
+- Tests that need stable implementation output to assert against
+- Tests that would couple to internal implementation details
+
+**Pending tests are not a permanent state.** Every pending test is a debt item. It has an owner and a target phase for completion.
+
+**Tracking requirement:** Every pending test must have:
+1. A debt ledger entry (introduced phase, target phase, owner, closure condition)
+2. An inline comment in the test file with the debt item ID
+3. The test framework's pending mechanism applied — do not leave empty assertions without marking pending
+
+The test suite at gate time must show:
+- Zero unintentional failures
+- All pending tests explicitly acknowledged, tracked, and linked to their debt entries
+
+**Do not** write stub tests with trivially-true assertions. A stub test that always passes gives a false sense of coverage and must be rewritten when the implementation diverges.
+
+### When Implementation Diverges from the Locked Contract
+
+If QA discovers during assertion fill-in that the implementation diverges from the locked contract:
+
+1. QA stops filling assertions and escalates to the Lead immediately — no silent adjustment of the test
+2. The Lead decides: approve a contract amendment (following the Contract Amendment Protocol in §7) or reject the implementation
+3. Until the Lead decides, QA marks the affected test cases pending with the divergence noted inline
+4. No QA owns the decision to diverge — this is always a Lead decision
 
 ### Fixture Design
 
-- Cover edge cases, not just happy paths
-- Include at least one fixture per known failure mode (e.g., cycle in a graph, malformed input, a permission boundary)
-- CLI test isolation: use temp directories inside the project's test output directory, not the OS-level `/tmp`
+Fixtures should cover:
+- The happy path with representative inputs
+- Known edge cases (empty, maximum, boundary values)
+- At least one known failure mode per subsystem (invalid input, missing resource, permission boundary)
 
-### Coverage Fix Submissions
+**Fixture constraints:**
+- Fixtures must not inspect or depend on implementation internals (private methods, internal state inspection). If a fixture requires access to private state to set up, the contract is leaking implementation — fix the contract.
+- Fixtures are module-scoped by default. Sharing fixtures across modules creates coupling between test suites that break when either module is refactored. Cross-module fixtures require Lead approval.
+- Test cases must not depend on execution order. Each test is independently set up and torn down. Shared state between tests is a reliability failure waiting to happen.
 
-1. Run the full coverage suite
-2. Include the full per-file table — no selective reporting
-3. Report exact numbers: `"graph.ts: 94.73% branch"` not `"graph.ts: above threshold"`
+Fixtures that only test the happy path produce a test suite that does not fail when the system breaks in the ways systems actually break.
 
----
+### Coverage Is a Floor, Not a Ceiling
 
-## 12. Documentation Standards
+Coverage thresholds are set per project. The threshold is a minimum. Passing the threshold does not mean the system is well-tested — it means the worst-case floor has been cleared.
 
-### Ownership
+**New modules:** All new modules are expected to meet the project's coverage threshold on their first gate submission. Partial coverage on first submission is a debt item, not an acceptable default.
 
-Docs role owns all documentation. Team members who implement features write **doc proposals** (inline comments, README section drafts). Docs role finalises.
+**Modified modules:** Changes to existing modules must preserve or improve existing coverage. A modification that reduces coverage in an existing module requires QA sign-off with a written rationale.
 
-### Files and Scope
-
-| File | Contents | Rule |
-|------|----------|------|
-| `README.md` | What is it, how to install, how to use | Only these three things. No roadmap, future plans, team references. |
-| `RELEASE-NOTES.md` | Current release notes | Overwrite each release OR append — pick one convention and commit to it. |
-| `docs/architecture.md` | ADRs for all major design decisions | Updated each phase. ADR entries are permanent — do not delete old decisions. |
-| Domain reference docs | API reference, query language guide, etc. | Written in the phase that introduces the feature. |
-
-### Documentation Is a Gate Criterion (Criteria 9–11)
-
-Docs are not "follow-on cleanup." If the README still shows new features as "coming soon" at gate time, that is a gate failure. Docs must be gate-ready on first submission.
-
-**Source-validated docs pass gate.** Use actual field names, function signatures, and error codes from the implemented source — not from planning documents. Planning documents go stale; source does not.
+**Mandatory: full per-file coverage table in every coverage fix submission.** Reporting Module A's improvement while omitting Module B (still failing) is a known failure mode. The omission is always the signal that the fix is incomplete.
 
 ---
 
-## 13. Retrospective Process
+## 9. How We Document
 
-Retrospectives are facilitated by the Lead after every phase.
+### Docs Owns Documentation
+
+The Docs role finalises all documentation. Team members write **proposals** (inline comments, README section drafts) as part of their implementation work. Docs reviews, corrects, and publishes.
+
+### The Three Mandatory Documents
+
+| Document | Contents | Rule |
+|----------|----------|------|
+| **README** | What it is, how to install, how to use | Only these three. No roadmap, phases, future features, or team references. |
+| **Release Notes / Changelog** | What changed in this release | Accurate and complete. Covers every user-visible change. Migration steps for breaking changes. |
+| **Architecture Log** | ADRs — why decisions were made, what alternatives were considered | Permanent. ADRs are never deleted. They explain why the codebase looks the way it looks. |
+
+### ADR Format (Architecture Decision Record)
+
+Every significant design decision gets an ADR. An ADR answers:
+
+1. **Context** — what situation required a decision
+2. **Decision** — what was decided
+3. **Rationale** — why this option over the alternatives
+4. **Consequences** — what becomes easier, what becomes harder, what debt is incurred
+
+ADRs are written at decision time, not retroactively. A decision made without an ADR is a decision that will be made again in six months by a team member who does not know it was already made.
+
+### Documentation Is a Gate Criterion
+
+Documentation is not follow-on cleanup. If the README still shows a new capability as "coming soon" at gate time, the gate fails. Docs must be gate-ready on first submission.
+
+Source-validated documentation passes gate. Documentation written from planning notes fails gate — not because it is wrong, but because planning notes go stale in ways source does not. Use actual names, signatures, and error codes from the implemented source.
+
+**Documentation drift detection:** At every gate, Docs spot-checks at minimum three random public exports by loading the built artifact and verifying that inline documentation matches the actual signature. If drift is found, the gate fails and the implementer corrects the drift — not Docs.
+
+### Inline Documentation
+
+Every exported interface, function, type, and error code requires inline documentation covering:
+- What it is and what it does
+- Every input: name, type, constraints
+- Every output: type, meaning
+- Every error case: when it occurs, what the caller should do
+
+---
+
+## 10. How We Retrospect
 
 ### Format
 
-1. **What went well** — concrete, named examples. Not vague praise.
-2. **What didn't go well** — honest, no euphemisms.
-3. **What we learned** — actionable insights with reasoning.
-4. **Action items** — owner + priority + target phase.
+Every phase retrospective follows this structure:
+
+1. **What went well** — concrete, specific examples. Not "good teamwork." Name the thing that worked and why it worked.
+2. **What didn't go well** — honest, direct, no euphemisms. Name the failure mode, the root cause, and who was involved.
+3. **What we learned** — actionable insight derived from what happened. Not observations — lessons that change future behaviour.
+4. **Action items** — one owner per item, one target phase per item, one clear definition of done per item.
 
 ### Cadence
 
-- After every phase completion → full retrospective
-- After a build failure, test failure, or reviewer rejection → abbreviated retro (see [§14 Ceremonies](#14-ceremonies))
+- **Full retrospective** — after every phase completion, facilitated by the Lead
+- **Abbreviated retrospective** — after any build failure, test failure, or reviewer rejection (see [§11 Ceremonies](#11-ceremonies))
 
-### Action Item Tracking
+### Action Item Discipline
 
-Action items are written to the decision ledger. Reviewed at the next phase kickoff. Verified in the gate checklist.
+Action items are written to the decision log. They are reviewed at the next phase kickoff. They are verified in the gate checklist.
 
-**Three consecutive deferrals = mandatory escalation.** If an action item has been deferred three phases in a row, it is an ownership problem, not a priority problem. Assign a single owner and make it a gate criterion for the next phase.
+**An action item that is deferred three phases in a row has an ownership problem, not a priority problem.** At that point, assign a single owner and make it a gate criterion for the next phase. It cannot slip again.
 
-### The Compounding Value of Retrospectives
+### The Compounding Value of Retros
 
-Retrospective action items have compounding value when actually enforced. A checklist item written in Phase N's retro, applied in Phase N+1, prevents exactly the failure mode it was designed to prevent.
+Retrospective action items have measurable compounding value when enforced. A checklist item added at Phase N's retro prevents the exact failure mode it was written for when applied in Phase N+1. The ROI is not visible in features delivered — it is visible in gate attempts avoided.
 
-> "The ROI of retro action items is measured in failures avoided, not features delivered."
-
-The documents are the mechanism. If they are written and not read, the retro has zero value.
+The retrospective is not a ceremony that produces documents nobody reads. The documents are the mechanism. If they are not read, the retrospective has zero value.
 
 ---
 
-## 14. Ceremonies
+## 11. Ceremonies
+
+Ceremonies are structured alignment events that happen before or after work. They are not optional and are not deferrable.
 
 ### Design Review
 
-**Trigger:** Before any multi-developer task involving shared systems or API contracts.
+**When:** Before any work that involves two or more team members touching a shared interface or shared system.
 
 **Agenda:**
-1. Review requirements
-2. Agree on interfaces and contracts between components
-3. Identify risks and edge cases
-4. Assign action items
+1. Review the requirement and its acceptance criteria
+2. Agree on the interface contract between components
+3. Identify risks, edge cases, and integration points
+4. Assign ownership of each piece
 
-**Attendees:** All team members whose modules are touched by the contract.
+**Output:** A written interface contract ready for the Lead's review. Work does not start until the contract is approved.
 
 ### Abbreviated Retrospective
 
-**Trigger:** After a build failure, test failure, or reviewer rejection.
+**When:** Triggered automatically after any build failure, test failure, or reviewer rejection.
 
 **Agenda:**
-1. What happened (facts only)
-2. Root cause
-3. What changes
-4. Action items (owner + target)
+1. What happened — facts only, no attribution
+2. Root cause — the systemic reason, not the surface symptom
+3. What changes — the single most important adjustment
+4. Action item — one owner, one target, one clear done condition
 
-This is distinct from the full phase retrospective. It is lightweight and immediate — do not defer it.
+This is a 15-minute exercise, not a full phase retrospective. Do not defer it. The value is in the immediacy — the failure mode is fresh.
+
+### Phase Kickoff
+
+**When:** Before every new phase begins.
+
+**Participants:** Lead, Product Owner, all role-holders.
+
+**Agenda:**
+1. **Product Owner confirms phase scope** — what is in, what is explicitly out, what is deferred and why
+2. **Product Owner locks priorities** — if there is more work than time, the PO decides what ships and what slips; this decision is written down before work begins
+3. Review the debt ledger from the previous phase — business impact assessed by PO, technical assessment by Lead
+4. Write the gate checklist (Lead)
+5. Assign contracts for drafting (not yet drafted — see §7 for the drafting sequence)
+6. Assign module ownership (Lead)
+7. Nominate Lead deputy for this phase
+
+**Output:** Written scope signed by the Product Owner, written gate checklist, contracts assigned, ownership assigned, deputy named. Work does not start without these.
 
 ---
 
-## 15. Routing Rules
+## 12. How Work Is Routed
 
-### Principles
+### Routing Principles
 
-1. **Domain ownership is exclusive.** One role owns each module/area. When two roles could handle a task, route to the one whose domain is primary.
-2. **Eager by default.** When a task produces downstream work (implementation → tests, implementation → docs), start the downstream work in parallel, not after.
-3. **Lead owns review, not implementation.** Route all code review and gate decisions to the Lead. Never back to the author.
-4. **Scribe and Ralph are automatic.** They never need explicit routing.
+These apply regardless of the specific routing table your project defines:
 
-### Routing Table Template
+1. **Domain ownership is exclusive.** One role owns each module or system area. When two roles could handle a task, the one whose primary domain is closer takes it.
+2. **Downstream work starts in parallel.** Implementation and testing are parallel, not sequential. As soon as the contract is locked and implementation begins, QA begins writing skeletons. As soon as a module stabilises, Docs begins drafting.
+3. **The Lead owns review, not implementation.** Code review and gate decisions always route to the Lead. They never route back to the submitting author.
+4. **Quick questions route to the coordinator.** If the answer is already in context, the coordinator answers directly — no agent spawn, no ticket, no meeting.
+5. **Ambiguous routing resolves toward the domain owner.** If it is unclear who should handle something, route it to the person whose domain is closest to the work. They can redirect if needed.
 
-Fill this in for your project:
+### Routing Table (Template)
+
+Fill this in for your project. The role labels on the left are universal.
 
 | Work Type | Route To |
 |-----------|----------|
 | Architecture decisions, phase gates, API design | Lead / Architect |
-| Core domain modules | Core Dev |
-| Integration / platform modules | Platform Dev |
-| All test files, fixtures, coverage | Tester / QA |
-| Documentation, README, release notes | Docs / DevRel |
-| CI/CD, build config, deployment | DevOps |
-| Phase priorities, scope, requirements, backlog | Product Owner |
+| Core domain implementation | Core Implementer(s) |
+| Integration, platform, infrastructure | Platform Implementer(s) |
+| Tests, fixtures, coverage | QA / Tester |
+| README, architecture log, release notes | Docs |
+| CI/CD, build, deployment | DevOps |
+| Scope, priorities, backlog | Product Owner |
 | Code review, gate sign-off | Lead / Architect |
-| Session logging, decisions merge | Scribe (automatic) |
-| Work queue, backlog monitoring | Ralph (automatic) |
 
-### Issue Label Routing
+### Issue Routing
 
-When using GitHub issues, assign `squad:<role>` labels for routing. The Lead triages any issue labelled `squad` (without a role sub-label) and assigns the correct `squad:<role>` label.
+When using an issue tracker with labels:
+- `squad` (no sub-label) → Lead triages, assigns `squad:<role>` label
+- `squad:<role>` → that role picks it up
 
----
-
-## 16. Known Anti-Patterns
-
-These are documented failure modes from retrospectives. Every new team member reads this section before contributing.
+The Lead is the triage point. All unlabelled squad work passes through the Lead before being assigned.
 
 ---
 
-### Anti-Pattern: Test Skeletons Against Backlog ACs
+## 13. Anti-Patterns (Retro-Derived)
 
-**What happened:** QA wrote test skeletons using backlog ACs as the API spec. The developer made a correct design change (different function signature) that was not reflected in the backlog. Full test rewrite required.
+These are failure modes that have recurred across phases. Every new team member reads this section.
 
-**Fix:** QA writes test skeletons only after the shared contract (types file + public API surface) is reviewed and merged. Backlog ACs are product requirements; they are not type contracts. See [§10 Contract-First Discipline](#10-contract-first-discipline).
+---
+
+### Anti-Pattern: Tests Written Against Acceptance Criteria, Not Contracts
+
+**What happens:** QA writes tests using the backlog AC as the API spec. The implementer interprets the AC differently (or more precisely, producing a different signature). Tests fail. Full rewrite required.
+
+**Root cause:** ACs describe behaviour. Contracts describe interfaces. They are different documents and should not be substituted for each other.
+
+**Fix:** QA writes test skeletons only after the interface contract is reviewed and approved by the Lead. See [§7 Contract-First Discipline](#7-contract-first-discipline).
 
 ---
 
 ### Anti-Pattern: Gate Criteria Discovered at Review Time
 
-**What happened:** Gate review uncovered criteria never communicated during implementation ("README must show Phase N features"). Required last-minute work.
+**What happens:** At gate review, the Lead identifies a criterion that was never communicated during the phase ("the public API must include X", "the clean install must succeed from scratch"). Teams scramble to fix things that were actually done correctly — just not to the unstated expectation.
 
-**Fix (D7):** Lead writes the full gate checklist at phase kickoff. Every criterion is binary-verifiable from day one. Anything discovered at review time is a process failure. See [§8 Phase Gate Process](#8-phase-gate-process).
+**Root cause:** The gate checklist was written at review time, not at kickoff.
+
+**Fix:** The Lead writes the complete gate checklist at phase kickoff. Everything on it is known and verifiable from day one. Criteria discovered at review time are process failures. See [§5 How We Gate a Phase](#5-how-we-gate-a-phase).
 
 ---
 
 ### Anti-Pattern: Selective Coverage Reporting
 
-**What happened:** A coverage fix submission showed Module A improving while omitting Module B (still failing). The gate failed again on Module B.
+**What happens:** A coverage fix is submitted. It shows Module A improving. It omits Module B, which is still below threshold. The gate fails again. This cycle repeats.
 
-**Fix:** Full per-file coverage table required in every coverage fix submission. The omission is always the signal. See [§6 Coverage Thresholds](#6-coverage-thresholds).
+**Root cause:** The submitter reported what improved, not what remains.
 
----
-
-### Anti-Pattern: Type-vs-Value Export Mismatch
-
-**What happened:** A public API file was updated to export new types. TypeScript source was correct. At build time, type-only exports were erased. The built library was missing runtime exports. All source checks passed; only the runtime import check caught it.
-
-**Fix:** Add a runtime import check to the gate checklist. Run it after every change to the public API surface file. See [§7 Build System](#7-build-system).
+**Fix:** Every coverage submission includes the full per-file table. Not a summary. Not the improved modules only. The entire table, with every module's exact numbers. The omission is always the signal that the fix is incomplete.
 
 ---
 
-### Anti-Pattern: Deferred Dry-Run Validation
+### Anti-Pattern: Runtime Exports Not Verified
 
-**What happened:** Release pipeline dry-run was deferred across multiple phases ("not blocking now"). When a real release was attempted, the pipeline had multiple missing plugins and failed.
+**What happens:** Static analysis passes. Lint passes. Tests pass. At gate, the built artifact is loaded and a required exported function is missing. It was declared in source as a type-level or compile-time construct, not as a runtime value — and was erased at build time.
 
-**Fix:** Run the release dry-run before the first real release attempt. Make it a gate criterion. Three deferrals = single owner assigned + mandatory gate criterion next phase.
+**Root cause:** Static analysis tools verify source-level declarations, not the built artifact. In compiled languages where type information is erased, or in build systems that separate type exports from value exports, a declaration can pass static analysis and still be absent at runtime.
+
+**Fix:** The gate checklist includes a runtime export verification step. Load or import the built artifact. Enumerate its exported names. Verify every expected symbol is present as a runtime-accessible value. This cannot be done with static analysis alone — it must be done against the built output. See gate criterion 5.
+
+---
+
+### Anti-Pattern: Release Pipeline Never Validated
+
+**What happens:** The release automation is set up but never run in dry-run mode. It is deferred phase after phase ("it's not blocking this release"). When a real release is finally attempted, the pipeline fails with missing plugins, incorrect credentials, or misconfigured steps.
+
+**Root cause:** Deferral is mistaken for low risk. Each deferral increases the real risk — more versions accumulate, more pipeline assumptions go unchecked.
+
+**Fix:** Run the release dry-run before the first real release. Make it a gate criterion. Three consecutive deferrals means the ownership is unclear — assign a single owner and make it mandatory next phase.
 
 ---
 
 ### Anti-Pattern: Informal Scope Pivot Without Gate Amendment
 
-**What happened:** Phase scope changed mid-phase. The gate checklist was informally reduced without a documented amendment. Ambiguity at gate time about which criteria applied.
+**What happens:** Mid-phase, a feature is deferred or a new one added. The gate checklist is silently reduced or expanded. At gate time, there is disagreement about which criteria apply.
 
-**Fix:** Any scope change requires a formal gate checklist amendment from the Lead. No silent subset evaluation. See [§8 Gate Checklist Amendment Protocol](#gate-checklist-amendment-protocol).
+**Root cause:** Scope changes without written record produce competing memories of what was agreed.
+
+**Fix:** Any mid-phase scope change requires a formal amendment from the Lead: which criteria are deferred, which are added, which are modified. No silent evaluation against a subset. See [§5 Gate Checklist Amendment Protocol](#gate-checklist-amendment-protocol).
 
 ---
 
 ### Anti-Pattern: Original Author Revising Their Own Rejected Work
 
-**What happened:** An artifact was rejected. The original author was asked to fix it. The second submission had the same blind spot as the first.
+**What happens:** An artifact is rejected. The original author is asked to fix it. The second submission repeats the same conceptual failure.
 
-**Fix (D6):** Rejection lockout. A different team member owns the revision. See [§9 Code Review Protocol](#9-code-review-protocol).
+**Root cause:** The author's mental model produced the initial failure. Returning to the same author without changing the mental model produces the same result.
+
+**Fix:** Rejection lockout. A different team member owns the revision. The lockout is structural, not punitive. See [§6 How We Review Code — Rejection Lockout](#rejection-lockout).
 
 ---
 
 ### Anti-Pattern: Permanently Pending Tests
 
-**What happened:** All CLI entry-point tests were pending stubs at gate time. Coverage thresholds passed because the CLI module was excluded. The CLI shipped entirely untested.
+**What happens:** Test cases are marked as pending ("todo", "skip", "xit") at gate time. Coverage passes because the framework excludes pending tests. The module ships untested for its most important code paths.
 
-**Fix:** Pending tests are debt items with a target phase for completion. They are not a permanent state. Track them in the debt ledger.
+**Root cause:** Pending tests were treated as a resolution rather than a deferral.
 
----
-
-### Anti-Pattern: Global Stateful Regex (JavaScript/TypeScript)
-
-```typescript
-// ❌ WRONG — /g flag maintains lastIndex state on the regex object
-const RE = /pattern/g;
-function extract(content: string) {
-  const results = [];
-  let m;
-  while ((m = RE.exec(content)) !== null) { results.push(m[1]); }
-  return results;
-  // second call with same input produces different results — non-deterministic
-}
-
-// ✅ CORRECT — new instance per call
-function extract(content: string) {
-  const re = new RegExp(/pattern/.source, "g");
-  const results = [];
-  let m;
-  while ((m = re.exec(content)) !== null) { results.push(m[1]); }
-  return results;
-}
-```
+**Fix:** Every pending test is a named debt item with an owner and a target phase. At kickoff, the previous phase's pending tests are reviewed. If they are still pending, they are assigned and prioritised.
 
 ---
 
-## 17. Architectural Principles
+### Anti-Pattern: External Dependency Gaps Discovered Mid-Implementation
 
-Document these for your project. The format matters as much as the content.
+**What happens:** An implementer starts writing code that depends on an external package. Mid-implementation, they discover the package lacks necessary interfaces, stubs, type definitions, or is incompatible with the existing dependency graph. They stop to resolve this, breaking flow and sometimes invalidating already-written code.
 
-### Data Storage
+**Root cause:** Dependency analysis was not done at contract time.
 
-**Decide once, apply consistently:**
-- Where is state stored? (in-memory, filesystem, database, combination)
-- What is the source of truth?
-- How is concurrency handled? (locks, git, CRDT, last-write-wins)
-
-Ambiguity in the data model is the most common source of subtle bugs across phases.
-
-### Error Architecture
-
-**Decide once, apply consistently:**
-- What type represents errors?
-- What fields are required on every error? (code, message, action)
-- Are errors thrown or returned? (Result type vs exceptions — pick one)
-
-Inconsistent error handling is the second-most common source of subtle bugs across phases.
-
-### Module Boundaries
-
-- Define which modules may import which others at project kickoff
-- Circular imports are a symptom of unclear boundaries — treat them as design failures, not implementation details
-- The contract/types module must have **no imports from implementation modules** — it is the leaf of the dependency graph
-
-### Public API Surface
-
-Define the public API surface file (`index.ts`, `__init__.py`, etc.) alongside the contract file. It is the contract between your library and its consumers. Treat it as a first-class deliverable, not a final integration step.
+**Fix:** When drafting the interface contract, list all external dependencies required. Verify that each is stable, actively maintained, and has the necessary integration points available. Verify compatibility with the existing dependency graph. Resolve gaps before implementation begins, not during. See Dependency Stability at Contract Time in §7.
 
 ---
 
-## 18. Debt Ledger
+## 14. Debt Ledger
 
-Maintain an active debt ledger. At every phase kickoff, review it, assign items to the current phase, or explicitly defer with rationale.
+Every piece of work explicitly deferred gets a row here. The ledger is reviewed at every phase kickoff.
 
-| Item | Introduced | Target Phase | Owner | Notes |
-|------|-----------|--------------|-------|-------|
-| _(example: pending CLI integration tests)_ | Phase 1 | Phase 2 | QA | All CLI paths need it.todo() filled in |
+| Item | Introduced | Target Phase | Owner | Condition for Closure |
+|------|-----------|--------------|-------|-----------------------|
+| *(example: CLI integration tests pending)* | Phase 1 | Phase 2 | QA | All pending CLI tests filled with assertions and passing |
 
-**Three consecutive deferrals = mandatory escalation.** Assign a single owner. Make it a gate criterion.
+### Ledger Rules
+
+- **Every deferred item has an owner.** "Team" is not an owner.
+- **Every deferred item has a target phase.** "Soon" is not a target phase.
+- **Three deferrals = mandatory.** An item that has been pushed to the next phase three times in a row is assigned to a specific owner and added to the gate checklist as a required criterion. It cannot be deferred again.
+- **Items are closed when the gate verifies them**, not when the implementer says they are done.
 
 ---
 
-*Maintained by the Lead. All amendments require a commit with a `docs(squad):` prefix. Read before every phase kickoff.*
+*This document describes how we work — the principles, process, and discipline — independent of what we are building and who is building it.*  
+*Maintained by the Lead. All amendments committed with `docs(squad):` prefix. Read before every phase kickoff.*
