@@ -62,6 +62,10 @@ export function structuralSearch(
   const suffix = filePath.startsWith("/") ? filePath : `/${filePath}`;
   const matches = allPaths.filter((p) => p === filePath || p.endsWith(suffix));
 
+  if (matches.length === 0) {
+    return { resolvedPath: filePath, links: [], backlinks: [] };
+  }
+
   if (matches.length === 1) {
     const resolved = matches[0];
     return {
@@ -71,10 +75,12 @@ export function structuralSearch(
     };
   }
 
-  // Multiple matches — return all combined, resolved path is the query (ambiguous)
-  const links = [...new Set(matches.flatMap((p) => index.linkGraph.forward[p] ?? []))];
-  const backlinks = [...new Set(matches.flatMap((p) => index.linkGraph.backlinks[p] ?? []))];
-  return { resolvedPath: filePath, links, backlinks };
+  // Multiple matches — ambiguous filename, throw with full list
+  throw new Error(
+    `Ambiguous file name "${filePath}" — multiple files match:\n` +
+      matches.map((m) => `  - ${m}`).join("\n") +
+      "\n\nUse the full path to disambiguate.",
+  );
 }
 
 // T4.3 — Tag filter

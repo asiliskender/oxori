@@ -69,10 +69,22 @@ function resolveTarget(target: string, pathSet: Set<string>): string | null {
   if (pathSet.has(`${target}.md`)) return `${target}.md`;
 
   const targetWithExt = target.endsWith(".md") ? target : `${target}.md`;
+  const matches: string[] = [];
   for (const path of pathSet) {
     if (path === targetWithExt || path.endsWith(`/${targetWithExt}`)) {
-      return path;
+      matches.push(path);
     }
+  }
+
+  if (matches.length === 1) return matches[0];
+
+  if (matches.length > 1) {
+    console.warn(
+      `[oxori] Ambiguous link target "${target}" — multiple files match:\n` +
+        matches.map((m) => `  - ${m}`).join("\n") +
+        "\n  Link marked as broken. Rename one of the files to make the name unique.",
+    );
+    return null;
   }
 
   return null;

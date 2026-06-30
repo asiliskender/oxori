@@ -104,15 +104,33 @@ describe("structuralSearch", () => {
         makeRecord({ path: "subdir/b.md" }),
       ],
       linkGraph: {
-        forward: { "a.md": ["subdir/b.md"] },
-        backlinks: { "subdir/b.md": ["a.md"] },
+        forward: { "a.md": ["subdir/b.md"], "subdir/b.md": [] },
+        backlinks: { "subdir/b.md": ["a.md"], "a.md": [] },
       },
     });
 
-    // User types just "b.md" — should resolve to "subdir/b.md"
     const result = structuralSearch(index, "b.md");
     expect(result.backlinks).toContain("a.md");
     expect(result.resolvedPath).toBe("subdir/b.md");
+  });
+
+  it("ambiguous filename — throws with list of conflicting paths", () => {
+    const index = makeIndex({
+      files: [
+        makeRecord({ path: "a/note.md" }),
+        makeRecord({ path: "b/note.md" }),
+      ],
+      linkGraph: {
+        forward: { "a/note.md": [], "b/note.md": [] },
+        backlinks: { "a/note.md": [], "b/note.md": [] },
+      },
+    });
+
+    expect(() => structuralSearch(index, "note.md")).toThrow(
+      /Ambiguous file name "note\.md"/,
+    );
+    expect(() => structuralSearch(index, "note.md")).toThrow("a/note.md");
+    expect(() => structuralSearch(index, "note.md")).toThrow("b/note.md");
   });
 });
 
