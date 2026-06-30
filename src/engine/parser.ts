@@ -22,6 +22,46 @@ function extractLinks(raw: string): string[] {
 }
 
 /**
+ * Extract tags from YAML frontmatter.
+ * Supports both formats:
+ *   tags: [kubernetes, devops]
+ *   tags:
+ *     - kubernetes
+ */
+function extractFrontmatterTags(raw: string): string[] {
+  // Frontmatter must be at the very start of the file
+  const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmMatch) return [];
+
+  const fm = fmMatch[1];
+
+  // tags: [a, b, c]
+  const inlineMatch = fm.match(/^tags\s*:\s*\[([^\]]*)\]/m);
+  if (inlineMatch) {
+    return inlineMatch[1]
+      .split(",")
+      .map((t) => t.trim().replace(/^['"]|['"]$/g, ""))
+      .filter(Boolean);
+  }
+
+  // tags:\n  - a\n  - b
+  const blockMatch = fm.match(/^tags\s*:\s*\r?\n((?:\s*-\s*.+\r?\n?)+)/m);
+  if (blockMatch) {
+    return blockMatch[1]
+      .split(/\r?\n/)
+      .map((line) =>
+        line
+          .replace(/^\s*-\s*/, "")
+          .trim()
+          .replace(/^['"]|['"]$/g, ""),
+      )
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+/**
  * Extract #tags from raw markdown text.
  * Rules:
  * - Match #word and #nested/word
@@ -67,8 +107,11 @@ function extractHeadingText(node: Heading): string {
 export async function parseFile(filePath: string): Promise<ParsedFile> {
   const raw = await readFile(filePath, "utf-8");
 
+  // Strip YAML frontmatter before passing to remark so it doesn't leak into text
+  const bodyOnly = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "");
+
   const processor = unified().use(remarkParse);
-  const tree = processor.parse(raw) as Root;
+  const tree = processor.parse(bodyOnly) as Root;
 
   const headings: string[] = [];
   const textParts: string[] = [];
@@ -85,7 +128,9 @@ export async function parseFile(filePath: string): Promise<ParsedFile> {
   const text = textParts.join(" ").replace(/\s+/g, " ").trim();
 
   const rawLinks = extractLinks(raw);
-  const tags = extractTags(raw);
+  const inlineTags = extractTags(raw);
+  const frontmatterTags = extractFrontmatterTags(raw);
+  const tags = [...new Set([...frontmatterTags, ...inlineTags])];
 
   // broken flag initialized false; indexer sets it when cross-referencing all files
   const links = rawLinks.map((target) => ({ target, broken: false }));

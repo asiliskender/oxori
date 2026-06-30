@@ -20,6 +20,7 @@ describe("store", () => {
 
   const sampleIndex: IndexData = {
     version: 1,
+    parserVersion: 2,
     updatedAt: "2026-06-30T00:00:00.000Z",
     files: [
       {

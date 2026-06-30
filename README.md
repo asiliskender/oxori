@@ -1,4 +1,6 @@
-# oxori
+<p align="center">
+  <img src="./assets/logo.png" alt="oxori" />
+</p>
 
 > Agents read and write knowledge in natural language, without drowning in it.
 
@@ -45,30 +47,64 @@ Call this after writing or editing notes. Re-indexes only what changed (hash-bas
 oxori search [query] [path]
 ```
 
-Returns matching files with **path + headings + snippet**. Searches the index — never scans the raw files.
+Returns matching files with **path + headings + snippet**. Searches the index — never scans the raw files. **Output is JSON by default** — pipe it to `jq` or consume directly in your agent.
 
 **Search modes:**
 
 | Mode | Flag | Example |
 |------|------|---------|
-| Full-text (default) | — | `oxori search "wristband"` |
-| Tag filter | `--tag` | `oxori search --tag "#rust"` |
-| Structural (links) | `--link` | `oxori search --link "note-a.md"` |
+| Full-text | — | `oxori search "database migration"` |
+| Tag filter | `--tag` | `oxori search --tag "backend"` |
+| Structural (links) | `--link` | `oxori search --link "note.md"` |
 
-**JSON output:**
+**Notes on each mode:**
+
+- **Full-text** searches both body text and headings — a file matches if the term appears anywhere.
+- **Tag filter** reads both YAML frontmatter (`tags: [backend, api]`) and inline `#tag` syntax.
+- **Structural** accepts a filename (`note.md`) or full relative path (`folder/note.md`). If two files share the same name, use the full path to disambiguate.
+
+**Structural search** returns two groups (Obsidian-style):
 
 ```sh
-oxori search "wristband" --json
+oxori search --link "note.md"
 ```
 
-Returns the same data as structured JSON — useful for agents that prefer to parse.
+```json
+[
+  { "path": "notes/overview.md", "direction": "link", "headings": ["Intro"], "snippet": "" },
+  { "path": "notes/setup.md", "direction": "backlink", "headings": ["Setup"], "snippet": "" }
+]
+```
 
-**Example output:**
+- `"direction": "link"` — files that `note.md` links **to**
+- `"direction": "backlink"` — files that link **to** `note.md`
+
+**Default JSON output:**
+
+```sh
+oxori search "database migration"
+```
+
+```json
+[
+  {
+    "path": "notes/architecture.md",
+    "headings": ["Design", "Storage Layer"],
+    "snippet": "…the database migration strategy relies on versioned schemas…"
+  }
+]
+```
+
+**Human-readable output (`--pretty`):**
+
+```sh
+oxori search "database migration" --pretty
+```
 
 ```
-📄 notes/decision-log.md
-   Headings: Architecture › Storage
-   …the wristband approach was chosen for its low overhead…
+📄 notes/architecture.md
+   Headings: Design › Storage Layer
+   …the database migration strategy relies on versioned schemas…
 ────────────────────────────────────────────────────────────
 ```
 
@@ -76,19 +112,20 @@ Returns the same data as structured JSON — useful for agents that prefer to pa
 
 - Knowledge lives in plain `.md` files — the same files a human reads in Obsidian
 - Oxori builds a derived, disposable `index.json` from your notes
-- `[[wikilinks]]` and `#tags` follow Obsidian conventions
+- `[[wikilinks]]` and `#tags` follow Obsidian conventions — both frontmatter and inline tags are supported
 - The index is always rebuildable from the markdown — delete `.oxori/` and run `oxori init` to start fresh
+- When Oxori is upgraded, `oxori index` automatically re-parses all files if the parser logic changed
 
 ## Docs
 
 | Document | What's in it |
 |----------|-------------|
-| [VISION.md](./VISION.md) | Why Oxori exists — the *md is the new db* thesis |
-| [DECISIONS.md](./DECISIONS.md) | Every engineering decision and its rationale |
-| [ARCHITECTURE_HIGH_LEVEL.md](./ARCHITECTURE_HIGH_LEVEL.md) | Components and data flows |
-| [ARCHITECTURE_LOW_LEVEL.md](./ARCHITECTURE_LOW_LEVEL.md) | Storage formats, modules, parsing approach |
-| [SPEC.md](./SPEC.md) | Exact command behavior and definition of done |
-| [PLAN.md](./PLAN.md) | Phase 1 build plan |
+| [VISION.md](./docs/VISION.md) | Why Oxori exists — the *md is the new db* thesis |
+| [DECISIONS.md](./docs/DECISIONS.md) | Every engineering decision and its rationale |
+| [ARCHITECTURE_HIGH_LEVEL.md](./docs/ARCHITECTURE_HIGH_LEVEL.md) | Components and data flows |
+| [ARCHITECTURE_LOW_LEVEL.md](./docs/ARCHITECTURE_LOW_LEVEL.md) | Storage formats, modules, parsing approach |
+| [SPEC.md](./docs/SPEC.md) | Exact command behavior and definition of done |
+| [PLAN.md](./docs/PLAN.md) | Phase 1 build plan |
 
 ## License
 

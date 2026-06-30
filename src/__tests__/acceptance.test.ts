@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { access, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterAll, it, expect } from "vitest";
+import { afterAll, expect, it } from "vitest";
 import { indexCommand } from "../commands/index.js";
 import { initCommand } from "../commands/init.js";
 import { searchCommand } from "../commands/search.js";
@@ -30,9 +30,10 @@ it("Phase 1 acceptance scenario", async () => {
   expect(indexAfterInit.files).toHaveLength(0);
 
   // Step 3: Write 3 markdown notes with [[links]] and #tags
-  const noteA = `# Alpha Note\nThis is the alpha note with keyword wristband.\n[[note-b]]\n#project\n`;
-  const noteB = `# Beta Note\nThe beta note links back context.\n[[note-c]]\n#project #research\n`;
-  const noteC = `# Gamma Note\nFinal note in the chain.\n#research\n`;
+  const noteA =
+    "# Alpha Note\nThis is the alpha note with keyword wristband.\n[[note-b]]\n#project\n";
+  const noteB = "# Beta Note\nThe beta note links back context.\n[[note-c]]\n#project #research\n";
+  const noteC = "# Gamma Note\nFinal note in the chain.\n#research\n";
   await writeFile(join(vaultPath, "note-a.md"), noteA, "utf-8");
   await writeFile(join(vaultPath, "note-b.md"), noteB, "utf-8");
   await writeFile(join(vaultPath, "note-c.md"), noteC, "utf-8");
@@ -54,7 +55,7 @@ it("Phase 1 acceptance scenario", async () => {
   expect(backlinks).toContain("note-a.md");
 
   // tagMap: #project contains note-a and note-b
-  const projectFiles = indexAfterIndex.tagMap["project"] ?? [];
+  const projectFiles = indexAfterIndex.tagMap.project ?? [];
   expect(projectFiles).toContain("note-a.md");
   expect(projectFiles).toContain("note-b.md");
 
@@ -65,7 +66,10 @@ it("Phase 1 acceptance scenario", async () => {
   expect(textResults[0].snippet.toLowerCase()).toContain("wristband");
 
   // Step 6: structural search for "note-b.md" → backlinks includes "note-a.md"
-  const structuralResults = await searchCommand(vaultPath, "note-b.md", { mode: "structural", structuralTarget: "note-b.md" });
+  const structuralResults = await searchCommand(vaultPath, "note-b.md", {
+    mode: "structural",
+    structuralTarget: "note-b.md",
+  });
   const backlinkPaths = structuralResults.map((r) => r.path);
   expect(backlinkPaths).toContain("note-a.md");
 

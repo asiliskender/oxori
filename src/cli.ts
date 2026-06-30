@@ -47,14 +47,14 @@ program
 program
   .command("search [query] [path]")
   .description("Search the vault index")
-  .option("--json", "Output results as JSON")
+  .option("--pretty", "Output results in human-readable format (default: JSON)")
   .option("--tag <tag>", "Filter by tag (e.g. --tag rust or --tag '#rust')")
   .option("--link <note>", "Show structural links for a note path")
   .action(
     async (
       query: string | undefined,
       path: string | undefined,
-      opts: { json?: boolean; tag?: string; link?: string },
+      opts: { pretty?: boolean; tag?: string; link?: string },
     ) => {
       const vaultPath = resolve(path ?? process.cwd());
 
@@ -67,7 +67,7 @@ program
       // Validate: text mode requires a query
       if (searchOpts.mode === "text" && !query) {
         const msg = "Error: query required for text search. Use --tag or --link for other modes.";
-        if (opts.json) {
+        if (!opts.pretty) {
           console.error(JSON.stringify({ error: msg }));
         } else {
           console.error(msg);
@@ -78,13 +78,29 @@ program
       try {
         const results = await searchCommand(vaultPath, query ?? "", searchOpts);
 
-        if (opts.json) {
-          // T6.3 — JSON output
-          console.log(JSON.stringify(results, null, 2));
-        } else {
-          // T6.2 — Human-readable output
+        if (opts.pretty) {
+          // Human-readable output
           if (results.length === 0) {
             console.log("No matches found.");
+          } else if (searchOpts.mode === "structural") {
+            // Structural: show links and backlinks in separate sections (Obsidian-style)
+            const target = opts.link ?? query ?? "";
+            const links = results.filter((r) => r.direction === "link");
+            const backlinks = results.filter((r) => r.direction === "backlink");
+
+            console.log(`\n🔗 Links from "${target}" (${links.length})`);
+            if (links.length === 0) {
+              console.log("   (none)");
+            } else {
+              for (const r of links) console.log(`   📄 ${r.path}`);
+            }
+
+            console.log(`\n⬅️  Backlinks to "${target}" (${backlinks.length})`);
+            if (backlinks.length === 0) {
+              console.log("   (none)");
+            } else {
+              for (const r of backlinks) console.log(`   📄 ${r.path}`);
+            }
           } else {
             for (const result of results) {
               console.log(`\n📄 ${result.path}`);
@@ -97,9 +113,12 @@ program
               console.log("─".repeat(60));
             }
           }
+        } else {
+          // Default: JSON output
+          console.log(JSON.stringify(results, null, 2));
         }
       } catch (err) {
-        if (opts.json) {
+        if (!opts.pretty) {
           console.error(JSON.stringify({ error: (err as Error).message }));
         } else {
           console.error(`Error: ${(err as Error).message}`);

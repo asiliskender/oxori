@@ -3,12 +3,7 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import {
-  buildLinkGraph,
-  buildTagMap,
-  computeHash,
-  reconcileFiles,
-} from "../engine/indexer.js";
+import { buildLinkGraph, buildTagMap, computeHash, reconcileFiles } from "../engine/indexer.js";
 import type { FileRecord } from "../types.js";
 
 describe("computeHash", () => {
@@ -209,9 +204,9 @@ describe("buildTagMap", () => {
 
     const tagMap = buildTagMap(records);
 
-    expect(tagMap["rust"]).toContain("a.md");
-    expect(tagMap["rust"]).toContain("b.md");
-    expect(tagMap["systems"]).toEqual(["a.md"]);
+    expect(tagMap.rust).toContain("a.md");
+    expect(tagMap.rust).toContain("b.md");
+    expect(tagMap.systems).toEqual(["a.md"]);
   });
 
   it("empty — no tags yields empty object", () => {

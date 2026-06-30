@@ -25,6 +25,8 @@ export type TagMap = Record<string, string[]>;
 
 export interface IndexData {
   version: number;
+  /** Incremented when parser logic changes — triggers full re-index on mismatch */
+  parserVersion: number;
   updatedAt: string;
   files: FileRecord[];
   linkGraph: LinkGraph;
@@ -49,4 +51,6 @@ export interface SearchResult {
   path: string;
   headings: string[];
   snippet: string;
+  /** Structural search only: 'link' = this file is linked FROM target, 'backlink' = this file links TO target */
+  direction?: "link" | "backlink";
 }

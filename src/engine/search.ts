@@ -26,21 +26,62 @@ export function extractSnippet(text: string, term: string, windowChars = 120): s
   return snippet;
 }
 
-// T4.1 — Full-text keyword search
+// T4.1 — Full-text keyword search (body text + headings)
 export function fullTextSearch(index: IndexData, term: string): FileRecord[] {
   const lower = term.toLowerCase();
-  return index.files.filter((file) => file.text.toLowerCase().includes(lower));
+  return index.files.filter(
+    (file) =>
+      file.text.toLowerCase().includes(lower) ||
+      file.headings.some((h) => h.toLowerCase().includes(lower)),
+  );
 }
 
 // T4.2 — Structural search (links + backlinks for a given file path)
+// Accepts full path ("Robotics-IoT/ROS2.md") or filename only ("ROS2.md").
+// When given a filename, resolves to the unique full path whose basename matches.
 export function structuralSearch(
   index: IndexData,
   filePath: string,
-): { links: string[]; backlinks: string[] } {
-  return {
-    links: index.linkGraph.forward[filePath] ?? [],
-    backlinks: index.linkGraph.backlinks[filePath] ?? [],
-  };
+): { resolvedPath: string; links: string[]; backlinks: string[] } {
+  // Exact match first
+  if (
+    index.linkGraph.forward[filePath] !== undefined ||
+    index.linkGraph.backlinks[filePath] !== undefined
+  ) {
+    return {
+      resolvedPath: filePath,
+      links: index.linkGraph.forward[filePath] ?? [],
+      backlinks: index.linkGraph.backlinks[filePath] ?? [],
+    };
+  }
+
+  // Suffix/filename match — find all known paths that end with the given name
+  const allPaths = [
+    ...new Set([
+      ...Object.keys(index.linkGraph.forward),
+      ...Object.keys(index.linkGraph.backlinks),
+    ]),
+  ];
+  const suffix = filePath.startsWith("/") ? filePath : `/${filePath}`;
+  const matches = allPaths.filter((p) => p === filePath || p.endsWith(suffix));
+
+  if (matches.length === 0) {
+    return { resolvedPath: filePath, links: [], backlinks: [] };
+  }
+
+  if (matches.length === 1) {
+    const resolved = matches[0];
+    return {
+      resolvedPath: resolved,
+      links: index.linkGraph.forward[resolved] ?? [],
+      backlinks: index.linkGraph.backlinks[resolved] ?? [],
+    };
+  }
+
+  // Multiple matches — ambiguous filename, throw with full list
+  throw new Error(
+    `Ambiguous file name "${filePath}" — multiple files match:\n${matches.map((m) => `  - ${m}`).join("\n")}\n\nUse the full path to disambiguate.`,
+  );
 }
 
 // T4.3 — Tag filter
@@ -57,25 +98,36 @@ export function search(index: IndexData, query: string, opts: SearchOptions): Se
   switch (opts.mode) {
     case "text": {
       const matches = fullTextSearch(index, query);
-      return matches.map((file) => ({
-        path: file.path,
-        headings: file.headings,
-        snippet: extractSnippet(file.text, query),
-      }));
+      return matches.map((file) => {
+        // Prefer snippet from body text; fall back to the matching heading
+        let snippet = extractSnippet(file.text, query);
+        if (!snippet) {
+          const matchingHeading = file.headings.find((h) =>
+            h.toLowerCase().includes(query.toLowerCase()),
+          );
+          snippet = matchingHeading ? `[heading] ${matchingHeading}` : "";
+        }
+        return { path: file.path, headings: file.headings, snippet };
+      });
     }
 
     case "structural": {
       const target = opts.structuralTarget ?? query;
       const { links, backlinks } = structuralSearch(index, target);
-      const allPaths = [...new Set([...links, ...backlinks])];
-      return allPaths.map((p) => {
+      const linkResults: SearchResult[] = links.map((p) => {
+        const file = index.files.find((f) => f.path === p);
+        return { path: p, headings: file?.headings ?? [], snippet: "", direction: "link" as const };
+      });
+      const backlinkResults: SearchResult[] = backlinks.map((p) => {
         const file = index.files.find((f) => f.path === p);
         return {
           path: p,
           headings: file?.headings ?? [],
           snippet: "",
+          direction: "backlink" as const,
         };
       });
+      return [...linkResults, ...backlinkResults];
     }
 
     case "tag": {

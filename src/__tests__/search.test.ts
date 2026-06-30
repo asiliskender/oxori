@@ -16,6 +16,7 @@ function makeRecord(overrides: Partial<FileRecord> & { path: string }): FileReco
 function makeIndex(overrides?: Partial<IndexData>): IndexData {
   return {
     version: 1,
+    parserVersion: 2,
     updatedAt: new Date().toISOString(),
     files: [],
     linkGraph: { forward: {}, backlinks: {} },
@@ -53,6 +54,30 @@ describe("fullTextSearch", () => {
     expect(results).toHaveLength(1);
     expect(results[0].path).toBe("a.md");
   });
+
+  it("heading match — term only in heading → file still returned", () => {
+    const index = makeIndex({
+      files: [
+        makeRecord({
+          path: "a.md",
+          text: "Some body content here.",
+          headings: ["Introduction to Rust"],
+        }),
+        makeRecord({ path: "b.md", text: "Another document.", headings: ["Python Basics"] }),
+      ],
+    });
+    const results = fullTextSearch(index, "rust");
+    expect(results.map((r) => r.path)).toContain("a.md");
+    expect(results.map((r) => r.path)).not.toContain("b.md");
+  });
+
+  it("heading match case-insensitive — 'RUST' matches heading 'Introduction to Rust'", () => {
+    const index = makeIndex({
+      files: [makeRecord({ path: "a.md", text: "", headings: ["Introduction to Rust"] })],
+    });
+    const results = fullTextSearch(index, "RUST");
+    expect(results).toHaveLength(1);
+  });
 });
 
 describe("structuralSearch", () => {
@@ -75,6 +100,34 @@ describe("structuralSearch", () => {
     const fromB = structuralSearch(index, "b.md");
     expect(fromB.backlinks).toContain("a.md");
     expect(fromB.links).toEqual([]);
+  });
+
+  it("filename-only match — 'b.md' resolves to 'subdir/b.md'", () => {
+    const index = makeIndex({
+      files: [makeRecord({ path: "a.md" }), makeRecord({ path: "subdir/b.md" })],
+      linkGraph: {
+        forward: { "a.md": ["subdir/b.md"], "subdir/b.md": [] },
+        backlinks: { "subdir/b.md": ["a.md"], "a.md": [] },
+      },
+    });
+
+    const result = structuralSearch(index, "b.md");
+    expect(result.backlinks).toContain("a.md");
+    expect(result.resolvedPath).toBe("subdir/b.md");
+  });
+
+  it("ambiguous filename — throws with list of conflicting paths", () => {
+    const index = makeIndex({
+      files: [makeRecord({ path: "a/note.md" }), makeRecord({ path: "b/note.md" })],
+      linkGraph: {
+        forward: { "a/note.md": [], "b/note.md": [] },
+        backlinks: { "a/note.md": [], "b/note.md": [] },
+      },
+    });
+
+    expect(() => structuralSearch(index, "note.md")).toThrow(/Ambiguous file name "note\.md"/);
+    expect(() => structuralSearch(index, "note.md")).toThrow("a/note.md");
+    expect(() => structuralSearch(index, "note.md")).toThrow("b/note.md");
   });
 });
 
