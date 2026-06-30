@@ -67,6 +67,7 @@
 **Branching & workflow**
 - **Trunk-based development.** Short-lived branches, merged into `main` via **PR**.
 - **Direct commits to `main` are forbidden** — everything goes through a PR.
+- **Branch naming:** `feature/[feature_name]` — all work starts on a feature branch, never directly on `main`.
 
 **Commits & versioning**
 - **Conventional Commits** for commit messages.
@@ -111,7 +112,7 @@
 | Output | plain CLI for the agent; Obsidian for the human |
 | Language | TypeScript, `npx oxori` |
 | Hosting / license | GitHub, MIT |
-| Workflow | trunk-based, short-lived branches, PR to `main`, no direct commits |
+| Workflow | trunk-based, `feature/[name]` branches → PR to `main`, no direct commits |
 | Commits / versioning | Conventional Commits → semantic-release (version, changelog, npm publish, GH release) |
 | CI/CD | GitHub Actions: tests + lint on PR; publish to npm on merge |
 | Testing | unit required, integration where feasible; coverage measured, not gated |
