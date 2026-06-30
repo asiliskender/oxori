@@ -6,6 +6,10 @@
   "bin": {
     "oxori": "dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run --passWithNoTests",
