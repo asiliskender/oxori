@@ -1,4 +1,10 @@
+#!/usr/bin/env node
 import { program } from "commander";
+import { resolve } from "node:path";
+import { initCommand } from "./commands/init.js";
+import { indexCommand } from "./commands/index.js";
+import { searchCommand } from "./commands/search.js";
+import type { SearchOptions } from "./types.js";
 
 program
   .name("oxori")
@@ -6,5 +12,84 @@ program
     "Agents read and write markdown knowledge bases — and find the right piece without scanning everything.",
   )
   .version("0.1.0");
+
+// oxori init [path]
+program
+  .command("init [path]")
+  .description("Initialize a vault and build the first index")
+  .action(async (path?: string) => {
+    const vaultPath = resolve(path ?? process.cwd());
+    try {
+      await initCommand(vaultPath);
+      console.log(`✓ Vault initialized at ${vaultPath}`);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// oxori index [path]
+program
+  .command("index [path]")
+  .description("Update the index with changes to the vault")
+  .action(async (path?: string) => {
+    const vaultPath = resolve(path ?? process.cwd());
+    try {
+      await indexCommand(vaultPath);
+      console.log(`✓ Index updated at ${vaultPath}`);
+    } catch (err) {
+      console.error(`Error: ${(err as Error).message}`);
+      process.exit(1);
+    }
+  });
+
+// oxori search <query> [path]
+program
+  .command("search <query> [path]")
+  .description("Search the vault index")
+  .option("--json", "Output results as JSON")
+  .option("--tag <tag>", "Filter by tag (e.g. --tag rust or --tag '#rust')")
+  .option("--link <note>", "Show structural links for a note path")
+  .action(async (query: string, path: string | undefined, opts: { json?: boolean; tag?: string; link?: string }) => {
+    const vaultPath = resolve(path ?? process.cwd());
+
+    const searchOpts: SearchOptions = opts.link
+      ? { mode: "structural", structuralTarget: opts.link }
+      : opts.tag
+        ? { mode: "tag", tagTarget: opts.tag }
+        : { mode: "text" };
+
+    try {
+      const results = await searchCommand(vaultPath, query, searchOpts);
+
+      if (opts.json) {
+        // T6.3 — JSON output
+        console.log(JSON.stringify(results, null, 2));
+      } else {
+        // T6.2 — Human-readable output
+        if (results.length === 0) {
+          console.log("No matches found.");
+        } else {
+          for (const result of results) {
+            console.log(`\n📄 ${result.path}`);
+            if (result.headings.length > 0) {
+              console.log(`   Headings: ${result.headings.join(" › ")}`);
+            }
+            if (result.snippet) {
+              console.log(`   ${result.snippet}`);
+            }
+            console.log("─".repeat(60));
+          }
+        }
+      }
+    } catch (err) {
+      if (opts.json) {
+        console.error(JSON.stringify({ error: (err as Error).message }));
+      } else {
+        console.error(`Error: ${(err as Error).message}`);
+      }
+      process.exit(1);
+    }
+  });
 
 program.parse();
