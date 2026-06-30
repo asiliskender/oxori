@@ -16,6 +16,7 @@ function makeRecord(overrides: Partial<FileRecord> & { path: string }): FileReco
 function makeIndex(overrides?: Partial<IndexData>): IndexData {
   return {
     version: 1,
+    parserVersion: 2,
     updatedAt: new Date().toISOString(),
     files: [],
     linkGraph: { forward: {}, backlinks: {} },

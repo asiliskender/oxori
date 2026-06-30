@@ -4,6 +4,10 @@ import { join, relative } from "node:path";
 import type { FileRecord, IndexData, LinkGraph, TagMap } from "../types.js";
 import { parseFile } from "./parser.js";
 
+// Increment this whenever parser logic changes (tag extraction, text extraction, etc.)
+// A mismatch between this value and existingIndex.parserVersion forces a full re-parse.
+export const PARSER_VERSION = 2;
+
 // T3.1 — SHA-256 hash of file contents
 export async function computeHash(filePath: string): Promise<string> {
   const content = await readFile(filePath);
@@ -135,7 +139,17 @@ export async function runIndex(
   vaultPath: string,
   existingIndex: IndexData | null,
 ): Promise<IndexData> {
-  const existingRecords = existingIndex?.files ?? [];
+  // If parser version changed, discard cached records to force full re-parse
+  const cacheValid =
+    existingIndex !== null && (existingIndex.parserVersion ?? 0) === PARSER_VERSION;
+  const existingRecords = cacheValid ? existingIndex.files : [];
+
+  if (existingIndex !== null && !cacheValid) {
+    console.log(
+      `[oxori] Parser updated (v${existingIndex.parserVersion ?? 0} → v${PARSER_VERSION}) — re-indexing all files.`,
+    );
+  }
+
   const filePaths = await listMarkdownFiles(vaultPath);
   const files = await reconcileFiles(vaultPath, existingRecords, filePaths);
   const linkGraph = buildLinkGraph(files);
@@ -143,6 +157,7 @@ export async function runIndex(
 
   return {
     version: 1,
+    parserVersion: PARSER_VERSION,
     updatedAt: new Date().toISOString(),
     files,
     linkGraph,

@@ -25,6 +25,8 @@ export type TagMap = Record<string, string[]>;
 
 export interface IndexData {
   version: number;
+  /** Incremented when parser logic changes — triggers full re-index on mismatch */
+  parserVersion: number;
   updatedAt: string;
   files: FileRecord[];
   linkGraph: LinkGraph;
