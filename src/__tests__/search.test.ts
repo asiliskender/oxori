@@ -53,6 +53,26 @@ describe("fullTextSearch", () => {
     expect(results).toHaveLength(1);
     expect(results[0].path).toBe("a.md");
   });
+
+  it("heading match — term only in heading → file still returned", () => {
+    const index = makeIndex({
+      files: [
+        makeRecord({ path: "a.md", text: "Some body content here.", headings: ["Introduction to Rust"] }),
+        makeRecord({ path: "b.md", text: "Another document.", headings: ["Python Basics"] }),
+      ],
+    });
+    const results = fullTextSearch(index, "rust");
+    expect(results.map((r) => r.path)).toContain("a.md");
+    expect(results.map((r) => r.path)).not.toContain("b.md");
+  });
+
+  it("heading match case-insensitive — 'RUST' matches heading 'Introduction to Rust'", () => {
+    const index = makeIndex({
+      files: [makeRecord({ path: "a.md", text: "", headings: ["Introduction to Rust"] })],
+    });
+    const results = fullTextSearch(index, "RUST");
+    expect(results).toHaveLength(1);
+  });
 });
 
 describe("structuralSearch", () => {

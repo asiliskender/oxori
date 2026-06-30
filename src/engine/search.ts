@@ -26,10 +26,14 @@ export function extractSnippet(text: string, term: string, windowChars = 120): s
   return snippet;
 }
 
-// T4.1 — Full-text keyword search
+// T4.1 — Full-text keyword search (body text + headings)
 export function fullTextSearch(index: IndexData, term: string): FileRecord[] {
   const lower = term.toLowerCase();
-  return index.files.filter((file) => file.text.toLowerCase().includes(lower));
+  return index.files.filter(
+    (file) =>
+      file.text.toLowerCase().includes(lower) ||
+      file.headings.some((h) => h.toLowerCase().includes(lower)),
+  );
 }
 
 // T4.2 — Structural search (links + backlinks for a given file path)
@@ -57,11 +61,17 @@ export function search(index: IndexData, query: string, opts: SearchOptions): Se
   switch (opts.mode) {
     case "text": {
       const matches = fullTextSearch(index, query);
-      return matches.map((file) => ({
-        path: file.path,
-        headings: file.headings,
-        snippet: extractSnippet(file.text, query),
-      }));
+      return matches.map((file) => {
+        // Prefer snippet from body text; fall back to the matching heading
+        let snippet = extractSnippet(file.text, query);
+        if (!snippet) {
+          const matchingHeading = file.headings.find((h) =>
+            h.toLowerCase().includes(query.toLowerCase()),
+          );
+          snippet = matchingHeading ? `[heading] ${matchingHeading}` : "";
+        }
+        return { path: file.path, headings: file.headings, snippet };
+      });
     }
 
     case "structural": {
