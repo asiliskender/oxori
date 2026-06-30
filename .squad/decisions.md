@@ -49,6 +49,37 @@ throws a descriptive error (not a raw SyntaxError) on corrupt JSON.
 **By:** Lambert
 **What:** 10 indexer unit tests passing. No implementation bugs found.
 
+### 2026-06-30: T7.4 + T7.5 tests complete
+**By:** Lambert
+**What:** Search unit tests (7) and integration tests (7) all passing. Note any implementation bugs found.
+
+No implementation bugs found. All search functions (fullTextSearch, structuralSearch, tagSearch, extractSnippet) behave correctly. Command layer (initCommand, indexCommand, searchCommand) integrates cleanly end-to-end with real temp dirs. Total test suite is now 35 tests passing (up from 21).
+
+### 2026-06-30: T7.6 acceptance scenario PASSING
+**By:** Lambert
+**What:** All 7 SPEC §8 steps pass as a single acceptance test. Phase 1 definition of done: MET.
+**Total tests:** 36 passing.
+
+### 2026-06-30: M6 CLI complete
+**By:** Parker
+**What:** CLI fully wired. init/index/search all work from terminal. --json flag works. End-to-end smoke test passed.
+**Note:** search command arg order is: search <query> [path] — query is positional, path is optional positional after it. Flags (--tag, --link, --json) come after the command name.
+
+### 2026-06-30: T8.2, T8.3, T9.1 complete
+**By:** Parker
+**What:** semantic-release configured, release workflow added, README v1 written.
+**Note:** NPM_TOKEN secret must be set in GitHub repo settings before first release. GITHUB_TOKEN is automatic.
+
+### 2026-06-30: Phase 1 architecture review
+**By:** Dallas (Lead)
+**Result:** APPROVED
+**Details:**
+1. **Module boundaries** — PASS. Dependency flow is cli → commands → engine → store → fs. No reverse imports.
+2. **Types match spec** — PASS. SearchResult, FileRecord, IndexData, LinkGraph, TagMap all match SPEC and ARCHITECTURE_LOW_LEVEL contracts exactly.
+3. **No Phase 2 features** — PASS. No embedding, semantic, watch, MCP, or multi-vault code. No TODO/FIXME referencing Phase 2.
+4. **SPEC edge cases** — PASS. All five edge cases handled and covered by integration tests (36 tests passing).
+5. **OQ decisions respected** — PASS. OQ2 optional [path] on all 3 commands, OQ3 index errors if .oxori/ missing, OQ6 --tag and --link flags, OQ7 links as Array<{ target, broken }>.
+
 ## Governance
 
 - All meaningful changes require team consensus

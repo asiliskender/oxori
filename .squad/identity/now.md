@@ -1,11 +1,12 @@
 ---
-updated_at: 2026-06-30T18:28:22.151Z
-focus_area: Phase 1 build planning
-active_issues: [OQ1, OQ2, OQ3, OQ4, OQ5, OQ6, OQ7]
+updated_at: 2026-06-30T19:55:42Z
+focus_area: Phase 1 COMPLETE
+active_issues: []
 ---
 
 # What the team is focused on
 
 **As of:** 2026-06-30
-**Focus:** Phase 1 build planning complete. 37 tasks defined across 10 milestones. Awaiting open question resolution before first build session.
-**Next:** Onur to resolve 7 open questions (linter choice, CLI path arg, search mode flags, etc.), then Parker scaffolds M0.
+**Focus:** Phase 1 COMPLETE. 40/40 tasks done. Dallas sign-off received. 0.1.0 ready to ship.
+**Next:** Set NPM_TOKEN in GitHub secrets, then push to trigger semantic-release → 0.1.0 on npm.
+**Phase 2:** Semantic search via embeddings (deferred by design).

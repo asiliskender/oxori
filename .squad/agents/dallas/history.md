@@ -8,3 +8,6 @@
 ## Learnings
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
+- Phase 1 complete. Module boundaries held throughout. 36 tests passing including acceptance scenario.
+- All SPEC edge cases handled. No Phase 2 leakage. OQ decisions respected.
+- 0.1.0 ready to ship.

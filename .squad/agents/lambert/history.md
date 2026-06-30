@@ -22,3 +22,7 @@
 - afterEach cleanup with force:true prevents test failures from leaking temp files
 - parser.test.ts needs real file writes — parseFile reads from disk
 - store.test.ts: malformed JSON test requires manually writing corrupt content to .oxori/
+- Integration tests import command functions directly — cleaner than spawning a child process
+- searchCommand needs an initialized vault — always call initCommand first in integration tests
+- indexCommand after edit: overwrite the file, then call indexCommand; check record.text changed
+- indexCommand after delete: rm the file, call indexCommand, verify files array doesn't include path
