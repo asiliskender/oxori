@@ -1,13 +1,6 @@
-<div align="center">
-<pre>
-  ██████╗ ██╗  ██╗ ██████╗ ██████╗ ██╗
- ██╔═══██╗╚██╗██╔╝██╔═══██╗██╔══██╗██║
- ██║   ██║ ╚███╔╝ ██║   ██║██████╔╝██║
- ██║   ██║ ██╔██╗ ██║   ██║██╔══██╗██║
- ╚██████╔╝██╔╝ ██╗╚██████╔╝██║  ██║██║
-  ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝
-</pre>
-</div>
+<p align="center">
+  <img src="./assets/logo.png" alt="oxori" />
+</p>
 
 > Agents read and write knowledge in natural language, without drowning in it.
 
