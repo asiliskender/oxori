@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { program } from "commander";
 import { resolve } from "node:path";
-import { initCommand } from "./commands/init.js";
+import { program } from "commander";
 import { indexCommand } from "./commands/index.js";
+import { initCommand } from "./commands/init.js";
 import { searchCommand } from "./commands/search.js";
 import type { SearchOptions } from "./types.js";
 
@@ -43,53 +43,70 @@ program
     }
   });
 
-// oxori search <query> [path]
+// oxori search [query] [path]
 program
-  .command("search <query> [path]")
+  .command("search [query] [path]")
   .description("Search the vault index")
   .option("--json", "Output results as JSON")
   .option("--tag <tag>", "Filter by tag (e.g. --tag rust or --tag '#rust')")
   .option("--link <note>", "Show structural links for a note path")
-  .action(async (query: string, path: string | undefined, opts: { json?: boolean; tag?: string; link?: string }) => {
-    const vaultPath = resolve(path ?? process.cwd());
+  .action(
+    async (
+      query: string | undefined,
+      path: string | undefined,
+      opts: { json?: boolean; tag?: string; link?: string },
+    ) => {
+      const vaultPath = resolve(path ?? process.cwd());
 
-    const searchOpts: SearchOptions = opts.link
-      ? { mode: "structural", structuralTarget: opts.link }
-      : opts.tag
-        ? { mode: "tag", tagTarget: opts.tag }
-        : { mode: "text" };
+      const searchOpts: SearchOptions = opts.link
+        ? { mode: "structural", structuralTarget: opts.link }
+        : opts.tag
+          ? { mode: "tag", tagTarget: opts.tag }
+          : { mode: "text" };
 
-    try {
-      const results = await searchCommand(vaultPath, query, searchOpts);
-
-      if (opts.json) {
-        // T6.3 — JSON output
-        console.log(JSON.stringify(results, null, 2));
-      } else {
-        // T6.2 — Human-readable output
-        if (results.length === 0) {
-          console.log("No matches found.");
+      // Validate: text mode requires a query
+      if (searchOpts.mode === "text" && !query) {
+        const msg = "Error: query required for text search. Use --tag or --link for other modes.";
+        if (opts.json) {
+          console.error(JSON.stringify({ error: msg }));
         } else {
-          for (const result of results) {
-            console.log(`\n📄 ${result.path}`);
-            if (result.headings.length > 0) {
-              console.log(`   Headings: ${result.headings.join(" › ")}`);
+          console.error(msg);
+        }
+        process.exit(1);
+      }
+
+      try {
+        const results = await searchCommand(vaultPath, query ?? "", searchOpts);
+
+        if (opts.json) {
+          // T6.3 — JSON output
+          console.log(JSON.stringify(results, null, 2));
+        } else {
+          // T6.2 — Human-readable output
+          if (results.length === 0) {
+            console.log("No matches found.");
+          } else {
+            for (const result of results) {
+              console.log(`\n📄 ${result.path}`);
+              if (result.headings.length > 0) {
+                console.log(`   Headings: ${result.headings.join(" › ")}`);
+              }
+              if (result.snippet) {
+                console.log(`   ${result.snippet}`);
+              }
+              console.log("─".repeat(60));
             }
-            if (result.snippet) {
-              console.log(`   ${result.snippet}`);
-            }
-            console.log("─".repeat(60));
           }
         }
+      } catch (err) {
+        if (opts.json) {
+          console.error(JSON.stringify({ error: (err as Error).message }));
+        } else {
+          console.error(`Error: ${(err as Error).message}`);
+        }
+        process.exit(1);
       }
-    } catch (err) {
-      if (opts.json) {
-        console.error(JSON.stringify({ error: (err as Error).message }));
-      } else {
-        console.error(`Error: ${(err as Error).message}`);
-      }
-      process.exit(1);
-    }
-  });
+    },
+  );
 
 program.parse();

@@ -42,7 +42,7 @@ Call this after writing or editing notes. Re-indexes only what changed (hash-bas
 ### Search
 
 ```sh
-oxori search "<query>" [path]
+oxori search [query] [path]
 ```
 
 Returns matching files with **path + headings + snippet**. Searches the index — never scans the raw files.
@@ -52,8 +52,8 @@ Returns matching files with **path + headings + snippet**. Searches the index �
 | Mode | Flag | Example |
 |------|------|---------|
 | Full-text (default) | — | `oxori search "wristband"` |
-| Tag filter | `--tag` | `oxori search "" --tag "#rust"` |
-| Structural (links) | `--link` | `oxori search "" --link "note-a.md"` |
+| Tag filter | `--tag` | `oxori search --tag "#rust"` |
+| Structural (links) | `--link` | `oxori search --link "note-a.md"` |
 
 **JSON output:**
 
