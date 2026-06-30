@@ -15,4 +15,9 @@
 
 ## Learnings
 
-<!-- Append new learnings below. Each entry is something lasting about the project. -->
+- unified v11 + remark-parse v11 are pure ESM — import as "unified" and "remark-parse" (no .js needed for npm packages, but src imports need .js)
+- NodeNext moduleResolution requires explicit .js extensions on relative imports
+- remark AST node types: Root, Heading, Text, Code, InlineCode, Paragraph, List, ListItem
+- Tags: strip fenced code blocks AND heading lines from raw before regex — order matters
+- Links: deduplicate with Set before returning — same [[target]] can appear multiple times
+- broken flag initialized false in parser; indexer sets it when cross-referencing all files
