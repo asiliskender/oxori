@@ -21,3 +21,7 @@
 - Tags: strip fenced code blocks AND heading lines from raw before regex — order matters
 - Links: deduplicate with Set before returning — same [[target]] can appear multiple times
 - broken flag initialized false in parser; indexer sets it when cross-referencing all files
+- Link resolution: [[target]] tries exact path, then target+.md, then suffix match (path ends with /target.md). This covers flat vaults and nested vaults.
+- broken flag mutation: parser initializes false, indexer corrects during buildLinkGraph — safe because reconcileFiles gives us fresh records
+- readdir withFileTypes: more efficient than stat() per file
+- relative() with split/join for cross-platform path normalization

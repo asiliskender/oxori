@@ -17,3 +17,8 @@
 ## Learnings
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
+- Vitest works with ESM (type: module) out of the box — no special config needed
+- Use os.tmpdir() + randomUUID() for test isolation, not shared fixtures
+- afterEach cleanup with force:true prevents test failures from leaking temp files
+- parser.test.ts needs real file writes — parseFile reads from disk
+- store.test.ts: malformed JSON test requires manually writing corrupt content to .oxori/
