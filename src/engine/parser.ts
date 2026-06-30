@@ -49,7 +49,12 @@ function extractFrontmatterTags(raw: string): string[] {
   if (blockMatch) {
     return blockMatch[1]
       .split(/\r?\n/)
-      .map((line) => line.replace(/^\s*-\s*/, "").trim().replace(/^['"]|['"]$/g, ""))
+      .map((line) =>
+        line
+          .replace(/^\s*-\s*/, "")
+          .trim()
+          .replace(/^['"]|['"]$/g, ""),
+      )
       .filter(Boolean);
   }
 

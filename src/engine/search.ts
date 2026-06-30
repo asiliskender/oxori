@@ -44,7 +44,10 @@ export function structuralSearch(
   filePath: string,
 ): { resolvedPath: string; links: string[]; backlinks: string[] } {
   // Exact match first
-  if (index.linkGraph.forward[filePath] !== undefined || index.linkGraph.backlinks[filePath] !== undefined) {
+  if (
+    index.linkGraph.forward[filePath] !== undefined ||
+    index.linkGraph.backlinks[filePath] !== undefined
+  ) {
     return {
       resolvedPath: filePath,
       links: index.linkGraph.forward[filePath] ?? [],
@@ -77,9 +80,7 @@ export function structuralSearch(
 
   // Multiple matches — ambiguous filename, throw with full list
   throw new Error(
-    `Ambiguous file name "${filePath}" — multiple files match:\n` +
-      matches.map((m) => `  - ${m}`).join("\n") +
-      "\n\nUse the full path to disambiguate.",
+    `Ambiguous file name "${filePath}" — multiple files match:\n${matches.map((m) => `  - ${m}`).join("\n")}\n\nUse the full path to disambiguate.`,
   );
 }
 
@@ -119,7 +120,12 @@ export function search(index: IndexData, query: string, opts: SearchOptions): Se
       });
       const backlinkResults: SearchResult[] = backlinks.map((p) => {
         const file = index.files.find((f) => f.path === p);
-        return { path: p, headings: file?.headings ?? [], snippet: "", direction: "backlink" as const };
+        return {
+          path: p,
+          headings: file?.headings ?? [],
+          snippet: "",
+          direction: "backlink" as const,
+        };
       });
       return [...linkResults, ...backlinkResults];
     }

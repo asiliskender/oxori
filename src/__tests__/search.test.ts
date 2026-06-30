@@ -58,7 +58,11 @@ describe("fullTextSearch", () => {
   it("heading match — term only in heading → file still returned", () => {
     const index = makeIndex({
       files: [
-        makeRecord({ path: "a.md", text: "Some body content here.", headings: ["Introduction to Rust"] }),
+        makeRecord({
+          path: "a.md",
+          text: "Some body content here.",
+          headings: ["Introduction to Rust"],
+        }),
         makeRecord({ path: "b.md", text: "Another document.", headings: ["Python Basics"] }),
       ],
     });
@@ -100,10 +104,7 @@ describe("structuralSearch", () => {
 
   it("filename-only match — 'b.md' resolves to 'subdir/b.md'", () => {
     const index = makeIndex({
-      files: [
-        makeRecord({ path: "a.md" }),
-        makeRecord({ path: "subdir/b.md" }),
-      ],
+      files: [makeRecord({ path: "a.md" }), makeRecord({ path: "subdir/b.md" })],
       linkGraph: {
         forward: { "a.md": ["subdir/b.md"], "subdir/b.md": [] },
         backlinks: { "subdir/b.md": ["a.md"], "a.md": [] },
@@ -117,19 +118,14 @@ describe("structuralSearch", () => {
 
   it("ambiguous filename — throws with list of conflicting paths", () => {
     const index = makeIndex({
-      files: [
-        makeRecord({ path: "a/note.md" }),
-        makeRecord({ path: "b/note.md" }),
-      ],
+      files: [makeRecord({ path: "a/note.md" }), makeRecord({ path: "b/note.md" })],
       linkGraph: {
         forward: { "a/note.md": [], "b/note.md": [] },
         backlinks: { "a/note.md": [], "b/note.md": [] },
       },
     });
 
-    expect(() => structuralSearch(index, "note.md")).toThrow(
-      /Ambiguous file name "note\.md"/,
-    );
+    expect(() => structuralSearch(index, "note.md")).toThrow(/Ambiguous file name "note\.md"/);
     expect(() => structuralSearch(index, "note.md")).toThrow("a/note.md");
     expect(() => structuralSearch(index, "note.md")).toThrow("b/note.md");
   });
