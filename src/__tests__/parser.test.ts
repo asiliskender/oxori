@@ -67,6 +67,38 @@ describe("parseFile", () => {
     expect(result.tags).not.toContain("notATag");
   });
 
+  it("frontmatter tags inline — tags: [kubernetes, devops] extracted", async () => {
+    const filePath = await writeTmp(
+      "---\ntags: [kubernetes, devops, azure]\n---\n\n# My Note\n\nBody text.",
+    );
+    const result = await parseFile(filePath);
+
+    expect(result.tags).toContain("kubernetes");
+    expect(result.tags).toContain("devops");
+    expect(result.tags).toContain("azure");
+  });
+
+  it("frontmatter tags block — tags: \\n  - tag extracted", async () => {
+    const filePath = await writeTmp(
+      "---\ntags:\n  - kubernetes\n  - devops\n---\n\n# My Note\n\nBody text.",
+    );
+    const result = await parseFile(filePath);
+
+    expect(result.tags).toContain("kubernetes");
+    expect(result.tags).toContain("devops");
+  });
+
+  it("frontmatter + inline tags — merged and deduplicated", async () => {
+    const filePath = await writeTmp(
+      "---\ntags: [rust]\n---\n\n# My Note\n\nBody with #rust and #typescript.",
+    );
+    const result = await parseFile(filePath);
+
+    expect(result.tags).toContain("rust");
+    expect(result.tags).toContain("typescript");
+    expect(result.tags.filter((t) => t === "rust")).toHaveLength(1); // no duplicates
+  });
+
   it("# heading marker — NOT a tag, but appears in headings[]", async () => {
     const filePath = await writeTmp("# My Heading\n\nBody text.");
     const result = await parseFile(filePath);
