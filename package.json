@@ -4,7 +4,7 @@
   "description": "Agents read and write markdown knowledge bases — and find the right piece without scanning everything.",
   "type": "module",
   "bin": {
-    "oxori": "./dist/cli.js"
+    "oxori": "dist/cli.js"
   },
   "scripts": {
     "build": "tsc",
