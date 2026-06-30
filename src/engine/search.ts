@@ -77,15 +77,15 @@ export function search(index: IndexData, query: string, opts: SearchOptions): Se
     case "structural": {
       const target = opts.structuralTarget ?? query;
       const { links, backlinks } = structuralSearch(index, target);
-      const allPaths = [...new Set([...links, ...backlinks])];
-      return allPaths.map((p) => {
+      const linkResults: SearchResult[] = links.map((p) => {
         const file = index.files.find((f) => f.path === p);
-        return {
-          path: p,
-          headings: file?.headings ?? [],
-          snippet: "",
-        };
+        return { path: p, headings: file?.headings ?? [], snippet: "", direction: "link" as const };
       });
+      const backlinkResults: SearchResult[] = backlinks.map((p) => {
+        const file = index.files.find((f) => f.path === p);
+        return { path: p, headings: file?.headings ?? [], snippet: "", direction: "backlink" as const };
+      });
+      return [...linkResults, ...backlinkResults];
     }
 
     case "tag": {

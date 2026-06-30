@@ -85,6 +85,25 @@ program
           // T6.2 — Human-readable output
           if (results.length === 0) {
             console.log("No matches found.");
+          } else if (searchOpts.mode === "structural") {
+            // Structural: show links and backlinks in separate sections (Obsidian-style)
+            const target = opts.link ?? query ?? "";
+            const links = results.filter((r) => r.direction === "link");
+            const backlinks = results.filter((r) => r.direction === "backlink");
+
+            console.log(`\n🔗 Links from "${target}" (${links.length})`);
+            if (links.length === 0) {
+              console.log("   (none)");
+            } else {
+              for (const r of links) console.log(`   📄 ${r.path}`);
+            }
+
+            console.log(`\n⬅️  Backlinks to "${target}" (${backlinks.length})`);
+            if (backlinks.length === 0) {
+              console.log("   (none)");
+            } else {
+              for (const r of backlinks) console.log(`   📄 ${r.path}`);
+            }
           } else {
             for (const result of results) {
               console.log(`\n📄 ${result.path}`);

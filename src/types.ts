@@ -49,4 +49,6 @@ export interface SearchResult {
   path: string;
   headings: string[];
   snippet: string;
+  /** Structural search only: 'link' = this file is linked FROM target, 'backlink' = this file links TO target */
+  direction?: "link" | "backlink";
 }
