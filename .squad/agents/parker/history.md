@@ -17,3 +17,10 @@
 ## Learnings
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
+
+## Learnings
+
+- `"type": "module"` in package.json required for unified v11 (ESM-only)
+- tsconfig moduleResolution: NodeNext required with type:module
+- biome.json schema version must match installed biome version
+- src/ skeleton uses _prefixed unused params to satisfy strict mode without real implementations
