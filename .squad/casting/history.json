@@ -1,0 +1,17 @@
+{
+  "assignments": [
+    {
+      "assignment_id": "oxori-init-2026-06-30",
+      "project": "oxori",
+      "universe": "alien",
+      "timestamp": "2026-06-30T18:17:59Z",
+      "requested_by": "Onur Asiliskender",
+      "cast": [
+        { "name": "Dallas", "role": "Lead" },
+        { "name": "Ripley", "role": "Engine Dev" },
+        { "name": "Parker", "role": "CLI & DevOps" },
+        { "name": "Lambert", "role": "Tester" }
+      ]
+    }
+  ]
+}

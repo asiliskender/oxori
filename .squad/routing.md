@@ -6,12 +6,17 @@ How to decide who handles what.
 
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
-| {domain 1} | {Name} | {example tasks} |
-| {domain 2} | {Name} | {example tasks} |
-| {domain 3} | {Name} | {example tasks} |
-| Code review | {Name} | Review PRs, check quality, suggest improvements |
-| Testing | {Name} | Write tests, find edge cases, verify fixes |
-| Scope & priorities | {Name} | What to build next, trade-offs, decisions |
+| Architecture & trade-offs | Dallas | Module boundaries, design decisions, scope enforcement |
+| Code review & PR gating | Dallas | Review all PRs before merge |
+| Parser, indexer, store, search | Ripley | remark parsing, hash detection, index.json structure, search logic |
+| CLI layer & command wiring | Parker | `oxori init/index/search` CLI, output formatting, argument parsing |
+| GitHub Actions & npm release | Parker | CI pipelines, semantic-release config, package.json |
+| README & docs | Parker | README v1, usage examples |
+| Unit & integration tests | Lambert | All test files, Vitest setup, acceptance scenario |
+| Edge case identification | Lambert | Broken links, corrupt index, empty vault, deleted files |
+| Code review | Dallas | Review PRs, check quality, suggest improvements |
+| Testing | Lambert | Write tests, find edge cases, verify fixes |
+| Scope & priorities | Dallas | What to build next, trade-offs, decisions |
 | Session logging | Scribe | Automatic — never needs routing |
 
 ## Issue Routing
