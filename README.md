@@ -45,7 +45,7 @@ Call this after writing or editing notes. Re-indexes only what changed (hash-bas
 oxori search [query] [path]
 ```
 
-Returns matching files with **path + headings + snippet**. Searches the index — never scans the raw files.
+Returns matching files with **path + headings + snippet**. Searches the index — never scans the raw files. **Output is JSON by default** — pipe it to `jq` or consume directly in your agent.
 
 **Search modes:**
 
@@ -53,17 +53,27 @@ Returns matching files with **path + headings + snippet**. Searches the index �
 |------|------|---------|
 | Full-text (default) | — | `oxori search "wristband"` |
 | Tag filter | `--tag` | `oxori search --tag "#rust"` |
-| Structural (links) | `--link` | `oxori search --link "note-a.md"` |
+| Structural (links) | `--link` | `oxori search --link "ROS2.md"` |
 
-**JSON output:**
+**Human-readable output:**
 
 ```sh
-oxori search "wristband" --json
+oxori search "wristband" --pretty
 ```
 
-Returns the same data as structured JSON — useful for agents that prefer to parse.
+**Example JSON output (default):**
 
-**Example output:**
+```json
+[
+  {
+    "path": "notes/decision-log.md",
+    "headings": ["Architecture", "Storage"],
+    "snippet": "…the wristband approach was chosen for its low overhead…"
+  }
+]
+```
+
+**Example `--pretty` output:**
 
 ```
 📄 notes/decision-log.md
