@@ -37,14 +37,44 @@ export function fullTextSearch(index: IndexData, term: string): FileRecord[] {
 }
 
 // T4.2 — Structural search (links + backlinks for a given file path)
+// Accepts full path ("Robotics-IoT/ROS2.md") or filename only ("ROS2.md").
+// When given a filename, resolves to the unique full path whose basename matches.
 export function structuralSearch(
   index: IndexData,
   filePath: string,
-): { links: string[]; backlinks: string[] } {
-  return {
-    links: index.linkGraph.forward[filePath] ?? [],
-    backlinks: index.linkGraph.backlinks[filePath] ?? [],
-  };
+): { resolvedPath: string; links: string[]; backlinks: string[] } {
+  // Exact match first
+  if (index.linkGraph.forward[filePath] !== undefined || index.linkGraph.backlinks[filePath] !== undefined) {
+    return {
+      resolvedPath: filePath,
+      links: index.linkGraph.forward[filePath] ?? [],
+      backlinks: index.linkGraph.backlinks[filePath] ?? [],
+    };
+  }
+
+  // Suffix/filename match — find all known paths that end with the given name
+  const allPaths = [
+    ...new Set([
+      ...Object.keys(index.linkGraph.forward),
+      ...Object.keys(index.linkGraph.backlinks),
+    ]),
+  ];
+  const suffix = filePath.startsWith("/") ? filePath : `/${filePath}`;
+  const matches = allPaths.filter((p) => p === filePath || p.endsWith(suffix));
+
+  if (matches.length === 1) {
+    const resolved = matches[0];
+    return {
+      resolvedPath: resolved,
+      links: index.linkGraph.forward[resolved] ?? [],
+      backlinks: index.linkGraph.backlinks[resolved] ?? [],
+    };
+  }
+
+  // Multiple matches — return all combined, resolved path is the query (ambiguous)
+  const links = [...new Set(matches.flatMap((p) => index.linkGraph.forward[p] ?? []))];
+  const backlinks = [...new Set(matches.flatMap((p) => index.linkGraph.backlinks[p] ?? []))];
+  return { resolvedPath: filePath, links, backlinks };
 }
 
 // T4.3 — Tag filter

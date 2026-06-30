@@ -96,6 +96,24 @@ describe("structuralSearch", () => {
     expect(fromB.backlinks).toContain("a.md");
     expect(fromB.links).toEqual([]);
   });
+
+  it("filename-only match — 'b.md' resolves to 'subdir/b.md'", () => {
+    const index = makeIndex({
+      files: [
+        makeRecord({ path: "a.md" }),
+        makeRecord({ path: "subdir/b.md" }),
+      ],
+      linkGraph: {
+        forward: { "a.md": ["subdir/b.md"] },
+        backlinks: { "subdir/b.md": ["a.md"] },
+      },
+    });
+
+    // User types just "b.md" — should resolve to "subdir/b.md"
+    const result = structuralSearch(index, "b.md");
+    expect(result.backlinks).toContain("a.md");
+    expect(result.resolvedPath).toBe("subdir/b.md");
+  });
 });
 
 describe("tagSearch", () => {
