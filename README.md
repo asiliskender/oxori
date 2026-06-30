@@ -51,17 +51,37 @@ Returns matching files with **path + headings + snippet**. Searches the index �
 
 | Mode | Flag | Example |
 |------|------|---------|
-| Full-text (default) | — | `oxori search "wristband"` |
-| Tag filter | `--tag` | `oxori search --tag "#rust"` |
+| Full-text | — | `oxori search "wristband"` |
+| Tag filter | `--tag` | `oxori search --tag "kubernetes"` |
 | Structural (links) | `--link` | `oxori search --link "ROS2.md"` |
 
-**Human-readable output:**
+**Notes on each mode:**
+
+- **Full-text** searches both body text and headings — a file matches if the term appears anywhere.
+- **Tag filter** reads both YAML frontmatter (`tags: [kubernetes, devops]`) and inline `#tag` syntax.
+- **Structural** accepts a filename (`ROS2.md`) or full relative path (`Robotics-IoT/ROS2.md`). If two files share the same name, use the full path to disambiguate.
+
+**Structural search** returns two groups (Obsidian-style):
 
 ```sh
-oxori search "wristband" --pretty
+oxori search --link "ROS2.md"
 ```
 
-**Example JSON output (default):**
+```json
+[
+  { "path": "notes/intro.md", "direction": "link", ... },
+  { "path": "notes/setup.md", "direction": "backlink", ... }
+]
+```
+
+- `"direction": "link"` — files that `ROS2.md` links **to**
+- `"direction": "backlink"` — files that link **to** `ROS2.md`
+
+**Default JSON output:**
+
+```sh
+oxori search "wristband"
+```
 
 ```json
 [
@@ -73,7 +93,11 @@ oxori search "wristband" --pretty
 ]
 ```
 
-**Example `--pretty` output:**
+**Human-readable output (`--pretty`):**
+
+```sh
+oxori search "wristband" --pretty
+```
 
 ```
 📄 notes/decision-log.md
@@ -86,8 +110,9 @@ oxori search "wristband" --pretty
 
 - Knowledge lives in plain `.md` files — the same files a human reads in Obsidian
 - Oxori builds a derived, disposable `index.json` from your notes
-- `[[wikilinks]]` and `#tags` follow Obsidian conventions
+- `[[wikilinks]]` and `#tags` follow Obsidian conventions — both frontmatter and inline tags are supported
 - The index is always rebuildable from the markdown — delete `.oxori/` and run `oxori init` to start fresh
+- When Oxori is upgraded, `oxori index` automatically re-parses all files if the parser logic changed
 
 ## Docs
 
