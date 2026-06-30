@@ -25,3 +25,8 @@
 - broken flag mutation: parser initializes false, indexer corrects during buildLinkGraph — safe because reconcileFiles gives us fresh records
 - readdir withFileTypes: more efficient than stat() per file
 - relative() with split/join for cross-platform path normalization
+- extractSnippet: trim to word boundaries requires checking both start and end independently
+- tagSearch: strip leading # before lookup — CLI will pass "#rust" but tagMap stores "rust"
+- structural search returns union of forward+backlinks, deduped with Set
+- access() check for .oxori/ dir: catch ENOENT only, re-throw everything else
+- T5.3 (searchCommand) implemented alongside M5 since it unblocks M6 CLI wiring

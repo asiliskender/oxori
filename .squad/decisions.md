@@ -40,6 +40,15 @@ throws a descriptive error (not a raw SyntaxError) on corrupt JSON.
 **What:** PR CI workflow and Dependabot configured.
 **Note:** Dependabot also configured for github-actions ecosystem — keeps action versions current automatically.
 
+### 2026-06-30: M4 + M5 complete
+**By:** Ripley
+**What:** Search module (fullText/structural/tag/snippet/compose) and all 3 command functions implemented.
+**Key:** tagSearch strips leading # to handle both "--tag rust" and "--tag #rust". searchCommand also implemented (T5.3) since it unblocks M6.
+
+### 2026-06-30: T7.3 complete
+**By:** Lambert
+**What:** 10 indexer unit tests passing. No implementation bugs found.
+
 ## Governance
 
 - All meaningful changes require team consensus
