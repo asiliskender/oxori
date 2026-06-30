@@ -102,8 +102,11 @@ function extractHeadingText(node: Heading): string {
 export async function parseFile(filePath: string): Promise<ParsedFile> {
   const raw = await readFile(filePath, "utf-8");
 
+  // Strip YAML frontmatter before passing to remark so it doesn't leak into text
+  const bodyOnly = raw.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "");
+
   const processor = unified().use(remarkParse);
-  const tree = processor.parse(raw) as Root;
+  const tree = processor.parse(bodyOnly) as Root;
 
   const headings: string[] = [];
   const textParts: string[] = [];
