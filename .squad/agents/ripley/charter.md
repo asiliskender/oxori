@@ -34,7 +34,8 @@
 
 ## Model
 
-- **Preferred:** auto (code tasks → coordinator selects sonnet-tier)
+- **Preferred:** claude-opus-4.6
+- **Rationale:** Most complex code in the project — remark AST, hash reconciler, link graph, search composition
 
 ## Collaboration
 

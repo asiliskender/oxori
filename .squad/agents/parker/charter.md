@@ -35,7 +35,8 @@
 
 ## Model
 
-- **Preferred:** auto
+- **Preferred:** claude-opus-4.6
+- **Rationale:** CLI UX, DevOps pipelines, and release config need careful, correct implementation
 
 ## Collaboration
 

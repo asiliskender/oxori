@@ -36,7 +36,8 @@
 
 ## Model
 
-- **Preferred:** auto (writes test code → coordinator selects sonnet-tier)
+- **Preferred:** claude-sonnet-4.6
+- **Rationale:** Test code quality matters — sonnet provides the right balance of accuracy and cost
 
 ## Collaboration
 

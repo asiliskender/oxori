@@ -35,8 +35,8 @@
 
 ## Model
 
-- **Preferred:** auto
-- **Rationale:** Architecture and review tasks → coordinator selects based on complexity
+- **Preferred:** claude-opus-4.6
+- **Rationale:** Architectural reasoning and review gating require highest quality — a wrong decision here affects the whole build
 
 ## Collaboration
 
