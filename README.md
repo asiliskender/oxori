@@ -120,12 +120,12 @@ oxori search "database migration" --pretty
 
 | Document | What's in it |
 |----------|-------------|
-| [VISION.md](./VISION.md) | Why Oxori exists — the *md is the new db* thesis |
-| [DECISIONS.md](./DECISIONS.md) | Every engineering decision and its rationale |
-| [ARCHITECTURE_HIGH_LEVEL.md](./ARCHITECTURE_HIGH_LEVEL.md) | Components and data flows |
-| [ARCHITECTURE_LOW_LEVEL.md](./ARCHITECTURE_LOW_LEVEL.md) | Storage formats, modules, parsing approach |
-| [SPEC.md](./SPEC.md) | Exact command behavior and definition of done |
-| [PLAN.md](./PLAN.md) | Phase 1 build plan |
+| [VISION.md](./docs/VISION.md) | Why Oxori exists — the *md is the new db* thesis |
+| [DECISIONS.md](./docs/DECISIONS.md) | Every engineering decision and its rationale |
+| [ARCHITECTURE_HIGH_LEVEL.md](./docs/ARCHITECTURE_HIGH_LEVEL.md) | Components and data flows |
+| [ARCHITECTURE_LOW_LEVEL.md](./docs/ARCHITECTURE_LOW_LEVEL.md) | Storage formats, modules, parsing approach |
+| [SPEC.md](./docs/SPEC.md) | Exact command behavior and definition of done |
+| [PLAN.md](./docs/PLAN.md) | Phase 1 build plan |
 
 ## License
 
