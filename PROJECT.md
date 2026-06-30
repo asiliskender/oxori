@@ -11,10 +11,11 @@ This folder holds the project's planning documents. Start at the top and read do
 | Document | What's in it | Read it when you want to know… |
 |---|---|---|
 | **[VISION.md](./VISION.md)** | The thesis (*md is the new db*), the problem, what Oxori is, and how we'll know it works. | *Why* Oxori exists and what it is — the one-page pitch. |
-| **[DECISIONS.md](./DECISIONS.md)** | Every settled decision: where knowledge lives, the index, two-phase search, the commands, output, language, and all engineering practices (git, CI/CD, versioning, testing, license). | *What* we decided and the reasoning behind each choice. |
+| **[DECISIONS.md](./DECISIONS.md)** | Every settled decision: where knowledge lives, the index, two-phase search, the commands, output, language, and all engineering practices (git, CI/CD, versioning, testing, license). Also includes Phase 1 build decisions (OQ1–OQ7). | *What* we decided and the reasoning behind each choice. |
 | **[ARCHITECTURE_HIGH_LEVEL.md](./ARCHITECTURE_HIGH_LEVEL.md)** | Conceptual shape: the components (CLI, engine, parser, index store, files), how they talk, and the two flows (write/update, read/search). | The system's *shape* — components and data flow, no implementation detail. |
 | **[ARCHITECTURE_LOW_LEVEL.md](./ARCHITECTURE_LOW_LEVEL.md)** | Concrete Phase 1 design: on-disk layout, `index.json` structure, parsing (remark + Obsidian layer), hash-based change detection, module boundaries, command walkthroughs. | *How* it's actually built — formats, modules, mechanisms. |
 | **[SPEC.md](./SPEC.md)** | Exactly what gets built: command behavior, the search-output contract, broken-link handling, performance target, edge cases, scope boundary, and the end-to-end definition of done. | What "done" means — the buildable, testable spec for the team. |
+| **[PLAN.md](./PLAN.md)** | The Phase 1 build plan: 40 tasks across 10 milestones (M0–M9), owners, dependencies, and all resolved design decisions. | *What to build next* — the actionable task list for the team. |
 
 ---
 

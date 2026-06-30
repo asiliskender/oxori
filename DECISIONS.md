@@ -115,6 +115,22 @@
 | Commits / versioning | Conventional Commits → semantic-release (version, changelog, npm publish, GH release) |
 | CI/CD | GitHub Actions: tests + lint on PR; publish to npm on merge |
 | Testing | unit required, integration where feasible; coverage measured, not gated |
-| Tooling | npm, ESLint/Biome (PR), Dependabot |
+| Tooling | npm, **Biome** (lint + format, PR), Dependabot |
 | Docs | README + repo markdown |
 | Deferred | embeddings, MCP, concurrency |
+
+---
+
+## Build decisions (Phase 1 — resolved 2026-06-30)
+
+These were open questions resolved before build started. See also `PLAN.md`.
+
+| # | Question | Decision |
+|---|---|---|
+| OQ1 | Linter | **Biome** — single tool for lint + format, zero config overhead |
+| OQ2 | CLI vault path | **Optional `[path]` arg, defaults to `process.cwd()`** on all three commands |
+| OQ3 | `oxori index` when `.oxori/` missing | **Error: "run oxori init first"** — init and index are distinct operations |
+| OQ4 | Snippet window size | **±120 characters** around first match, trimmed at word boundaries |
+| OQ5 | `#tag` inside heading text | **Not extracted** — headings are structural, not tag annotations |
+| OQ6 | Search mode selection | **Flags**: default full-text, `--tag "#rust"` for tags, `--link "note-a"` for structural |
+| OQ7 | Broken links in `FileRecord` | **`links: Array<{ target: string, broken: boolean }>`** — single consistent shape |
