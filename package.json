@@ -15,7 +15,9 @@
     "test": "vitest run --passWithNoTests",
     "lint": "biome check src",
     "format": "biome format src --write",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "cp README.md README.md.bak && cp README.npm.md README.md",
+    "postpublish": "mv README.md.bak README.md"
   },
   "dependencies": {
     "commander": "^12.0.0",
