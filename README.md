@@ -126,7 +126,3 @@ oxori search "database migration" --pretty
 | [ARCHITECTURE_LOW_LEVEL.md](./docs/ARCHITECTURE_LOW_LEVEL.md) | Storage formats, modules, parsing approach |
 | [SPEC.md](./docs/SPEC.md) | Exact command behavior and definition of done |
 | [PLAN.md](./docs/PLAN.md) | Phase 1 build plan |
-
-## License
-
-MIT
