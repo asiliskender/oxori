@@ -2,7 +2,7 @@
   <img src="./assets/logo.png" alt="oxori" />
 </p>
 
-> Agents read and write knowledge in natural language, without drowning in it.
+Agents read and write knowledge in natural language, without drowning in it.
 
 [![npm](https://img.shields.io/npm/v/oxori)](https://www.npmjs.com/package/oxori)
 [![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
