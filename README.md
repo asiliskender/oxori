@@ -116,7 +116,7 @@ oxori search "database migration" --pretty
 - The index is always rebuildable from the markdown — delete `.oxori/` and run `oxori init` to start fresh
 - When Oxori is upgraded, `oxori index` automatically re-parses all files if the parser logic changed
 
-## Docs
+## Project Docs
 
 | Document | What's in it |
 |----------|-------------|
